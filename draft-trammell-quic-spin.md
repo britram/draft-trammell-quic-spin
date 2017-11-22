@@ -1,7 +1,7 @@
 ---
 title: The Addition of a Spin Bit to the QUIC Transport Protocol
 abbrev: Spin Bit
-docname: draft-trammell-quic-spin
+docname: draft-trammell-quic-spin-latest
 date:
 category: info
 
@@ -29,7 +29,7 @@ informative:
 
 --- abstract
 
-This document summarizes work to date on the addition of a Spin Bit, intended for explicit measurability of end-to-end RTT on QUIC flows. It proposes a detailed mechanism for the spin bit, describes how to use it to measure end-to-end latency, discusses corner cases and workarounds therefor in the measurement, and examines the utility and privacy implications 
+This document summarizes work to date on the addition of a Spin Bit, intended for explicit measurability of end-to-end RTT on QUIC flows. It proposes a detailed mechanism for the spin bit, describes how to use it to measure end-to-end latency, discusses corner cases and workarounds therefor in the measurement, and examines the utility and privacy implications
 
 --- middle
 
@@ -47,7 +47,7 @@ Receiver- and Sender-Limited Transmission
 
 # Use Cases for Passive RTT Measurement
 
-# Privacy and Security Considerations 
+# Privacy and Security Considerations
 
 # Acknowledgments
 
