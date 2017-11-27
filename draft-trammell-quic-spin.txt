@@ -84,12 +84,14 @@ Table of Contents
    2.  The Spin Bit Mechanism  . . . . . . . . . . . . . . . . . . .   2
    3.  Using the Spin Bit for Passive RTT Measurement  . . . . . . .   3
      3.1.  Limitations and Workarounds . . . . . . . . . . . . . . .   3
-     3.2.  Experimental Evaluation . . . . . . . . . . . . . . . . .   3
-   4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .   3
-   5.  Privacy and Security Considerations . . . . . . . . . . . . .   4
-   6.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   5
-   7.  Informative References  . . . . . . . . . . . . . . . . . . .   5
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   5
+     3.2.  Alternate RTT Measurement Approaches for Diagnosing QUIC
+           flows . . . . . . . . . . . . . . . . . . . . . . . . . .   3
+     3.3.  Experimental Evaluation . . . . . . . . . . . . . . . . .   4
+   4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .   4
+   5.  Privacy and Security Considerations . . . . . . . . . . . . .   5
+   6.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   6
+   7.  Informative References  . . . . . . . . . . . . . . . . . . .   6
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   7
 
 1.  Introduction
 
@@ -101,8 +103,6 @@ Table of Contents
    [EDITOR'S NOTE: Marcus to write.  Modify slightly from PR609 design,
    spin only on short header packets.  Coordinate with work on reserved
    bits in the short header in the transport draft?]
-
-
 
 
 
@@ -148,7 +148,64 @@ Internet-Draft                  Spin Bit                   November 2017
    mitigated by the observer considering the low-order bits of the
    packet number, and rejecting edges that appear out-of-order.
 
-3.2.  Experimental Evaluation
+3.2.  Alternate RTT Measurement Approaches for Diagnosing QUIC flows
+
+   There are two alternatives to explicit signaling for passive RTT
+   measurement for measuring the RTT experienced by QUIC flows.
+
+   The first of these is handshake RTT measurement.  As described in
+   [I-D.ietf-quic-manageability], the packets of the QUIC handshake are
+   distinguishable on the wire in such a way that they can be used for
+   one RTT measurement sample per flow: the delay between the client
+   initial and the server cleartext packet can be used to measure
+   "upstream" RTT (between the observer and the server), and the delay
+   between the server cleartext packet and the next client cleartext
+   packet can be used to measure "downstream" RTT (between the client
+   and the observer).  When RTT measurements are used in large
+
+
+
+Trammell, et al.          Expires May 31, 2018                  [Page 3]
+
+Internet-Draft                  Spin Bit                   November 2017
+
+
+   aggregates (all flows traversing a large link, for example), a
+   methodology based on handshake RTT could be used to generate
+   sufficient samples for some use cases (e.g.  [EDITOR'S NOTE: cite use
+   cases here]) without the spin bit.  However, this methodology would
+   rely on the assumption that the difference between handshake RTT and
+   nominal in-flow RTT is negligible.  Specifically, (1) any additional
+   delay required to compute any cryptographic parameters must be
+   negligible with respect to network RTT; (2) any additional delay
+   required to establish state along the path must be negligible with
+   respect to network RTT; and (3) network treatment of initial packets
+   in a flow must identical to that of later packets in the flow.  When
+   these assumptions cannot be shown to hold, spin-bit based RTT
+   measurement is preferable to handshake RTT measurement, even for
+   applications for which handshake RTT measurement would otherwise be
+   suitable.
+
+   The second alternative is parallel active measurement: using ICMP
+   Echo Request and Reply [RFC0792] [RFC4433], a dedicated measurement
+   protocol like TWAMP [RFC5357], or a separate diagnostic QUIC flow to
+   measure RTT.  Regardless of protocol, the active measurement must be
+   initiated by a client on the same network as the client of the QUIC
+   flow(s) of interest, or a network close by in the Internet topology,
+   toward the server.  Note that there is no guarantee that ICMP flows
+   will receive the same network treatment as the flows under study,
+   both due to differential treatment of ICMP traffic and due to ECMP
+   routing (see e.g.  [TOKYO-PING]).  TWAMP and QUIC diagnostic flows,
+   though both use UDP, have similar issues regarding ECMP.  However, in
+   situations where the entity doing the measurement can guarantee that
+   the active measurement traffic will traverse the subpaths of interest
+   (e.g.  residential access network measurement under a network
+   architecture and business model where the network operator owns the
+   CPE), active measurement can be used to generate RTT samples at the
+   cost of at least two non-productive packets sent though the network
+   per sample.
+
+3.3.  Experimental Evaluation
 
    [EDITOR'S NOTE: Summary of Piet's work to date goes here.]
 
@@ -164,8 +221,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-
-Trammell, et al.          Expires May 31, 2018                  [Page 3]
+Trammell, et al.          Expires May 31, 2018                  [Page 4]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -178,15 +234,14 @@ Internet-Draft                  Spin Bit                   November 2017
    A concern was raised during the discussion of this feature within the
    QUIC working group and the QUIC RTT Design Team that high-resolution
    RTT information might be usable for geolocation.  However, an
-   evaluation based on several million RTT samples taken over xx,000
-   paths in the Internet from RIPE Atlas anchoring measurements [TRILAT]
-   shows that the magnitude and uncertainty of RTTs in the Internet
-   render the resolution of geolocation information that can be derived
-   from Internet RTT is limited to national- or continental-scale; i.e.,
-   less resolution than is generally available from free, open IP
-   geolocation databases.  Therefore, in the general case, when an
-   endpoint's IP address is known, RTT information provides negligible
-   additional information.
+   evaluation based on RTT samples taken over 13,780 paths in the
+   Internet from RIPE Atlas anchoring measurements [TRILAT] shows that
+   the magnitude and uncertainty of RTT data render the resolution of
+   geolocation information that can be derived from Internet RTT is
+   limited to national- or continental-scale; i.e., less resolution than
+   is generally available from free, open IP geolocation databases.
+   Therefore, in the general case, when an endpoint's IP address is
+   known, RTT information provides negligible additional information.
 
    RTT information may be used to infer the occupancy of queues along a
    path; indeed, this is part of its utility for performance measurement
@@ -221,7 +276,8 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 4]
+
+Trammell, et al.          Expires May 31, 2018                  [Page 5]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -245,10 +301,42 @@ Internet-Draft                  Spin Bit                   November 2017
 
 7.  Informative References
 
+   [I-D.ietf-quic-manageability]
+              Kuehlewind, M. and B. Trammell, "Manageability of the QUIC
+              Transport Protocol", draft-ietf-quic-manageability-01
+              (work in progress), October 2017.
+
+   [RFC0792]  Postel, J., "Internet Control Message Protocol", STD 5,
+              RFC 792, DOI 10.17487/RFC0792, September 1981,
+              <https://www.rfc-editor.org/info/rfc792>.
+
+   [RFC4433]  Kulkarni, M., Patel, A., and K. Leung, "Mobile IPv4
+              Dynamic Home Agent (HA) Assignment", RFC 4433,
+              DOI 10.17487/RFC4433, March 2006,
+              <https://www.rfc-editor.org/info/rfc4433>.
+
+   [RFC5357]  Hedayat, K., Krzanowski, R., Morton, A., Yum, K., and J.
+              Babiarz, "A Two-Way Active Measurement Protocol (TWAMP)",
+              RFC 5357, DOI 10.17487/RFC5357, October 2008,
+              <https://www.rfc-editor.org/info/rfc5357>.
+
+   [TOKYO-PING]
+              Pelsser, C., Cittadini, L., Vissicchio, S., and R. Bush,
+              "From Paris to Tokyo - On the Suitability of ping to
+              Measure Latency (ACM IMC 2014)", October 2014.
+
    [TRILAT]   Trammell, B., "On the Suitability of RTT Measurements for
               Geolocation
-              (https://github.com/britram/trilateration/blob/master/
-              paper.ipynb)", August 2017.
+              (https://github.com/britram/trilateration/blob/paper-rev-
+              1/paper.ipynb)", August 2017.
+
+
+
+
+Trammell, et al.          Expires May 31, 2018                  [Page 6]
+
+Internet-Draft                  Spin Bit                   November 2017
+
 
 Authors' Addresses
 
@@ -276,12 +364,6 @@ Authors' Addresses
    Email: giuseppe.fioccola@telecomitalia.it
 
 
-
-Trammell, et al.          Expires May 31, 2018                  [Page 5]
-
-Internet-Draft                  Spin Bit                   November 2017
-
-
    Thomas Fossati
    Nokia
 
@@ -307,30 +389,4 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Trammell, et al.          Expires May 31, 2018                  [Page 6]
+Trammell, et al.          Expires May 31, 2018                  [Page 7]

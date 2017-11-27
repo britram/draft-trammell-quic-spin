@@ -279,7 +279,8 @@ address {
 <link href="#rfc.section.2" rel="Chapter" title="2 The Spin Bit Mechanism">
 <link href="#rfc.section.3" rel="Chapter" title="3 Using the Spin Bit for Passive RTT Measurement">
 <link href="#rfc.section.3.1" rel="Chapter" title="3.1 Limitations and Workarounds">
-<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Experimental Evaluation">
+<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Alternate RTT Measurement Approaches for Diagnosing QUIC flows">
+<link href="#rfc.section.3.3" rel="Chapter" title="3.3 Experimental Evaluation">
 <link href="#rfc.section.4" rel="Chapter" title="4 Use Cases for Passive RTT Measurement">
 <link href="#rfc.section.5" rel="Chapter" title="5 Privacy and Security Considerations">
 <link href="#rfc.section.6" rel="Chapter" title="6 Acknowledgments">
@@ -399,7 +400,9 @@ address {
 </li>
 <ul><li>3.1.   <a href="#rfc.section.3.1">Limitations and Workarounds</a>
 </li>
-<li>3.2.   <a href="#rfc.section.3.2">Experimental Evaluation</a>
+<li>3.2.   <a href="#rfc.section.3.2">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
+</li>
+<li>3.3.   <a href="#rfc.section.3.3">Experimental Evaluation</a>
 </li>
 </ul><li>4.   <a href="#rfc.section.4">Use Cases for Passive RTT Measurement</a>
 </li>
@@ -433,9 +436,15 @@ address {
 <p id="rfc.section.3.1.p.1">The spin bit provides latency information only when the sender is neither application nor flow control limited. When the sender is application-limited by periodic application traffic, where that period is longer than the RTT, measuring the spin bit provides information about the application period, not the RTT. Simple heuristics based on the observed data rate per flow or changes in the RTT series can be used to reject bad RTT samples due to application or flow control limitation. [EDITOR&#8217;S NOTE: more here?]</p>
 <p id="rfc.section.3.1.p.2">Since the spin bit logic at each endpoint considers only samples on packets that advance the highest packet number seen, signal generation itself is resistent to reordering. However, reordering can cause problems at an observer by causing spurious edge detection and therefore low RTT estimates. This can be probabilistically mitigated by the observer considering the low-order bits of the packet number, and rejecting edges that appear out-of-order.</p>
 <h1 id="rfc.section.3.2">
-<a href="#rfc.section.3.2">3.2.</a> <a href="#experimental-evaluation" id="experimental-evaluation">Experimental Evaluation</a>
+<a href="#rfc.section.3.2">3.2.</a> <a href="#alternate-rtt-measurement-approaches-for-diagnosing-quic-flows" id="alternate-rtt-measurement-approaches-for-diagnosing-quic-flows">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
 </h1>
-<p id="rfc.section.3.2.p.1">[EDITOR&#8217;S NOTE: Summary of Piet&#8217;s work to date goes here.]</p>
+<p id="rfc.section.3.2.p.1">There are two alternatives to explicit signaling for passive RTT measurement for measuring the RTT experienced by QUIC flows.</p>
+<p id="rfc.section.3.2.p.2">The first of these is handshake RTT measurement. As described in <a href="#I-D.ietf-quic-manageability" class="xref">[I-D.ietf-quic-manageability]</a>, the packets of the QUIC handshake are distinguishable on the wire in such a way that they can be used for one RTT measurement sample per flow: the delay between the client initial and the server cleartext packet can be used to measure &#8220;upstream&#8221; RTT (between the observer and the server), and the delay between the server cleartext packet and the next client cleartext packet can be used to measure &#8220;downstream&#8221; RTT (between the client and the observer). When RTT measurements are used in large aggregates (all flows traversing a large link, for example), a methodology based on handshake RTT could be used to generate sufficient samples for some use cases (e.g. [EDITOR&#8217;S NOTE: cite use cases here]) without the spin bit.  However, this methodology would rely on the assumption that the difference between handshake RTT and nominal in-flow RTT is negligible. Specifically, (1) any additional delay required to compute any cryptographic parameters must be negligible with respect to network RTT; (2) any additional delay required to establish state along the path must be negligible with respect to network RTT; and (3) network treatment of initial packets in a flow must identical to that of later packets in the flow. When these assumptions cannot be shown to hold, spin-bit based RTT measurement is preferable to handshake RTT measurement, even for applications for which handshake RTT measurement would otherwise be suitable.</p>
+<p id="rfc.section.3.2.p.3">The second alternative is parallel active measurement: using ICMP Echo Request and Reply <a href="#RFC0792" class="xref">[RFC0792]</a> <a href="#RFC4433" class="xref">[RFC4433]</a>, a dedicated measurement protocol like TWAMP <a href="#RFC5357" class="xref">[RFC5357]</a>, or a separate diagnostic QUIC flow to measure RTT.  Regardless of protocol, the active measurement must be initiated by a client on the same network as the client of the QUIC flow(s) of interest, or a network close by in the Internet topology, toward the server. Note that there is no guarantee that ICMP flows will receive the same network treatment as the flows under study, both due to differential treatment of ICMP traffic and due to ECMP routing (see e.g. <a href="#TOKYO-PING" class="xref">[TOKYO-PING]</a>). TWAMP and QUIC diagnostic flows, though both use UDP, have similar issues regarding ECMP. However, in situations where the entity doing the measurement can guarantee that the active measurement traffic will traverse the subpaths of interest (e.g.  residential access network measurement under a network architecture and business model where the network operator owns the CPE), active measurement can be used to generate RTT samples at the cost of at least two non-productive packets sent though the network per sample.</p>
+<h1 id="rfc.section.3.3">
+<a href="#rfc.section.3.3">3.3.</a> <a href="#experimental-evaluation" id="experimental-evaluation">Experimental Evaluation</a>
+</h1>
+<p id="rfc.section.3.3.p.1">[EDITOR&#8217;S NOTE: Summary of Piet&#8217;s work to date goes here.]</p>
 <h1 id="rfc.section.4">
 <a href="#rfc.section.4">4.</a> <a href="#use-cases-for-passive-rtt-measurement" id="use-cases-for-passive-rtt-measurement">Use Cases for Passive RTT Measurement</a>
 </h1>
@@ -447,7 +456,7 @@ address {
 <a href="#rfc.section.5">5.</a> <a href="#privacy-and-security-considerations" id="privacy-and-security-considerations">Privacy and Security Considerations</a>
 </h1>
 <p id="rfc.section.5.p.1">The privacy considerations for the latency spin bit are essentially the same as those for passive RTT measurement in general.</p>
-<p id="rfc.section.5.p.2">A concern was raised during the discussion of this feature within the QUIC working group and the QUIC RTT Design Team that high-resolution RTT information might be usable for geolocation. However, an evaluation based on several million RTT samples taken over xx,000 paths in the Internet from RIPE Atlas anchoring measurements <a href="#TRILAT" class="xref">[TRILAT]</a> shows that the magnitude and uncertainty of RTTs in the Internet render the resolution of geolocation information that can be derived from Internet RTT is limited to national- or continental-scale; i.e., less resolution than is generally available from free, open IP geolocation databases. Therefore, in the general case, when an endpoint&#8217;s IP address is known, RTT information provides negligible additional information.</p>
+<p id="rfc.section.5.p.2">A concern was raised during the discussion of this feature within the QUIC working group and the QUIC RTT Design Team that high-resolution RTT information might be usable for geolocation. However, an evaluation based on RTT samples taken over 13,780 paths in the Internet from RIPE Atlas anchoring measurements <a href="#TRILAT" class="xref">[TRILAT]</a> shows that the magnitude and uncertainty of RTT data render the resolution of geolocation information that can be derived from Internet RTT is limited to national- or continental-scale; i.e., less resolution than is generally available from free, open IP geolocation databases. Therefore, in the general case, when an endpoint&#8217;s IP address is known, RTT information provides negligible additional information.</p>
 <p id="rfc.section.5.p.3">RTT information may be used to infer the occupancy of queues along a path; indeed, this is part of its utility for performance measurement and diagnostics. When a link on given path has excessive buffering (on the order of hundreds of milliseconds or more; a situation colloquially referred to as &#8220;bufferbloat&#8221;), such that the difference in delay between an empty queue and a full queue dwarfs normal variance and RTT along the path, RTT variance during the lifetime of a flow can be used to infer the presence of traffic on the bottleneck link. In practice, however, this is not a concern for passive measurement of congestion-controlled traffic, since any observer in a situation to observe RTT passively need not infer the presence of the traffic, as it can observe it directly.</p>
 <p id="rfc.section.5.p.4">In addition, since RTT information contains application as well as network delay, patterns in RTT variance from minimum, and therefore application delay, can be used to infer or fingerprint application-layer behavior. However, as with the case above, this is not a concern with passive measurement, since the packet size and interarrival time sequence, which is also directly observable, carries more information than RTT variance sequence.</p>
 <p id="rfc.section.5.p.5">We therefore conclude that the high-resolution, per-flow exposure of RTT for passive measurement as provided by the spin bit poses negligible marginal risk to privacy.</p>
@@ -459,11 +468,38 @@ address {
 <p id="rfc.section.6.p.2">This work is partially supported by the European Commission under Horizon 2020 grant agreement no. 688421 Measurement and Architecture for a Middleboxed Internet (MAMI), and by the Swiss State Secretariat for Education, Research, and Innovation under contract no. 15.0268. This support does not imply endorsement.</p>
 <h1 id="rfc.references">
 <a href="#rfc.references">7.</a> Informative References</h1>
-<table><tbody><tr>
+<table><tbody>
+<tr>
+<td class="reference"><b id="I-D.ietf-quic-manageability">[I-D.ietf-quic-manageability]</b></td>
+<td class="top">
+<a>Kuehlewind, M.</a> and <a>B. Trammell</a>, "<a href="https://tools.ietf.org/html/draft-ietf-quic-manageability-01">Manageability of the QUIC Transport Protocol</a>", Internet-Draft draft-ietf-quic-manageability-01, October 2017.</td>
+</tr>
+<tr>
+<td class="reference"><b id="RFC0792">[RFC0792]</b></td>
+<td class="top">
+<a>Postel, J.</a>, "<a href="https://tools.ietf.org/html/rfc792">Internet Control Message Protocol</a>", STD 5, RFC 792, DOI 10.17487/RFC0792, September 1981.</td>
+</tr>
+<tr>
+<td class="reference"><b id="RFC4433">[RFC4433]</b></td>
+<td class="top">
+<a>Kulkarni, M.</a>, <a>Patel, A.</a> and <a>K. Leung</a>, "<a href="https://tools.ietf.org/html/rfc4433">Mobile IPv4 Dynamic Home Agent (HA) Assignment</a>", RFC 4433, DOI 10.17487/RFC4433, March 2006.</td>
+</tr>
+<tr>
+<td class="reference"><b id="RFC5357">[RFC5357]</b></td>
+<td class="top">
+<a>Hedayat, K.</a>, <a>Krzanowski, R.</a>, <a>Morton, A.</a>, <a>Yum, K.</a> and <a>J. Babiarz</a>, "<a href="https://tools.ietf.org/html/rfc5357">A Two-Way Active Measurement Protocol (TWAMP)</a>", RFC 5357, DOI 10.17487/RFC5357, October 2008.</td>
+</tr>
+<tr>
+<td class="reference"><b id="TOKYO-PING">[TOKYO-PING]</b></td>
+<td class="top">
+<a>Pelsser, C.</a>, <a>Cittadini, L.</a>, <a>Vissicchio, S.</a> and <a>R. Bush</a>, "<a>From Paris to Tokyo - On the Suitability of ping to Measure Latency (ACM IMC 2014)</a>", October 2014.</td>
+</tr>
+<tr>
 <td class="reference"><b id="TRILAT">[TRILAT]</b></td>
 <td class="top">
-<a>Trammell, B.</a>, "<a>On the Suitability of RTT Measurements for Geolocation (https://github.com/britram/trilateration/blob/master/paper.ipynb)</a>", August 2017.</td>
-</tr></tbody></table>
+<a>Trammell, B.</a>, "<a>On the Suitability of RTT Measurements for Geolocation (https://github.com/britram/trilateration/blob/paper-rev-1/paper.ipynb)</a>", August 2017.</td>
+</tr>
+</tbody></table>
 <h1 id="rfc.authors"><a href="#rfc.authors">Authors' Addresses</a></h1>
 <div class="avoidbreak">
   <address class="vcard">
