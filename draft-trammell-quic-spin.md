@@ -59,11 +59,23 @@ normative:
 
 informative:
   TRILAT:
-    title: On the Suitability of RTT Measurements for Geolocation (https://github.com/britram/trilateration/blob/master/paper.ipynb)
+    title: On the Suitability of RTT Measurements for Geolocation (https://github.com/britram/trilateration/blob/paper-rev-1/paper.ipynb)
     author:
       -
         ins: B. Trammell
     date: 2017-08-30
+  TOKYO-PING:
+    title: From Paris to Tokyo - On the Suitability of ping to Measure Latency (ACM IMC 2014)
+    author:
+      -
+        ins: C. Pelsser
+      -
+        ins: L. Cittadini
+      -
+        ins: S. Vissicchio
+      -
+        ins: R. Bush
+    date: 2014-10-23
 
 --- abstract
 
@@ -121,6 +133,50 @@ by causing spurious edge detection and therefore low RTT estimates. This can
 be probabilistically mitigated by the observer considering the low-order bits
 of the packet number, and rejecting edges that appear out-of-order.
 
+## Alternate RTT Measurement Approaches for Diagnosing QUIC flows
+
+There are two alternatives to explicit signaling for passive RTT measurement
+for measuring the RTT experienced by QUIC flows.
+
+The first of these is handshake RTT measurement. As described in
+{{?QUIC-MGT=I-D.ietf-quic-manageability}}, the packets of the QUIC handshake are
+distinguishable on the wire in such a way that they can be used for one RTT
+measurement sample per flow: the delay between the client initial and the
+server cleartext packet can be used to measure "upstream" RTT (between the
+observer and the server), and the delay between the server cleartext packet
+and the next client cleartext packet can be used to measure "downstream" RTT
+(between the client and the observer). When RTT measurements are used in large
+aggregates (all flows traversing a large link, for example), a methodology
+based on handshake RTT could be used to generate sufficient samples for some
+use cases (e.g. \[EDITOR'S NOTE: cite use cases here]) without the spin bit.
+However, this methodology would rely on the assumption that the difference
+between handshake RTT and nominal in-flow RTT is negligible. Specifically, (1)
+any additional delay required to compute any cryptographic parameters must be
+negligible with respect to network RTT; (2) any additional delay required to
+establish state along the path must be negligible with respect to network RTT;
+and (3) network treatment of initial packets in a flow must identical to that
+of later packets in the flow. When these assumptions cannot be shown to hold,
+spin-bit based RTT measurement is preferable to handshake RTT measurement,
+even for applications for which handshake RTT measurement would otherwise be
+suitable.
+
+The second alternative is parallel active measurement: using ICMP Echo Request
+and Reply {{?RFC0792}} {{?RFC4433}}, a dedicated measurement protocol like
+TWAMP {{?RFC5357}}, or a separate diagnostic QUIC flow to measure RTT.
+Regardless of protocol, the active measurement must be initiated by a client
+on the same network as the client of the QUIC flow(s) of interest, or a
+network close by in the Internet topology, toward the server. Note that there
+is no guarantee that ICMP flows will receive the same network treatment as the
+flows under study, both due to differential treatment of ICMP traffic and due
+to ECMP routing (see e.g. {{TOKYO-PING}}). TWAMP and QUIC diagnostic flows,
+though both use UDP, have similar issues regarding ECMP. However, in
+situations where the entity doing the measurement can guarantee that the
+active measurement traffic will traverse the subpaths of interest (e.g.
+residential access network measurement under a network architecture and
+business model where the network operator owns the CPE), active measurement
+can be used to generate RTT samples at the cost of at least two non-productive
+packets sent though the network per sample.
+
 ## Experimental Evaluation
 
 \[EDITOR'S NOTE: Summary of Piet's work to date goes here.]
@@ -143,14 +199,13 @@ as those for passive RTT measurement in general.
 A concern was raised during the discussion of this feature within the QUIC
 working group and the QUIC RTT Design Team that high-resolution RTT
 information might be usable for geolocation. However, an evaluation based on
-several million RTT samples taken over xx,000 paths in the Internet from RIPE
-Atlas anchoring measurements {{TRILAT}} shows that the magnitude and
-uncertainty of RTTs in the Internet render the resolution of geolocation
-information that can be derived from Internet RTT is limited to national- or
-continental-scale; i.e., less resolution than is generally available from
-free, open IP geolocation databases. Therefore, in the general case, when an
-endpoint's IP address is known, RTT information provides negligible additional
-information.
+RTT samples taken over 13,780 paths in the Internet from RIPE Atlas anchoring
+measurements {{TRILAT}} shows that the magnitude and uncertainty of RTT data
+render the resolution of geolocation information that can be derived from
+Internet RTT is limited to national- or continental-scale; i.e., less
+resolution than is generally available from free, open IP geolocation
+databases. Therefore, in the general case, when an endpoint's IP address is
+known, RTT information provides negligible additional information.
 
 RTT information may be used to infer the occupancy of queues along a path;
 indeed, this is part of its utility for performance measurement and
