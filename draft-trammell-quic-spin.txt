@@ -88,10 +88,11 @@ Table of Contents
            flows . . . . . . . . . . . . . . . . . . . . . . . . . .   3
      3.3.  Experimental Evaluation . . . . . . . . . . . . . . . . .   4
    4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .   4
-   5.  Privacy and Security Considerations . . . . . . . . . . . . .   5
-   6.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   6
-   7.  Informative References  . . . . . . . . . . . . . . . . . . .   6
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   7
+     4.1.  Video Delivery Troubleshooting  . . . . . . . . . . . . .   5
+   5.  Privacy and Security Considerations . . . . . . . . . . . . .   6
+   6.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   7
+   7.  Informative References  . . . . . . . . . . . . . . . . . . .   7
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   8
 
 1.  Introduction
 
@@ -103,7 +104,6 @@ Table of Contents
    [EDITOR'S NOTE: Marcus to write.  Modify slightly from PR609 design,
    spin only on short header packets.  Coordinate with work on reserved
    bits in the short header in the transport draft?]
-
 
 
 
@@ -210,9 +210,66 @@ Internet-Draft                  Spin Bit                   November 2017
 
 4.  Use Cases for Passive RTT Measurement
 
-   [EDITOR'S NOTE: Roni on video]
+   This section describes current use cases for passive RTT measurement
+   with TCP, i.e., the matching of packets based on sequence and
+   acknowledgment numbers, or timestamps and timestamp echoes, in order
+   to generate upstream and downstream RTT samples which can be added to
+   get end-to-end RTT, as with handshake RTT in Section 3.2.  These
+   current use cases would be consumers of RTT samples measured from the
+   spin bit as in Section 3.
 
-   [EDITOR'S NOTE: Emile on interdomain]
+
+
+
+Trammell, et al.          Expires May 31, 2018                  [Page 4]
+
+Internet-Draft                  Spin Bit                   November 2017
+
+
+   In all cases, the basic measurement methodology follows one of a few
+   basic variants.  The RTT evolution of a flow or a set of flows can be
+   compared to baseline or expected RTT measurements for flows with the
+   same characterisitcs... [EDITOR'S NOTE: other variants go here]
+
+4.1.  Video Delivery Troubleshooting
+
+   [EDITOR'S NOTE: merge with Emile's interdomain troubleshooting
+   section?]
+
+   [EDITOR'S NOTE: this is rewritten from Roni's text on video; Roni,
+   please check.]
+
+   Network access providers are often the first point of contact by
+   their customers when network problems impact the performance of
+   bandwidth-intensive and latency-sensitive applications such as video,
+   regardless of whether the root cause lies within the access
+   provider's network, the service provider's network, on the Internet
+   paths between them, or within the customer's own network.
+
+   Many residential networks use WiFi (802.11) on the last segment, and
+   WiFi signal strength degradation manifests in high first-hop delay,
+   due to the fact that the MAC layer will retransmit loss packets in
+   order to trade latency off for loss.  Measuring the RTT between
+   endpoints on the customer network and parts of the service provider's
+   own infrastructure (which have predictable delay characteristics) can
+   be used to isolate this cause of performance problems.
+
+   Comparing the evolution of passively-measured RTTs between a customer
+   network and selected other networks on the Internet to short- and
+   medium-term baseline measurements can be used to isolate high latency
+   to specific networks or network segments.  For example, if the RTTs
+   of all flows to a given service provider increase at the same time,
+   the problem likely exists between the access network and the service
+   provider, or in the service provider's network itself.  On the other
+   hand, if the RTTs of all flows for a set of customers sharing some
+   give access provider infrastructure increase, then the problem is
+   likely attributable to that infrastructure.
+
+   In both of these cases, handshake RTT as in Section 3.2 would provide
+   limited information, presuming that its assumptions hold.  Intraflow
+   measurements are necessary in this case to increase the baseline and
+   measurement data available, and to increase the chance that enough
+   samples are available for arbitrarily small aggregates.
 
    [EDITOR'S NOTE: Markus on AQM?]
 
@@ -220,8 +277,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-
-Trammell, et al.          Expires May 31, 2018                  [Page 4]
+Trammell, et al.          Expires May 31, 2018                  [Page 5]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -277,7 +333,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 5]
+Trammell, et al.          Expires May 31, 2018                  [Page 6]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -333,7 +389,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 6]
+Trammell, et al.          Expires May 31, 2018                  [Page 7]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -389,4 +445,4 @@ Authors' Addresses
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 7]
+Trammell, et al.          Expires May 31, 2018                  [Page 8]

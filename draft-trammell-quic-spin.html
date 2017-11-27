@@ -282,6 +282,7 @@ address {
 <link href="#rfc.section.3.2" rel="Chapter" title="3.2 Alternate RTT Measurement Approaches for Diagnosing QUIC flows">
 <link href="#rfc.section.3.3" rel="Chapter" title="3.3 Experimental Evaluation">
 <link href="#rfc.section.4" rel="Chapter" title="4 Use Cases for Passive RTT Measurement">
+<link href="#rfc.section.4.1" rel="Chapter" title="4.1 Video Delivery Troubleshooting">
 <link href="#rfc.section.5" rel="Chapter" title="5 Privacy and Security Considerations">
 <link href="#rfc.section.6" rel="Chapter" title="6 Acknowledgments">
 <link href="#rfc.references" rel="Chapter" title="7 Informative References">
@@ -406,7 +407,9 @@ address {
 </li>
 </ul><li>4.   <a href="#rfc.section.4">Use Cases for Passive RTT Measurement</a>
 </li>
-<li>5.   <a href="#rfc.section.5">Privacy and Security Considerations</a>
+<ul><li>4.1.   <a href="#rfc.section.4.1">Video Delivery Troubleshooting</a>
+</li>
+</ul><li>5.   <a href="#rfc.section.5">Privacy and Security Considerations</a>
 </li>
 <li>6.   <a href="#rfc.section.6">Acknowledgments</a>
 </li>
@@ -427,7 +430,7 @@ address {
 </h1>
 <p id="rfc.section.2.p.1">[EDITOR&#8217;S NOTE: Marcus to write. Modify slightly from PR609 design, spin only on short header packets. Coordinate with work on reserved bits in the short header in the transport draft?]</p>
 <h1 id="rfc.section.3">
-<a href="#rfc.section.3">3.</a> <a href="#using-the-spin-bit-for-passive-rtt-measurement" id="using-the-spin-bit-for-passive-rtt-measurement">Using the Spin Bit for Passive RTT Measurement</a>
+<a href="#rfc.section.3">3.</a> <a href="#usage" id="usage">Using the Spin Bit for Passive RTT Measurement</a>
 </h1>
 <p id="rfc.section.3.p.1">When a QUIC flow is sending at full rate (i.e., neither application nor flow control limited), the latency spin bit in each direction changes value once per round-trip time (RTT). An on-path observer can observe the time difference between edges in the spin bit signal to measure one sample of end-to-end RTT.  Note that this measurement, as with passive RTT measurement for TCP, includes any transport protocol delay (e.g., delayed sending of acknowledgements) and/or application layer delay (e.g., waiting for a request to complete). It therefore provides devices on path a good instantaneous estimate of the RTT as experienced by the application. A simple linear smoothing or moving minimum filter can be applied to the stream of RTT information to get a more stable estimate.</p>
 <h1 id="rfc.section.3.1">
@@ -436,7 +439,7 @@ address {
 <p id="rfc.section.3.1.p.1">The spin bit provides latency information only when the sender is neither application nor flow control limited. When the sender is application-limited by periodic application traffic, where that period is longer than the RTT, measuring the spin bit provides information about the application period, not the RTT. Simple heuristics based on the observed data rate per flow or changes in the RTT series can be used to reject bad RTT samples due to application or flow control limitation. [EDITOR&#8217;S NOTE: more here?]</p>
 <p id="rfc.section.3.1.p.2">Since the spin bit logic at each endpoint considers only samples on packets that advance the highest packet number seen, signal generation itself is resistent to reordering. However, reordering can cause problems at an observer by causing spurious edge detection and therefore low RTT estimates. This can be probabilistically mitigated by the observer considering the low-order bits of the packet number, and rejecting edges that appear out-of-order.</p>
 <h1 id="rfc.section.3.2">
-<a href="#rfc.section.3.2">3.2.</a> <a href="#alternate-rtt-measurement-approaches-for-diagnosing-quic-flows" id="alternate-rtt-measurement-approaches-for-diagnosing-quic-flows">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
+<a href="#rfc.section.3.2">3.2.</a> <a href="#other-bad-ideas" id="other-bad-ideas">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
 </h1>
 <p id="rfc.section.3.2.p.1">There are two alternatives to explicit signaling for passive RTT measurement for measuring the RTT experienced by QUIC flows.</p>
 <p id="rfc.section.3.2.p.2">The first of these is handshake RTT measurement. As described in <a href="#QUIC-MGT" class="xref">[QUIC-MGT]</a>, the packets of the QUIC handshake are distinguishable on the wire in such a way that they can be used for one RTT measurement sample per flow: the delay between the client initial and the server cleartext packet can be used to measure &#8220;upstream&#8221; RTT (between the observer and the server), and the delay between the server cleartext packet and the next client cleartext packet can be used to measure &#8220;downstream&#8221; RTT (between the client and the observer). When RTT measurements are used in large aggregates (all flows traversing a large link, for example), a methodology based on handshake RTT could be used to generate sufficient samples for some use cases (e.g. [EDITOR&#8217;S NOTE: cite use cases here]) without the spin bit.  However, this methodology would rely on the assumption that the difference between handshake RTT and nominal in-flow RTT is negligible. Specifically, (1) any additional delay required to compute any cryptographic parameters must be negligible with respect to network RTT; (2) any additional delay required to establish state along the path must be negligible with respect to network RTT; and (3) network treatment of initial packets in a flow must identical to that of later packets in the flow. When these assumptions cannot be shown to hold, spin-bit based RTT measurement is preferable to handshake RTT measurement, even for applications for which handshake RTT measurement would otherwise be suitable.</p>
@@ -448,10 +451,19 @@ address {
 <h1 id="rfc.section.4">
 <a href="#rfc.section.4">4.</a> <a href="#use-cases-for-passive-rtt-measurement" id="use-cases-for-passive-rtt-measurement">Use Cases for Passive RTT Measurement</a>
 </h1>
-<p id="rfc.section.4.p.1">[EDITOR&#8217;S NOTE: Roni on video]</p>
-<p id="rfc.section.4.p.2">[EDITOR&#8217;S NOTE: Emile on interdomain]</p>
-<p id="rfc.section.4.p.3">[EDITOR&#8217;S NOTE: Markus on AQM?]</p>
-<p id="rfc.section.4.p.4">[EDITOR&#8217;S NOTE: Others?]</p>
+<p id="rfc.section.4.p.1">This section describes current use cases for passive RTT measurement with TCP, i.e., the matching of packets based on sequence and acknowledgment numbers, or timestamps and timestamp echoes, in order to generate upstream and downstream RTT samples which can be added to get end-to-end RTT, as with handshake RTT in <a href="#other-bad-ideas" class="xref">Section 3.2</a>. These current use cases would be consumers of RTT samples measured from the spin bit as in <a href="#usage" class="xref">Section 3</a>.</p>
+<p id="rfc.section.4.p.2">In all cases, the basic measurement methodology follows one of a few basic variants. The RTT evolution of a flow or a set of flows can be compared to baseline or expected RTT measurements for flows with the same characterisitcs&#8230; [EDITOR&#8217;S NOTE: other variants go here]</p>
+<h1 id="rfc.section.4.1">
+<a href="#rfc.section.4.1">4.1.</a> <a href="#video-delivery-troubleshooting" id="video-delivery-troubleshooting">Video Delivery Troubleshooting</a>
+</h1>
+<p id="rfc.section.4.1.p.1">[EDITOR&#8217;S NOTE: merge with Emile&#8217;s interdomain troubleshooting section?]</p>
+<p id="rfc.section.4.1.p.2">[EDITOR&#8217;S NOTE: this is rewritten from Roni&#8217;s text on video; Roni, please check.]</p>
+<p id="rfc.section.4.1.p.3">Network access providers are often the first point of contact by their customers when network problems impact the performance of bandwidth-intensive and latency-sensitive applications such as video, regardless of whether the root cause lies within the access provider&#8217;s network, the service provider&#8217;s network, on the Internet paths between them, or within the customer&#8217;s own network.</p>
+<p id="rfc.section.4.1.p.4">Many residential networks use WiFi (802.11) on the last segment, and WiFi signal strength degradation manifests in high first-hop delay, due to the fact that the MAC layer will retransmit loss packets in order to trade latency off for loss. Measuring the RTT between endpoints on the customer network and parts of the service provider&#8217;s own infrastructure (which have predictable delay characteristics) can be used to isolate this cause of performance problems.</p>
+<p id="rfc.section.4.1.p.5">Comparing the evolution of passively-measured RTTs between a customer network and selected other networks on the Internet to short- and medium-term baseline measurements can be used to isolate high latency to specific networks or network segments. For example, if the RTTs of all flows to a given service provider increase at the same time, the problem likely exists between the access network and the service provider, or in the service provider&#8217;s network itself. On the other hand, if the RTTs of all flows for a set of customers sharing some give access provider infrastructure increase, then the problem is likely attributable to that infrastructure.</p>
+<p id="rfc.section.4.1.p.6">In both of these cases, handshake RTT as in <a href="#other-bad-ideas" class="xref">Section 3.2</a> would provide limited information, presuming that its assumptions hold. Intraflow measurements are necessary in this case to increase the baseline and measurement data available, and to increase the chance that enough samples are available for arbitrarily small aggregates.</p>
+<p id="rfc.section.4.1.p.7">[EDITOR&#8217;S NOTE: Markus on AQM?]</p>
+<p id="rfc.section.4.1.p.8">[EDITOR&#8217;S NOTE: Others?]</p>
 <h1 id="rfc.section.5">
 <a href="#rfc.section.5">5.</a> <a href="#privacy-and-security-considerations" id="privacy-and-security-considerations">Privacy and Security Considerations</a>
 </h1>
