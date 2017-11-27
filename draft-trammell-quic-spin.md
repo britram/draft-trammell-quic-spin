@@ -41,7 +41,7 @@ author:
     email: thomas.fossati@nokia.com
   -
     ins: M. Ihlar
-    name: Markus Ihlar
+    name: Marcus Ihlar
     org: Ericsson
     email: marcus.ihlar@ericsson.com
   -
@@ -98,9 +98,57 @@ protocol.
 
 # The Spin Bit Mechanism {#mechanism}
 
-\[EDITOR'S NOTE: Marcus to write. Modify slightly from PR609 design, spin only
-on short header packets. Coordinate with work on reserved bits in the short
-header in the transport draft?]
+The latency spin bit enables latency monitoring from observation points on
+the network path. The bit is set by the endpoints in the following way:
+
+* The server sets the spin bit value to the value of the
+  spin bit in the packet received from the client with
+  the largest sequence number.
+
+* The client sets the spin bit value to the opposite
+  of the value set in the packet received from the server with the
+  largest sequence number, or to 0 if no packet as been received yet.
+
+Observation points can estimate the network latency by monitoring these
+changes in the latency spin bit.
+If packets are delivered in sequence, this procedure will cause the spin
+bit to change value in each direction once per round trip.
+
+Out of sequence packets can cause spurious spins, it is therefore recommended
+that monitoring agents keep track of packet sequence number and / or use 
+filtering.
+
+The latency spin bit handling is similar to the
+"Alternate Marking method for passive performance monitoring"
+described in [I-D.draft-ietf-ippm-alt-mark].
+
+## Proposed Header Format Including Spin Bit
+
+Since it is possible to measure handshake RTT without a spin bit it is
+sufficient to include the spin bit in the short packet header. 
+This proposal suggests to ues the second most significant bit (0x40) of 
+the first octet in the short header for the spin bit. 
+
+~~~~~
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+
+|0|S|C|K|Type(4)|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                     [Connection ID (64)]                      +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      Packet Number (8/16/32)                ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                     Protected Payload (*)                   ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~~~~~
+{: #fig-short-header title="Short Header Format including proposed Spin Bit"}
+
+Addition of the  spin bit will shift the Connection ID flag and the Key Phase
+Bit to 0x20 and 0x10 respectively. The number of available short packet 
+types will be limited to 16. 
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
