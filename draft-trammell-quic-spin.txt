@@ -154,14 +154,14 @@ Internet-Draft                  Spin Bit                   November 2017
    measurement for measuring the RTT experienced by QUIC flows.
 
    The first of these is handshake RTT measurement.  As described in
-   [I-D.ietf-quic-manageability], the packets of the QUIC handshake are
-   distinguishable on the wire in such a way that they can be used for
-   one RTT measurement sample per flow: the delay between the client
-   initial and the server cleartext packet can be used to measure
-   "upstream" RTT (between the observer and the server), and the delay
-   between the server cleartext packet and the next client cleartext
-   packet can be used to measure "downstream" RTT (between the client
-   and the observer).  When RTT measurements are used in large
+   [QUIC-MGT], the packets of the QUIC handshake are distinguishable on
+   the wire in such a way that they can be used for one RTT measurement
+   sample per flow: the delay between the client initial and the server
+   cleartext packet can be used to measure "upstream" RTT (between the
+   observer and the server), and the delay between the server cleartext
+   packet and the next client cleartext packet can be used to measure
+   "downstream" RTT (between the client and the observer).  When RTT
+   measurements are used in large aggregates (all flows traversing a
 
 
 
@@ -170,21 +170,20 @@ Trammell, et al.          Expires May 31, 2018                  [Page 3]
 Internet-Draft                  Spin Bit                   November 2017
 
 
-   aggregates (all flows traversing a large link, for example), a
-   methodology based on handshake RTT could be used to generate
-   sufficient samples for some use cases (e.g.  [EDITOR'S NOTE: cite use
-   cases here]) without the spin bit.  However, this methodology would
-   rely on the assumption that the difference between handshake RTT and
-   nominal in-flow RTT is negligible.  Specifically, (1) any additional
-   delay required to compute any cryptographic parameters must be
-   negligible with respect to network RTT; (2) any additional delay
-   required to establish state along the path must be negligible with
-   respect to network RTT; and (3) network treatment of initial packets
-   in a flow must identical to that of later packets in the flow.  When
-   these assumptions cannot be shown to hold, spin-bit based RTT
-   measurement is preferable to handshake RTT measurement, even for
-   applications for which handshake RTT measurement would otherwise be
-   suitable.
+   large link, for example), a methodology based on handshake RTT could
+   be used to generate sufficient samples for some use cases (e.g.
+   [EDITOR'S NOTE: cite use cases here]) without the spin bit.  However,
+   this methodology would rely on the assumption that the difference
+   between handshake RTT and nominal in-flow RTT is negligible.
+   Specifically, (1) any additional delay required to compute any
+   cryptographic parameters must be negligible with respect to network
+   RTT; (2) any additional delay required to establish state along the
+   path must be negligible with respect to network RTT; and (3) network
+   treatment of initial packets in a flow must identical to that of
+   later packets in the flow.  When these assumptions cannot be shown to
+   hold, spin-bit based RTT measurement is preferable to handshake RTT
+   measurement, even for applications for which handshake RTT
+   measurement would otherwise be suitable.
 
    The second alternative is parallel active measurement: using ICMP
    Echo Request and Reply [RFC0792] [RFC4433], a dedicated measurement
@@ -218,6 +217,7 @@ Internet-Draft                  Spin Bit                   November 2017
    [EDITOR'S NOTE: Markus on AQM?]
 
    [EDITOR'S NOTE: Others?]
+
 
 
 
@@ -301,7 +301,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 7.  Informative References
 
-   [I-D.ietf-quic-manageability]
+   [QUIC-MGT]
               Kuehlewind, M. and B. Trammell, "Manageability of the QUIC
               Transport Protocol", draft-ietf-quic-manageability-01
               (work in progress), October 2017.
