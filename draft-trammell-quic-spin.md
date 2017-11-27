@@ -102,7 +102,7 @@ protocol.
 on short header packets. Coordinate with work on reserved bits in the short
 header in the transport draft?]
 
-# Using the Spin Bit for Passive RTT Measurement
+# Using the Spin Bit for Passive RTT Measurement {#usage}
 
 When a QUIC flow is sending at full rate (i.e., neither application nor flow
 control limited), the latency spin bit in each direction changes value once
@@ -133,7 +133,7 @@ by causing spurious edge detection and therefore low RTT estimates. This can
 be probabilistically mitigated by the observer considering the low-order bits
 of the packet number, and rejecting edges that appear out-of-order.
 
-## Alternate RTT Measurement Approaches for Diagnosing QUIC flows
+## Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
 
 There are two alternatives to explicit signaling for passive RTT measurement
 for measuring the RTT experienced by QUIC flows.
@@ -183,9 +183,55 @@ packets sent though the network per sample.
 
 # Use Cases for Passive RTT Measurement
 
-\[EDITOR'S NOTE: Roni on video]
+This section describes current use cases for passive RTT measurement with TCP,
+i.e., the matching of packets based on sequence and acknowledgment numbers, or
+timestamps and timestamp echoes, in order to generate upstream and downstream
+RTT samples which can be added to get end-to-end RTT, as with handshake RTT in
+{{other-bad-ideas}}. These current use cases would be consumers of RTT samples
+measured from the spin bit as in {{usage}}.
 
-\[EDITOR'S NOTE: Emile on interdomain]
+In all cases, the basic measurement methodology follows one of a few basic
+variants. The RTT evolution of a flow or a set of flows can be compared to
+baseline or expected RTT measurements for flows with the same
+characterisitcs... \[EDITOR'S NOTE: other variants go here]
+
+## Video Delivery Troubleshooting
+
+\[EDITOR'S NOTE: merge with Emile's interdomain troubleshooting section?]
+
+\[EDITOR'S NOTE: this is rewritten from Roni's text on video; Roni, please
+check.]
+
+Network access providers are often the first point of contact by their
+customers when network problems impact the performance of bandwidth-intensive
+and latency-sensitive applications such as video, regardless of whether the
+root cause lies within the access provider's network, the service provider's
+network, on the Internet paths between them, or within the customer's own
+network.
+
+Many residential networks use WiFi (802.11) on the last segment, and WiFi
+signal strength degradation manifests in high first-hop delay, due to the fact
+that the MAC layer will retransmit loss packets in order to trade latency off
+for loss. Measuring the RTT between endpoints on the customer network and
+parts of the service provider's own infrastructure (which have predictable
+delay characteristics) can be used to isolate this cause of performance
+problems.
+
+Comparing the evolution of passively-measured RTTs between a customer network
+and selected other networks on the Internet to short- and medium-term baseline
+measurements can be used to isolate high latency to specific networks or
+network segments. For example, if the RTTs of all flows to a given service
+provider increase at the same time, the problem likely exists between the
+access network and the service provider, or in the service provider's network
+itself. On the other hand, if the RTTs of all flows for a set of customers
+sharing some give access provider infrastructure increase, then the problem is
+likely attributable to that infrastructure.
+
+In both of these cases, handshake RTT as in {{other-bad-ideas}} would provide
+limited information, presuming that its assumptions hold. Intraflow
+measurements are necessary in this case to increase the baseline and
+measurement data available, and to increase the chance that enough samples are
+available for arbitrarily small aggregates.
 
 \[EDITOR'S NOTE: Markus on AQM?]
 
