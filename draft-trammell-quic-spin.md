@@ -103,31 +103,23 @@ the network path. The bit is set by the endpoints in the following way:
 
 * The server sets the spin bit value to the value of the
   spin bit in the packet received from the client with
-  the largest sequence number.
+  the largest packet number.
 
 * The client sets the spin bit value to the opposite
   of the value set in the packet received from the server with the
-  largest sequence number, or to 0 if no packet as been received yet.
+  largest packet number, or to 0 if no packet as been received yet.
 
-Observation points can estimate the network latency by monitoring these
-changes in the latency spin bit.
-If packets are delivered in sequence, this procedure will cause the spin
-bit to change value in each direction once per round trip.
+If packets are delivered in order, this procedure will cause the spin bit
+to change value in each direction once per round trip. Observation points can
+estimate the network latency by observing these changes in the latency spin
+bit, as described in {{usage}}.
 
-Out of sequence packets can cause spurious spins, it is therefore recommended
-that monitoring agents keep track of packet sequence number and / or use 
-filtering.
+## Proposed Short Header Format Including Spin Bit
 
-The latency spin bit handling is similar to the
-"Alternate Marking method for passive performance monitoring"
-described in [I-D.draft-ietf-ippm-alt-mark].
-
-## Proposed Header Format Including Spin Bit
-
-Since it is possible to measure handshake RTT without a spin bit it is
-sufficient to include the spin bit in the short packet header. 
-This proposal suggests to ues the second most significant bit (0x40) of 
-the first octet in the short header for the spin bit. 
+Since it is possible to measure handshake RTT without a spin bit (see
+{{other-bad-ideas}}), it is sufficient to include the spin bit in the short
+packet header. This proposal suggests to ues the second most significant bit
+(0x40) of the first octet in the short header for the spin bit.
 
 ~~~~~
  0                   1                   2                   3
@@ -146,9 +138,8 @@ the first octet in the short header for the spin bit.
 ~~~~~
 {: #fig-short-header title="Short Header Format including proposed Spin Bit"}
 
-Addition of the  spin bit will shift the Connection ID flag and the Key Phase
-Bit to 0x20 and 0x10 respectively. The number of available short packet 
-types will be limited to 16. 
+This will shift the Connection ID flag and the Key Phase Bit to 0x20 and 0x10
+respectively, and will limit the number of available short packet types to 16.
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
@@ -164,27 +155,33 @@ experienced by the application. A simple linear smoothing or moving minimum
 filter can be applied to the stream of RTT information to get a more stable
 estimate.
 
+We note that the Latency Spin Bit, and the measurements that can be done with
+it, can be seen as an end-to-end extension of a special case of the alternate
+marking method described in {{?ALT-MARK=I-D.ietf-ippm-alt-mark}}.
+
 ## Limitations and Workarounds
 
-The spin bit provides latency information only when the sender is neither
-application nor flow control limited. When the sender is application-limited
-by periodic application traffic, where that period is longer than the RTT,
-measuring the spin bit provides information about the application period, not
-the RTT. Simple heuristics based on the observed data rate per flow or changes
-in the RTT series can be used to reject bad RTT samples due to application or
-flow control limitation. \[EDITOR'S NOTE: more here?]
+Application-limited and flow-control-limited senders can have application and
+transport layer delay, respectively, that are much greater than network RTT.
+Therefore, the spin bit provides network latency information only when the
+sender is neither application nor flow control limited. When the sender is
+application-limited by periodic application traffic, where that period is
+longer than the RTT, measuring the spin bit provides information about the
+application period, not the RTT. Simple heuristics based on the observed data
+rate per flow or changes in the RTT series can be used to reject bad RTT
+samples due to application or flow control limitation.
 
 Since the spin bit logic at each endpoint considers only samples on packets
-that advance the highest packet number seen, signal generation itself is
+that advance the largest packet number seen, signal generation itself is
 resistent to reordering. However, reordering can cause problems at an observer
 by causing spurious edge detection and therefore low RTT estimates. This can
-be probabilistically mitigated by the observer considering the low-order bits
-of the packet number, and rejecting edges that appear out-of-order.
+be probabilistically mitigated by the observer tracking the low-order bits of
+the packet number, and rejecting edges that appear out-of-order.
 
 ## Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
 
-There are two alternatives to explicit signaling for passive RTT measurement
-for measuring the RTT experienced by QUIC flows.
+There are two broad alternatives to explicit signaling for passive RTT
+measurement for measuring the RTT experienced by QUIC flows.
 
 The first of these is handshake RTT measurement. As described in
 {{?QUIC-MGT=I-D.ietf-quic-manageability}}, the packets of the QUIC handshake are
@@ -335,9 +332,9 @@ transport protocol state through the spin bit.
 # Acknowledgments
 
 Many thanks to Christian Huitema, who originally proposed the spin bit as pull
-request 609 on draft-ietf-quic-transport. Thanks to the QUIC RTT Design Team
-for discussions leading especially to the measurement limitations and privacy
-and security considerations sections.
+request 609 on {{?QUIC-TRANSPORT=I-D.ietf-quic-transport}}. Thanks to the QUIC
+RTT Design Team for discussions leading especially to the measurement
+limitations and privacy and security considerations sections.
 
 This work is partially supported by the European Commission under Horizon 2020
 grant agreement no. 688421 Measurement and Architecture for a Middleboxed
