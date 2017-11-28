@@ -5,7 +5,7 @@
 QUIC                                                    B. Trammell, Ed.
 Internet-Draft                                               P. De Vaere
 Intended status: Informational                                ETH Zurich
-Expires: May 31, 2018                                            R. Even
+Expires: June 1, 2018                                            R. Even
                                                                   Huawei
                                                              G. Fioccola
                                                           Telecom Italia
@@ -17,7 +17,7 @@ Expires: May 31, 2018                                            R. Even
                                                                     AT&T
                                                               E. Stephan
                                                                   Orange
-                                                       November 27, 2017
+                                                       November 28, 2017
 
 
        The Addition of a Spin Bit to the QUIC Transport Protocol
@@ -53,7 +53,7 @@ Status of This Memo
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 1]
+Trammell, et al.          Expires June 1, 2018                  [Page 1]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -61,7 +61,7 @@ Internet-Draft                  Spin Bit                   November 2017
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on May 31, 2018.
+   This Internet-Draft will expire on June 1, 2018.
 
 Copyright Notice
 
@@ -82,17 +82,18 @@ Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
    2.  The Spin Bit Mechanism  . . . . . . . . . . . . . . . . . . .   2
+     2.1.  Proposed Short Header Format Including Spin Bit . . . . .   3
    3.  Using the Spin Bit for Passive RTT Measurement  . . . . . . .   3
-     3.1.  Limitations and Workarounds . . . . . . . . . . . . . . .   3
+     3.1.  Limitations and Workarounds . . . . . . . . . . . . . . .   4
      3.2.  Alternate RTT Measurement Approaches for Diagnosing QUIC
-           flows . . . . . . . . . . . . . . . . . . . . . . . . . .   3
-     3.3.  Experimental Evaluation . . . . . . . . . . . . . . . . .   4
-   4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .   4
-     4.1.  Video Delivery Troubleshooting  . . . . . . . . . . . . .   5
-   5.  Privacy and Security Considerations . . . . . . . . . . . . .   6
-   6.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   7
-   7.  Informative References  . . . . . . . . . . . . . . . . . . .   7
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   8
+           flows . . . . . . . . . . . . . . . . . . . . . . . . . .   4
+     3.3.  Experimental Evaluation . . . . . . . . . . . . . . . . .   5
+   4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .   5
+     4.1.  Video Delivery Troubleshooting  . . . . . . . . . . . . .   6
+   5.  Privacy and Security Considerations . . . . . . . . . . . . .   7
+   6.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   8
+   7.  Informative References  . . . . . . . . . . . . . . . . . . .   8
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   9
 
 1.  Introduction
 
@@ -101,18 +102,58 @@ Table of Contents
 
 2.  The Spin Bit Mechanism
 
-   [EDITOR'S NOTE: Marcus to write.  Modify slightly from PR609 design,
-   spin only on short header packets.  Coordinate with work on reserved
-   bits in the short header in the transport draft?]
+   The latency spin bit enables latency monitoring from observation
+   points on the network path.  The bit is set by the endpoints in the
+   following way:
 
 
 
 
-
-Trammell, et al.          Expires May 31, 2018                  [Page 2]
+Trammell, et al.          Expires June 1, 2018                  [Page 2]
 
 Internet-Draft                  Spin Bit                   November 2017
 
+
+   o  The server sets the spin bit value to the value of the spin bit in
+      the packet received from the client with the largest packet
+      number.
+
+   o  The client sets the spin bit value to the opposite of the value
+      set in the packet received from the server with the largest packet
+      number, or to 0 if no packet as been received yet.
+
+   If packets are delivered in order, this procedure will cause the spin
+   bit to change value in each direction once per round trip.
+   Observation points can estimate the network latency by observing
+   these changes in the latency spin bit, as described in Section 3.
+
+2.1.  Proposed Short Header Format Including Spin Bit
+
+   Since it is possible to measure handshake RTT without a spin bit (see
+   Section 3.2), it is sufficient to include the spin bit in the short
+   packet header.  This proposal suggests to ues the second most
+   significant bit (0x40) of the first octet in the short header for the
+   spin bit.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+
+   |0|S|C|K|Type(4)|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   +                     [Connection ID (64)]                      +
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      Packet Number (8/16/32)                ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                     Protected Payload (*)                   ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+         Figure 1: Short Header Format including proposed Spin Bit
+
+   This will shift the Connection ID flag and the Key Phase Bit to 0x20
+   and 0x10 respectively, and will limit the number of available short
+   packet types to 16.
 
 3.  Using the Spin Bit for Passive RTT Measurement
 
@@ -121,6 +162,14 @@ Internet-Draft                  Spin Bit                   November 2017
    changes value once per round-trip time (RTT).  An on-path observer
    can observe the time difference between edges in the spin bit signal
    to measure one sample of end-to-end RTT.  Note that this measurement,
+
+
+
+Trammell, et al.          Expires June 1, 2018                  [Page 3]
+
+Internet-Draft                  Spin Bit                   November 2017
+
+
    as with passive RTT measurement for TCP, includes any transport
    protocol delay (e.g., delayed sending of acknowledgements) and/or
    application layer delay (e.g., waiting for a request to complete).
@@ -129,29 +178,36 @@ Internet-Draft                  Spin Bit                   November 2017
    smoothing or moving minimum filter can be applied to the stream of
    RTT information to get a more stable estimate.
 
+   We note that the Latency Spin Bit, and the measurements that can be
+   done with it, can be seen as an end-to-end extension of a special
+   case of the alternate marking method described in [ALT-MARK].
+
 3.1.  Limitations and Workarounds
 
-   The spin bit provides latency information only when the sender is
-   neither application nor flow control limited.  When the sender is
-   application-limited by periodic application traffic, where that
-   period is longer than the RTT, measuring the spin bit provides
-   information about the application period, not the RTT.  Simple
-   heuristics based on the observed data rate per flow or changes in the
-   RTT series can be used to reject bad RTT samples due to application
-   or flow control limitation.  [EDITOR'S NOTE: more here?]
+   Application-limited and flow-control-limited senders can have
+   application and transport layer delay, respectively, that are much
+   greater than network RTT.  Therefore, the spin bit provides network
+   latency information only when the sender is neither application nor
+   flow control limited.  When the sender is application-limited by
+   periodic application traffic, where that period is longer than the
+   RTT, measuring the spin bit provides information about the
+   application period, not the RTT.  Simple heuristics based on the
+   observed data rate per flow or changes in the RTT series can be used
+   to reject bad RTT samples due to application or flow control
+   limitation.
 
    Since the spin bit logic at each endpoint considers only samples on
-   packets that advance the highest packet number seen, signal
+   packets that advance the largest packet number seen, signal
    generation itself is resistent to reordering.  However, reordering
    can cause problems at an observer by causing spurious edge detection
    and therefore low RTT estimates.  This can be probabilistically
-   mitigated by the observer considering the low-order bits of the
-   packet number, and rejecting edges that appear out-of-order.
+   mitigated by the observer tracking the low-order bits of the packet
+   number, and rejecting edges that appear out-of-order.
 
 3.2.  Alternate RTT Measurement Approaches for Diagnosing QUIC flows
 
-   There are two alternatives to explicit signaling for passive RTT
-   measurement for measuring the RTT experienced by QUIC flows.
+   There are two broad alternatives to explicit signaling for passive
+   RTT measurement for measuring the RTT experienced by QUIC flows.
 
    The first of these is handshake RTT measurement.  As described in
    [QUIC-MGT], the packets of the QUIC handshake are distinguishable on
@@ -165,7 +221,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 3]
+Trammell, et al.          Expires June 1, 2018                  [Page 4]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -221,7 +277,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 4]
+Trammell, et al.          Expires June 1, 2018                  [Page 5]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -277,7 +333,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 5]
+Trammell, et al.          Expires June 1, 2018                  [Page 6]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -333,7 +389,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 6]
+Trammell, et al.          Expires June 1, 2018                  [Page 7]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -344,10 +400,9 @@ Internet-Draft                  Spin Bit                   November 2017
 6.  Acknowledgments
 
    Many thanks to Christian Huitema, who originally proposed the spin
-   bit as pull request 609 on draft-ietf-quic-transport.  Thanks to the
-   QUIC RTT Design Team for discussions leading especially to the
-   measurement limitations and privacy and security considerations
-   sections.
+   bit as pull request 609 on [QUIC-TRANSPORT].  Thanks to the QUIC RTT
+   Design Team for discussions leading especially to the measurement
+   limitations and privacy and security considerations sections.
 
    This work is partially supported by the European Commission under
    Horizon 2020 grant agreement no. 688421 Measurement and Architecture
@@ -357,10 +412,22 @@ Internet-Draft                  Spin Bit                   November 2017
 
 7.  Informative References
 
+   [ALT-MARK]
+              Fioccola, G., Capello, A., Cociglio, M., Castaldelli, L.,
+              Chen, M., Zheng, L., Mirsky, G., and T. Mizrahi,
+              "Alternate Marking method for passive and hybrid
+              performance monitoring", draft-ietf-ippm-alt-mark-13 (work
+              in progress), October 2017.
+
    [QUIC-MGT]
               Kuehlewind, M. and B. Trammell, "Manageability of the QUIC
               Transport Protocol", draft-ietf-quic-manageability-01
               (work in progress), October 2017.
+
+   [QUIC-TRANSPORT]
+              Iyengar, J. and M. Thomson, "QUIC: A UDP-Based Multiplexed
+              and Secure Transport", draft-ietf-quic-transport-07 (work
+              in progress), October 2017.
 
    [RFC0792]  Postel, J., "Internet Control Message Protocol", STD 5,
               RFC 792, DOI 10.17487/RFC0792, September 1981,
@@ -376,6 +443,13 @@ Internet-Draft                  Spin Bit                   November 2017
               RFC 5357, DOI 10.17487/RFC5357, October 2008,
               <https://www.rfc-editor.org/info/rfc5357>.
 
+
+
+Trammell, et al.          Expires June 1, 2018                  [Page 8]
+
+Internet-Draft                  Spin Bit                   November 2017
+
+
    [TOKYO-PING]
               Pelsser, C., Cittadini, L., Vissicchio, S., and R. Bush,
               "From Paris to Tokyo - On the Suitability of ping to
@@ -385,14 +459,6 @@ Internet-Draft                  Spin Bit                   November 2017
               Geolocation
               (https://github.com/britram/trilateration/blob/paper-rev-
               1/paper.ipynb)", August 2017.
-
-
-
-
-Trammell, et al.          Expires May 31, 2018                  [Page 7]
-
-Internet-Draft                  Spin Bit                   November 2017
-
 
 Authors' Addresses
 
@@ -426,10 +492,18 @@ Authors' Addresses
    Email: thomas.fossati@nokia.com
 
 
-   Markus Ihlar
+   Marcus Ihlar
    Ericsson
 
    Email: marcus.ihlar@ericsson.com
+
+
+
+
+
+Trammell, et al.          Expires June 1, 2018                  [Page 9]
+
+Internet-Draft                  Spin Bit                   November 2017
 
 
    Al Morton
@@ -445,4 +519,42 @@ Authors' Addresses
 
 
 
-Trammell, et al.          Expires May 31, 2018                  [Page 8]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 1, 2018                 [Page 10]
