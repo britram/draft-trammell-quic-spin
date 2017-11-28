@@ -47,7 +47,7 @@ author:
   -
     ins: A. Morton
     name: Al Morton
-    org: AT&T
+    org: AT&T Labs
     email: acmorton@att.com
   -
     ins: E. Stephan
@@ -76,6 +76,12 @@ informative:
       -
         ins: R. Bush
     date: 2014-10-23
+  CONUS:
+    title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/  <<< I'll make a gihub repo for this)
+    author:
+      -
+        ins: A. Morton
+    date: 2017-09-01
 
 --- abstract
 
@@ -295,7 +301,14 @@ measurements {{TRILAT}} shows that the magnitude and uncertainty of RTT data
 render the resolution of geolocation information that can be derived from
 Internet RTT is limited to national- or continental-scale; i.e., less
 resolution than is generally available from free, open IP geolocation
-databases. Therefore, in the general case, when an endpoint's IP address is
+databases. One reason for the inaccuracy of geolocation from network RTT 
+is that Internet backbone transmission facilities do not follow the great-circle
+path between major nodes. Instead, major geographic features and the efficiency
+of connecting adjacent major cities influence the facility routing. An evaluation 
+of ~3500 measurements on a mesh of 25 backbone nodes in the continental United States
+shows that 85% had RTT to great-circle error of 3ms or more, making 
+location within US State boundaries ambigous {{CONUS}}.
+Therefore, in the general case, when an endpoint's IP address is
 known, RTT information provides negligible additional information.
 
 RTT information may be used to infer the occupancy of queues along a path;
