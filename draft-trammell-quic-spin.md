@@ -157,7 +157,7 @@ route QUIC packets to the correct machine in a load-balancing situation (the
 connection ID). In other words, in contrast to TCP, QUIC's wire image (see
 {{?WIRE-IMAGE=I-D.trammell-wire-image}}) exposes much less information about
 transport protocol state than TCP's wire image. Specifically, the fact that
-sequence and acknowledgement numbers and timestamps are cannot be seen by
+sequence and acknowledgement numbers and timestamps cannot be seen by
 on-path observes in QUIC as they can be in the TCP means that passive TCP loss
 and latency measurement techniques that rely on this information (e.g.
 {{CACM-TCP}}, {{TMA-QOF}}) cannot be easily ported to work with QUIC.
@@ -422,21 +422,20 @@ network.
 
 Many residential networks use WiFi (802.11) on the last segment, and WiFi
 signal strength degradation manifests in high first-hop delay, due to the fact
-that the MAC layer will retransmit loss packets in order to trade latency off
-for loss. Measuring the RTT between endpoints on the customer network and
-parts of the service provider's own infrastructure (which have predictable
-delay characteristics) can be used to isolate this cause of performance
-problems.
+that the MAC layer will retransmit packets lost at that layer. Measuring the RTT
+between endpoints on the customer network and parts of the service provider's
+own infrastructure (which have predictable delay characteristics) can be used
+to isolate this cause of performance problems.
 
 Comparing the evolution of passively-measured RTTs between a customer network
 and selected other networks on the Internet to short- and medium-term baseline
 measurements can similarly be used to isolate high latency to specific
 networks or network segments. For example, if the RTTs of all flows to a given
-service provider increase at the same time, the problem likely exists between
-the access network and the service provider, or in the service provider's
-network itself. On the other hand, if the RTTs of all flows for a set of
-customers sharing some give access provider infrastructure increase, then the
-problem is likely attributable to that infrastructure.
+content provider increase at the same time, the problem likely exists between
+the access network and the content provider, or in the content provider's
+network itself. On the other hand, if the RTTs of all flows passing through
+the same access provider infrastructure change together, then the change is
+likely attributable to that infrastructure.
 
 These measurements are particularly useful for traffic which is latency
 sensitive, such as interactive video applications. However, since high latency
