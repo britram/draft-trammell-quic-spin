@@ -77,11 +77,43 @@ informative:
         ins: R. Bush
     date: 2014-10-23
   CONUS:
-    title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/  <<< I'll make a gihub repo for this)
+    title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/acmacm/FIXME-TBD)
     author:
       -
         ins: A. Morton
     date: 2017-09-01
+  SPINBIT-REPORT:
+    title: Latency Spinbit Implementation Experience
+    author:
+      -
+        ins: P. De Vaere
+    date: 2017-11-28
+  MINQ:
+    title: MINQ, a simple Go implementation of QUIC (https://github.com/ekr/minq)
+    author:
+      -
+        ins: E. Rescorla
+    date: 2017-11-28
+  MOKUMOKUREN:
+    title: Mokumokuren, a lightweight flow meter using gopacket (https://github.com/britram/mokumokuren)
+    author:
+      -
+        ins: B. Trammell
+    date: 2017-11-12
+  IMC-CONGESTION:
+    title: Challenges in Inferring Internet Interdomain Congestion (in Proc. ACM IMC 2014)
+    author:
+      -
+        ins: M. Luckie
+      -
+        ins: A. Dhamdhere
+      -
+        ins: D. Clark
+      -
+        ins: B. Huffaker
+      -
+        ins: k. claffy
+    date: 2014-11
 
 --- abstract
 
@@ -165,7 +197,7 @@ We note that the Latency Spin Bit, and the measurements that can be done with
 it, can be seen as an end-to-end extension of a special case of the alternate
 marking method described in {{?ALT-MARK=I-D.ietf-ippm-alt-mark}}.
 
-## Limitations and Workarounds
+## Limitations and Workarounds {#limitations}
 
 Application-limited and flow-control-limited senders can have application and
 transport layer delay, respectively, that are much greater than network RTT.
@@ -230,7 +262,65 @@ packets sent though the network per sample.
 
 ## Experimental Evaluation
 
-\[EDITOR'S NOTE: Summary of Piet's work to date goes here.]
+We have evaluated the effectiveness of the spin bit in an emulated network
+environment. The spin bit was added to a fork of {{MINQ}}, using the mechanism
+described in {{mechanism}}, but with the spin bit appearing in a measurement
+byte added to the header for passive measurability experiments. Spin bit
+measurement support was added to {{MOKUMOKUREN}}. Full results of these
+ongoing experiments are available online in {{SPINBIT-REPORT}}, but we
+summarize our findings here.
+
+First, we confirm that the spin bit works as advertised: it provides one
+useful RTT sample per RTT to any passive observer of the flow. This sample
+tracks each sender's local instantaneous estimate of RTT as well as the
+expected RTT (i.e., defined by the emulation) fairly well. One surprising
+implication of this is that the spin bit provides _more_ information than is
+available by local estimation to an endpoint which is mostly receiving data
+frames and sending mainly ACKs, and as such can also be useful in purely
+endpoint-local observations of the RTT evolution during the flow. The spin bit also works correctly under moderate to heavy packet loss and jitter.
+
+Second, we confirm that the spin bit can be easily implemented without
+requiring deep integration into a QUIC implementation. Indeed, it could be
+implemented completely independently, as a shim, aside from the requirement
+that the spin bit value be integrity-protected along with the rest of the QUIC
+header.
+
+Third, we performed experiments focused on the intermittent-sender problem
+described in {{limitations}}. We confirm that the spinbit does not provide
+useful RTT samples after the handshake when packets are only sent
+intermittently. Simple heuristics can be used to recognize this situation,
+however, and to reject these RTT samples. We also find that a simple
+sender-side heuristic can be used to determine whether a sample will be
+useful. If a sender sends a packet more than a specified delay (e.g. 1ms)
+after the last packet received by the client, it knows that any latency spin
+observation of that packet will be invalid. If a second "spin valid" bit were
+available, the sender could then mark that packet "spin invalid". Our
+experiments show that this simple heuristic and spin validity bit are
+succesful in marking all packets whose RTT samples should be rejected.
+
+Fourth, we performed experiments focused on the reordering problem described
+in {{limitations}}. We find that while reordering can cause spurious samples
+at a naive observer, two simple approaches can be used to reject spurious RTT
+samples due to reordering. First, a two-bit spin signal that always advances
+in a single direction (e.g. 00 -> 01 -> 10 -> 11) successfully rejects all
+reordered samples, including under amounts of reordering that render the
+transport itself mostly useless. However, adding a bit is not necessary:
+having the observer keep the least significant bits of the packet number, and
+rejecting samples from packets that do not advance by one, as suggested in
+{{limitations}}, is essentially as successful as a two-bit spin signal in
+mitigating the effects of reordering on RTT measurement.
+
+Fifth, we performed parallel active measurements using ping, as described in
+{{other-bad-ideas}}. In our emulated network, the ICMP packets and the QUIC
+packets traverse the same links with the same treatment, and share queues at
+each link, which mitigates most of the issues with ping. We find that while
+ping works as expected in measuring end-to-end RTT, it does not track the
+sender's estimate of RTT, and as such does not measure the RTT experienced by
+the application layer as well as the spin bit does.
+
+In summary, our experiments show that the spin bit is suitable for purpose,
+can be implemented with minimal disruption, and that most of the problems
+identified with it in specific corner cases can be easily mitigated. See {{SPINBIT-REPORT}} for more.
 
 # Use Cases for Passive RTT Measurement
 
@@ -246,9 +336,9 @@ variants. The RTT evolution of a flow or a set of flows can be compared to
 baseline or expected RTT measurements for flows with the same
 characterisitcs... \[EDITOR'S NOTE: other variants go here]
 
-## Video Delivery Troubleshooting
+## Interdomain Troubleshooting
 
-\[EDITOR'S NOTE: merge with Emile's interdomain troubleshooting section?]
+\[EDITOR'S NOTE: Emile, anything to add here?]
 
 \[EDITOR'S NOTE: this is rewritten from Roni's text on video; Roni, please
 check.]
@@ -270,23 +360,35 @@ problems.
 
 Comparing the evolution of passively-measured RTTs between a customer network
 and selected other networks on the Internet to short- and medium-term baseline
-measurements can be used to isolate high latency to specific networks or
-network segments. For example, if the RTTs of all flows to a given service
-provider increase at the same time, the problem likely exists between the
-access network and the service provider, or in the service provider's network
-itself. On the other hand, if the RTTs of all flows for a set of customers
-sharing some give access provider infrastructure increase, then the problem is
-likely attributable to that infrastructure.
+measurements can similarly be used to isolate high latency to specific
+networks or network segments. For example, if the RTTs of all flows to a given
+service provider increase at the same time, the problem likely exists between
+the access network and the service provider, or in the service provider's
+network itself. On the other hand, if the RTTs of all flows for a set of
+customers sharing some give access provider infrastructure increase, then the
+problem is likely attributable to that infrastructure.
 
-In both of these cases, handshake RTT as in {{other-bad-ideas}} would provide
+These measurements are particularly useful for traffic which is latency
+sensitive, such as interactive video applications. However, since high latency
+is often correlated with other network-layer issues such as chronic
+interconnect congestion {{IMC-CONGESTION}}, it is useful for general
+troubleshooting of network layer issues in an interdomain setting.
+
+In all of these cases, handshake RTT as in {{other-bad-ideas}} would provide
 limited information, presuming that its assumptions hold. Intraflow
 measurements are necessary in this case to increase the baseline and
-measurement data available, and to increase the chance that enough samples are
-available for arbitrarily small aggregates.
+measurement data available, to increase the chance that enough samples are
+available for arbitrarily small aggregates. Given that issues may be caused by
+misconfigured differential treatment of traffic, intraflow measurement also
+allows targeted troubleshooting of specific flows.
 
-\[EDITOR'S NOTE: Markus on AQM?]
+## Latency as input to Active Queue Management
 
-\[EDITOR'S NOTE: Others?]
+\[EDITOR'S NOTE: Marcus?]
+
+## Other latency measurement tasks
+
+\[EDITOR'S NOTE: Others? Independent verification of network neutrality?]
 
 # Privacy and Security Considerations
 
@@ -301,12 +403,12 @@ measurements {{TRILAT}} shows that the magnitude and uncertainty of RTT data
 render the resolution of geolocation information that can be derived from
 Internet RTT is limited to national- or continental-scale; i.e., less
 resolution than is generally available from free, open IP geolocation
-databases. One reason for the inaccuracy of geolocation from network RTT 
+databases. One reason for the inaccuracy of geolocation from network RTT
 is that Internet backbone transmission facilities do not follow the great-circle
 path between major nodes. Instead, major geographic features and the efficiency
-of connecting adjacent major cities influence the facility routing. An evaluation 
+of connecting adjacent major cities influence the facility routing. An evaluation
 of ~3500 measurements on a mesh of 25 backbone nodes in the continental United States
-shows that 85% had RTT to great-circle error of 3ms or more, making 
+shows that 85% had RTT to great-circle error of 3ms or more, making
 location within US State boundaries ambigous {{CONUS}}.
 Therefore, in the general case, when an endpoint's IP address is
 known, RTT information provides negligible additional information.
