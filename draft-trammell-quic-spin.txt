@@ -5,7 +5,7 @@
 QUIC                                                    B. Trammell, Ed.
 Internet-Draft                                               P. De Vaere
 Intended status: Informational                                ETH Zurich
-Expires: June 2, 2018                                            R. Even
+Expires: June 3, 2018                                            R. Even
                                                                   Huawei
                                                              G. Fioccola
                                                           Telecom Italia
@@ -17,7 +17,7 @@ Expires: June 2, 2018                                            R. Even
                                                                AT&T Labs
                                                               E. Stephan
                                                                   Orange
-                                                       November 29, 2017
+                                                       November 30, 2017
 
 
        The Addition of a Spin Bit to the QUIC Transport Protocol
@@ -53,7 +53,7 @@ Status of This Memo
 
 
 
-Trammell, et al.          Expires June 2, 2018                  [Page 1]
+Trammell, et al.          Expires June 3, 2018                  [Page 1]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -61,7 +61,7 @@ Internet-Draft                  Spin Bit                   November 2017
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on June 2, 2018.
+   This Internet-Draft will expire on June 3, 2018.
 
 Copyright Notice
 
@@ -109,17 +109,17 @@ Table of Contents
 
 
 
-Trammell, et al.          Expires June 2, 2018                  [Page 2]
+Trammell, et al.          Expires June 3, 2018                  [Page 2]
 
 Internet-Draft                  Spin Bit                   November 2017
 
 
    transport protocol state than TCP's wire image.  Specifically, the
-   fact that sequence and acknowledgement numbers and timestamps are
-   cannot be seen by on-path observes in QUIC as they can be in the TCP
-   means that passive TCP loss and latency measurement techniques that
-   rely on this information (e.g.  [CACM-TCP], [TMA-QOF]) cannot be
-   easily ported to work with QUIC.
+   fact that sequence and acknowledgement numbers and timestamps cannot
+   be seen by on-path observes in QUIC as they can be in the TCP means
+   that passive TCP loss and latency measurement techniques that rely on
+   this information (e.g.  [CACM-TCP], [TMA-QOF]) cannot be easily
+   ported to work with QUIC.
 
    This document proposes a solution to this problem by adding a
    "latency spin bit" to the QUIC short header.  This bit is designed
@@ -165,7 +165,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires June 2, 2018                  [Page 3]
+Trammell, et al.          Expires June 3, 2018                  [Page 3]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -221,7 +221,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires June 2, 2018                  [Page 4]
+Trammell, et al.          Expires June 3, 2018                  [Page 4]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -277,7 +277,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires June 2, 2018                  [Page 5]
+Trammell, et al.          Expires June 3, 2018                  [Page 5]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -333,7 +333,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires June 2, 2018                  [Page 6]
+Trammell, et al.          Expires June 3, 2018                  [Page 6]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -389,7 +389,7 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires June 2, 2018                  [Page 7]
+Trammell, et al.          Expires June 3, 2018                  [Page 7]
 
 Internet-Draft                  Spin Bit                   November 2017
 
@@ -410,8 +410,8 @@ Internet-Draft                  Spin Bit                   November 2017
    acknowledgement and timestamp analysis with spin bit analysis, as
    described in Section 3.
 
-   This section currently focuses on a single use case, interdomain
-   troubleshooting; additional use cases will be added in future
+   This section currently focuses one initial use case, interdomain
+   troubleshooting.  Additional use cases will be added in future
    revisions; see https://github.com/britram/draft-trammell-spin-bit/
    issues for use cases we are currently considering.
 
@@ -429,8 +429,9 @@ Internet-Draft                  Spin Bit                   November 2017
    o  The spin bit can be used to generate a large number of samples of
       RTT for a flow aggregate (e.g., all flows between two given
       networks) without regard to temporal evolution of the RTT, in
-      order to examine the distribution of RTTs for flows that should
-      shart the same paths.
+      order to examine the distribution of RTTs for a group of flows
+      that should have similar RTT (e.g., because they should share the
+      same path(s)).
 
 4.1.  Interdomain Troubleshooting
 
@@ -444,30 +445,29 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-
-Trammell, et al.          Expires June 2, 2018                  [Page 8]
+Trammell, et al.          Expires June 3, 2018                  [Page 8]
 
 Internet-Draft                  Spin Bit                   November 2017
 
 
    Many residential networks use WiFi (802.11) on the last segment, and
    WiFi signal strength degradation manifests in high first-hop delay,
-   due to the fact that the MAC layer will retransmit loss packets in
-   order to trade latency off for loss.  Measuring the RTT between
-   endpoints on the customer network and parts of the service provider's
-   own infrastructure (which have predictable delay characteristics) can
-   be used to isolate this cause of performance problems.
+   due to the fact that the MAC layer will retransmit packets lost at
+   that layer.  Measuring the RTT between endpoints on the customer
+   network and parts of the service provider's own infrastructure (which
+   have predictable delay characteristics) can be used to isolate this
+   cause of performance problems.
 
    Comparing the evolution of passively-measured RTTs between a customer
    network and selected other networks on the Internet to short- and
    medium-term baseline measurements can similarly be used to isolate
    high latency to specific networks or network segments.  For example,
-   if the RTTs of all flows to a given service provider increase at the
+   if the RTTs of all flows to a given content provider increase at the
    same time, the problem likely exists between the access network and
-   the service provider, or in the service provider's network itself.
-   On the other hand, if the RTTs of all flows for a set of customers
-   sharing some give access provider infrastructure increase, then the
-   problem is likely attributable to that infrastructure.
+   the content provider, or in the content provider's network itself.
+   On the other hand, if the RTTs of all flows passing through the same
+   access provider infrastructure change together, then the change is
+   likely attributable to that infrastructure.
 
    These measurements are particularly useful for traffic which is
    latency sensitive, such as interactive video applications.  However,
@@ -476,14 +476,9 @@ Internet-Draft                  Spin Bit                   November 2017
    is useful for general troubleshooting of network layer issues in an
    interdomain setting.
 
-   In all of these cases, handshake RTT as in Section 3.2 would provide
-   limited information, presuming that its assumptions hold.  Intraflow
-   measurements are necessary in this case to increase the baseline and
-   measurement data available, to increase the chance that enough
-   samples are available for arbitrarily small aggregates.  Given that
-   issues may be caused by misconfigured differential treatment of
-   traffic, intraflow measurement also allows targeted troubleshooting
-   of specific flows.
+   In this case, multiple RTT samples per flow are useful less for
+   observing intraflow behavior, and more for generating sufficient
+   samples for a given aggregate to make a high-quality measurement.
 
 5.  Privacy and Security Considerations
 
@@ -497,21 +492,20 @@ Internet-Draft                  Spin Bit                   November 2017
    Internet from RIPE Atlas anchoring measurements [TRILAT] shows that
    the magnitude and uncertainty of RTT data render the resolution of
    geolocation information that can be derived from Internet RTT is
-
-
-
-
-Trammell, et al.          Expires June 2, 2018                  [Page 9]
-
-Internet-Draft                  Spin Bit                   November 2017
-
-
    limited to national- or continental-scale; i.e., less resolution than
    is generally available from free, open IP geolocation databases.
 
    One reason for the inaccuracy of geolocation from network RTT is that
    Internet backbone transmission facilities do not follow the great-
    circle path between major nodes.  Instead, major geographic features
+
+
+
+Trammell, et al.          Expires June 3, 2018                  [Page 9]
+
+Internet-Draft                  Spin Bit                   November 2017
+
+
    and the efficiency of connecting adjacent major cities influence the
    facility routing.  An evaluation of ~3500 measurements on a mesh of
    25 backbone nodes in the continental United States shows that 85% had
@@ -554,20 +548,20 @@ Internet-Draft                  Spin Bit                   November 2017
    implementation could leak private transport protocol state through
    the spin bit.
 
-
-
-
-Trammell, et al.          Expires June 2, 2018                 [Page 10]
-
-Internet-Draft                  Spin Bit                   November 2017
-
-
    Since the spin bit is disconnected from transport mechanics, a QUIC
    endpoint implementing the spin bit that has a model of the actual
    network RTT and a target RTT to expose can "lie" about its spin bit
    transitions, even without coordination with and the collusion of the
    other endpoint.  This is not the case with TCP, which requires
    coordination and collusion to expose false information via its
+
+
+
+Trammell, et al.          Expires June 3, 2018                 [Page 10]
+
+Internet-Draft                  Spin Bit                   November 2017
+
+
    sequence and acknowledgment numbers and its timestamp option.  When
    passive measurement is used for purposes where one endpoint might
    gain a material advantage by representing a false RTT, e.g.  SLA
@@ -610,17 +604,19 @@ Internet-Draft                  Spin Bit                   November 2017
               Strowes, S., "Passively Measuring TCP Round-Trip Times (in
               Communications of the ACM)", October 2013.
 
-
-
-
-Trammell, et al.          Expires June 2, 2018                 [Page 11]
-
-Internet-Draft                  Spin Bit                   November 2017
-
-
    [CONUS]    Morton, A., "Comparison of Backbone Node RTT and Great
               Circle Distances (https://github.com/acmacm/FIXME-TBD)",
               September 2017.
+
+
+
+
+
+
+Trammell, et al.          Expires June 3, 2018                 [Page 11]
+
+Internet-Draft                  Spin Bit                   November 2017
+
 
    [IMC-CONGESTION]
               Luckie, M., Dhamdhere, A., Clark, D., Huffaker, B., and k.
@@ -667,16 +663,16 @@ Internet-Draft                  Spin Bit                   November 2017
               Version 1.3", draft-ietf-tls-tls13-21 (work in progress),
               July 2017.
 
-
-
-Trammell, et al.          Expires June 2, 2018                 [Page 12]
-
-Internet-Draft                  Spin Bit                   November 2017
-
-
    [TMA-QOF]  Trammell, B., Gugelmann, D., and N. Brownlee, "Inline Data
               Integrity Signals for Passive Measurement (in Proc. TMA
               2014)", April 2014.
+
+
+
+Trammell, et al.          Expires June 3, 2018                 [Page 12]
+
+Internet-Draft                  Spin Bit                   November 2017
+
 
    [TOKYO-PING]
               Pelsser, C., Cittadini, L., Vissicchio, S., and R. Bush,
@@ -719,21 +715,19 @@ Authors' Addresses
    Email: giuseppe.fioccola@telecomitalia.it
 
 
-
-
-
-
-
-
-Trammell, et al.          Expires June 2, 2018                 [Page 13]
-
-Internet-Draft                  Spin Bit                   November 2017
-
-
    Thomas Fossati
    Nokia
 
    Email: thomas.fossati@nokia.com
+
+
+
+
+
+
+Trammell, et al.          Expires June 3, 2018                 [Page 13]
+
+Internet-Draft                  Spin Bit                   November 2017
 
 
    Marcus Ihlar
@@ -781,4 +775,10 @@ Internet-Draft                  Spin Bit                   November 2017
 
 
 
-Trammell, et al.          Expires June 2, 2018                 [Page 14]
+
+
+
+
+
+
+Trammell, et al.          Expires June 3, 2018                 [Page 14]

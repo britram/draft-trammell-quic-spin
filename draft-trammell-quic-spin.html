@@ -296,7 +296,7 @@ address {
 
   <meta name="dct.creator" content="Trammell, B., Ed., De Vaere, P., Even, R., Fioccola, G., Fossati, T., Ihlar, M., Morton, A., and E. Stephan" />
   <meta name="dct.identifier" content="urn:ietf:id:draft-trammell-quic-spin-latest" />
-  <meta name="dct.issued" scheme="ISO8601" content="2017-11-29" />
+  <meta name="dct.issued" scheme="ISO8601" content="2017-11-30" />
   <meta name="dct.abstract" content="This document summarizes work to date on the addition of a &#8220;spin bit&#8221;, intended for explicit measurability of end-to-end RTT on QUIC flows. It proposes a detailed mechanism for the spin bit, describes how to use it to measure end-to-end latency, discusses corner cases and workarounds therefor in the measurement, describes experimental evaluation of the mechanism done to date, and examines the utility and privacy implications of the spin bit. As the overhead and risk associated with the spin bit are negligible, and the utility of a passive RTT measurement signal at higher resolution than once per flow is clear, this document advocates for the addition of the spin bit to the protocol." />
   <meta name="description" content="This document summarizes work to date on the addition of a &#8220;spin bit&#8221;, intended for explicit measurability of end-to-end RTT on QUIC flows. It proposes a detailed mechanism for the spin bit, describes how to use it to measure end-to-end latency, discusses corner cases and workarounds therefor in the measurement, describes experimental evaluation of the mechanism done to date, and examines the utility and privacy implications of the spin bit. As the overhead and risk associated with the spin bit are negligible, and the utility of a passive RTT measurement signal at higher resolution than once per flow is clear, this document advocates for the addition of the spin bit to the protocol." />
 
@@ -320,7 +320,7 @@ address {
 <td class="right">ETH Zurich</td>
 </tr>
 <tr>
-<td class="left">Expires: June 2, 2018</td>
+<td class="left">Expires: June 3, 2018</td>
 <td class="right">R. Even</td>
 </tr>
 <tr>
@@ -369,7 +369,7 @@ address {
 </tr>
 <tr>
 <td class="left"></td>
-<td class="right">November 29, 2017</td>
+<td class="right">November 30, 2017</td>
 </tr>
 
     	
@@ -385,7 +385,7 @@ address {
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at https://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on June 2, 2018.</p>
+<p>This Internet-Draft will expire on June 3, 2018.</p>
 <h1 id="rfc.copyrightnotice"><a href="#rfc.copyrightnotice">Copyright Notice</a></h1>
 <p>Copyright (c) 2017 IETF Trust and the persons identified as the document authors.  All rights reserved.</p>
 <p>This document is subject to BCP 78 and the IETF Trust's Legal Provisions Relating to IETF Documents (https://trustee.ietf.org/license-info) in effect on the date of publication of this document.  Please review these documents carefully, as they describe your rights and restrictions with respect to this document.  Code Components extracted from this document must include Simplified BSD License text as described in Section 4.e of the Trust Legal Provisions and are provided without warranty as described in the Simplified BSD License.</p>
@@ -430,7 +430,7 @@ address {
   <h1 id="rfc.section.1">
 <a href="#rfc.section.1">1.</a> <a href="#introduction" id="introduction">Introduction</a>
 </h1>
-<p id="rfc.section.1.p.1">The QUIC transport protocol <a href="#QUIC-TRANS" class="xref">[QUIC-TRANS]</a> is a UDP-encapsulated protocol integrated with Transport Layer Security (TLS) <a href="#TLS" class="xref">[TLS]</a> to encrypt most of its protocol internals, beyond those handshake packets needed to establish or resume a TLS session, and information required to reassemble QUIC streams (the packet number) and to route QUIC packets to the correct machine in a load-balancing situation (the connection ID). In other words, in contrast to TCP, QUIC&#8217;s wire image (see <a href="#WIRE-IMAGE" class="xref">[WIRE-IMAGE]</a>) exposes much less information about transport protocol state than TCP&#8217;s wire image. Specifically, the fact that sequence and acknowledgement numbers and timestamps are cannot be seen by on-path observes in QUIC as they can be in the TCP means that passive TCP loss and latency measurement techniques that rely on this information (e.g.  <a href="#CACM-TCP" class="xref">[CACM-TCP]</a>, <a href="#TMA-QOF" class="xref">[TMA-QOF]</a>) cannot be easily ported to work with QUIC.</p>
+<p id="rfc.section.1.p.1">The QUIC transport protocol <a href="#QUIC-TRANS" class="xref">[QUIC-TRANS]</a> is a UDP-encapsulated protocol integrated with Transport Layer Security (TLS) <a href="#TLS" class="xref">[TLS]</a> to encrypt most of its protocol internals, beyond those handshake packets needed to establish or resume a TLS session, and information required to reassemble QUIC streams (the packet number) and to route QUIC packets to the correct machine in a load-balancing situation (the connection ID). In other words, in contrast to TCP, QUIC&#8217;s wire image (see <a href="#WIRE-IMAGE" class="xref">[WIRE-IMAGE]</a>) exposes much less information about transport protocol state than TCP&#8217;s wire image. Specifically, the fact that sequence and acknowledgement numbers and timestamps cannot be seen by on-path observes in QUIC as they can be in the TCP means that passive TCP loss and latency measurement techniques that rely on this information (e.g.  <a href="#CACM-TCP" class="xref">[CACM-TCP]</a>, <a href="#TMA-QOF" class="xref">[TMA-QOF]</a>) cannot be easily ported to work with QUIC.</p>
 <p id="rfc.section.1.p.2">This document proposes a solution to this problem by adding a &#8220;latency spin bit&#8221; to the QUIC short header. This bit is designed solely for explicit passive measurability of the protocol. It provides one RTT sample per RTT to passive observers of QUIC traffic. It describes the mechanism, how it can be added to QUIC, and how it can be used by passive measurement facilities to generate RTT samples. It explores potential corner cases and shortcomings of the mechanism and how they can be worked around. It summarizes experimental results to date with an implementation of the spin bit built atop a recent QUIC implementation. It additionally describes use cases for passive RTT measurement at the resolution provided by the spin bit. It further reviews findings on privacy risk researched by the QUIC RTT Design Team, which was tasked by the IETF QUIC Working Group to determine the risk/utility tradeoff for the spin bit.</p>
 <p id="rfc.section.1.p.3">The spin bit has low overhead, presents negligible privacy risk, and has clear utility in providing passive RTT measurability of QUIC that is far superior to QUIC&#8217;s measurability without the spin bit, and equivalent to or better than TCP passive measurability.</p>
 <h1 id="rfc.section.1.1">
@@ -502,23 +502,23 @@ address {
 <a href="#rfc.section.4">4.</a> <a href="#use-cases-for-passive-rtt-measurement" id="use-cases-for-passive-rtt-measurement">Use Cases for Passive RTT Measurement</a>
 </h1>
 <p id="rfc.section.4.p.1">This section describes use cases for passive RTT measurement. Most of these are currently achieved with TCP, i.e., the matching of packets based on sequence and acknowledgment numbers, or timestamps and timestamp echoes, in order to generate upstream and downstream RTT samples which can be added to get end-to-end RTT. These use cases could be achieved with QUIC by replacing sequence/acknowledgement and timestamp analysis with spin bit analysis, as described in <a href="#usage" class="xref">Section 3</a>.</p>
-<p id="rfc.section.4.p.2">This section currently focuses on a single use case, interdomain troubleshooting; additional use cases will be added in future revisions; see https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are currently considering.</p>
+<p id="rfc.section.4.p.2">This section currently focuses one initial use case, interdomain troubleshooting. Additional use cases will be added in future revisions; see https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are currently considering.</p>
 <p id="rfc.section.4.p.3">In any case, the measurement methodology follows one of a few basic variants:</p>
 <p></p>
 
 <ul>
 <li>The RTT evolution of a flow or a set of flows can be compared to baseline or expected RTT measurements for flows with the same characterisitcs in order to detect or localize latency issues in a specific network.</li>
 <li>The RTT evolution of a single flow can also be examined in detail to diagnose performance issues with that flow.</li>
-<li>The spin bit can be used to generate a large number of samples of RTT for a flow aggregate (e.g., all flows between two given networks) without regard to temporal evolution of the RTT, in order to examine the distribution of RTTs for flows that should shart the same paths.</li>
+<li>The spin bit can be used to generate a large number of samples of RTT for a flow aggregate (e.g., all flows between two given networks) without regard to temporal evolution of the RTT, in order to examine the distribution of RTTs for a group of flows that should have similar RTT (e.g., because they should share the same path(s)).</li>
 </ul>
 <h1 id="rfc.section.4.1">
 <a href="#rfc.section.4.1">4.1.</a> <a href="#interdomain-troubleshooting" id="interdomain-troubleshooting">Interdomain Troubleshooting</a>
 </h1>
 <p id="rfc.section.4.1.p.1">Network access providers are often the first point of contact by their customers when network problems impact the performance of bandwidth-intensive and latency-sensitive applications such as video, regardless of whether the root cause lies within the access provider&#8217;s network, the service provider&#8217;s network, on the Internet paths between them, or within the customer&#8217;s own network.</p>
-<p id="rfc.section.4.1.p.2">Many residential networks use WiFi (802.11) on the last segment, and WiFi signal strength degradation manifests in high first-hop delay, due to the fact that the MAC layer will retransmit loss packets in order to trade latency off for loss. Measuring the RTT between endpoints on the customer network and parts of the service provider&#8217;s own infrastructure (which have predictable delay characteristics) can be used to isolate this cause of performance problems.</p>
-<p id="rfc.section.4.1.p.3">Comparing the evolution of passively-measured RTTs between a customer network and selected other networks on the Internet to short- and medium-term baseline measurements can similarly be used to isolate high latency to specific networks or network segments. For example, if the RTTs of all flows to a given service provider increase at the same time, the problem likely exists between the access network and the service provider, or in the service provider&#8217;s network itself. On the other hand, if the RTTs of all flows for a set of customers sharing some give access provider infrastructure increase, then the problem is likely attributable to that infrastructure.</p>
+<p id="rfc.section.4.1.p.2">Many residential networks use WiFi (802.11) on the last segment, and WiFi signal strength degradation manifests in high first-hop delay, due to the fact that the MAC layer will retransmit packets lost at that layer. Measuring the RTT between endpoints on the customer network and parts of the service provider&#8217;s own infrastructure (which have predictable delay characteristics) can be used to isolate this cause of performance problems.</p>
+<p id="rfc.section.4.1.p.3">Comparing the evolution of passively-measured RTTs between a customer network and selected other networks on the Internet to short- and medium-term baseline measurements can similarly be used to isolate high latency to specific networks or network segments. For example, if the RTTs of all flows to a given content provider increase at the same time, the problem likely exists between the access network and the content provider, or in the content provider&#8217;s network itself. On the other hand, if the RTTs of all flows passing through the same access provider infrastructure change together, then the change is likely attributable to that infrastructure.</p>
 <p id="rfc.section.4.1.p.4">These measurements are particularly useful for traffic which is latency sensitive, such as interactive video applications. However, since high latency is often correlated with other network-layer issues such as chronic interconnect congestion <a href="#IMC-CONGESTION" class="xref">[IMC-CONGESTION]</a>, it is useful for general troubleshooting of network layer issues in an interdomain setting.</p>
-<p id="rfc.section.4.1.p.5">In all of these cases, handshake RTT as in <a href="#other-bad-ideas" class="xref">Section 3.2</a> would provide limited information, presuming that its assumptions hold. Intraflow measurements are necessary in this case to increase the baseline and measurement data available, to increase the chance that enough samples are available for arbitrarily small aggregates. Given that issues may be caused by misconfigured differential treatment of traffic, intraflow measurement also allows targeted troubleshooting of specific flows.</p>
+<p id="rfc.section.4.1.p.5">In this case, multiple RTT samples per flow are useful less for observing intraflow behavior, and more for generating sufficient samples for a given aggregate to make a high-quality measurement.</p>
 <h1 id="rfc.section.5">
 <a href="#rfc.section.5">5.</a> <a href="#privacy-and-security-considerations" id="privacy-and-security-considerations">Privacy and Security Considerations</a>
 </h1>
