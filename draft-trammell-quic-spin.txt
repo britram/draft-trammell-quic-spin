@@ -150,7 +150,7 @@ Internet-Draft                  Spin Bit                   November 2017
    quic-spin.  Current open issues on the document can be seen at
    https://github.com/britram/draft-trammell-quic-spin/issues.  Comments
    and suggestions on this document can be made by filing an issue
-   there.
+   there, or by contacting the editor.
 
 2.  The Spin Bit Mechanism
 
