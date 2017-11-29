@@ -285,6 +285,7 @@ address {
 <link href="#rfc.section.3.3" rel="Chapter" title="3.3 Experimental Evaluation">
 <link href="#rfc.section.4" rel="Chapter" title="4 Use Cases for Passive RTT Measurement">
 <link href="#rfc.section.4.1" rel="Chapter" title="4.1 Interdomain Troubleshooting">
+<link href="#rfc.section.4.2" rel="Chapter" title="4.2 Bufferbloat Mitigation in Cellular Networks">
 <link href="#rfc.section.5" rel="Chapter" title="5 Privacy and Security Considerations">
 <link href="#rfc.section.6" rel="Chapter" title="6 Acknowledgments">
 <link href="#rfc.references" rel="Chapter" title="7 Informative References">
@@ -415,6 +416,8 @@ address {
 </li>
 <ul><li>4.1.   <a href="#rfc.section.4.1">Interdomain Troubleshooting</a>
 </li>
+<li>4.2.   <a href="#rfc.section.4.2">Bufferbloat Mitigation in Cellular Networks</a>
+</li>
 </ul><li>5.   <a href="#rfc.section.5">Privacy and Security Considerations</a>
 </li>
 <li>6.   <a href="#rfc.section.6">Acknowledgments</a>
@@ -451,14 +454,14 @@ address {
 <h1 id="rfc.section.2.1">
 <a href="#rfc.section.2.1">2.1.</a> <a href="#proposed-short-header-format-including-spin-bit" id="proposed-short-header-format-including-spin-bit">Proposed Short Header Format Including Spin Bit</a>
 </h1>
-<p id="rfc.section.2.1.p.1">Since it is possible to measure handshake RTT without a spin bit (see <a href="#other-bad-ideas" class="xref">Section 3.2</a>), it is sufficient to include the spin bit in the short packet header. This proposal suggests to ues the second most significant bit (0x40) of the first octet in the short header for the spin bit.</p>
+<p id="rfc.section.2.1.p.1">Since it is possible to measure handshake RTT without a spin bit (see <a href="#other-bad-ideas" class="xref">Section 3.2</a>), it is sufficient to include the spin bit in the short packet header. This proposal suggests to use the second most significant bit (0x40) of the first octet in the short header for the spin bit.</p>
 <div id="rfc.figure.1"></div>
 <div id="fig-short-header"></div>
 <pre>
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+
-|0|S|C|K|Type(4)|
+|0|C|K|S|Type(4)|
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                     [Connection ID (64)]                      +
@@ -470,7 +473,31 @@ address {
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 </pre>
 <p class="figure">Figure 1: Short Header Format including proposed Spin Bit</p>
-<p id="rfc.section.2.1.p.2">This will shift the Connection ID flag and the Key Phase Bit to 0x20 and 0x10 respectively, and will limit the number of available short packet types to 16.</p>
+<p id="rfc.section.2.1.p.2">This will limit the number of available short packet types to 16. The short packet types will be redefined to the following values:</p>
+<div id="rfc.table.1"></div>
+<div id="short-packet-types"></div>
+<table cellpadding="3" cellspacing="0" class="tt full center">
+<caption>Short Header Packet Types after Definition of Spin Bit</caption>
+<thead><tr>
+<th class="left">Type</th>
+<th class="left">Packet Number Size</th>
+</tr></thead>
+<tbody>
+<tr>
+<td class="left">0xD</td>
+<td class="left">4 octets</td>
+</tr>
+<tr>
+<td class="left">0xE</td>
+<td class="left">2 octets</td>
+</tr>
+<tr>
+<td class="left">0xF</td>
+<td class="left">1 octet</td>
+</tr>
+</tbody>
+</table>
+<p id="rfc.section.2.1.p.3">Note that this proposal changes the short header as defined in the editor&#8217;s copy of <a href="#QUIC-TRANS" class="xref">[QUIC-TRANS]</a> at the time of writing; regardless of where and how the spin bit is eventually defined, the key properties of the spin bit are (1) it&#8217;s a single bit, (2) it spins as defined above, and (3) it appears only in the short header; i.e. after version negotiation and connection establishment are completed.</p>
 <h1 id="rfc.section.3">
 <a href="#rfc.section.3">3.</a> <a href="#usage" id="usage">Using the Spin Bit for Passive RTT Measurement</a>
 </h1>
@@ -502,7 +529,7 @@ address {
 <a href="#rfc.section.4">4.</a> <a href="#use-cases-for-passive-rtt-measurement" id="use-cases-for-passive-rtt-measurement">Use Cases for Passive RTT Measurement</a>
 </h1>
 <p id="rfc.section.4.p.1">This section describes use cases for passive RTT measurement. Most of these are currently achieved with TCP, i.e., the matching of packets based on sequence and acknowledgment numbers, or timestamps and timestamp echoes, in order to generate upstream and downstream RTT samples which can be added to get end-to-end RTT. These use cases could be achieved with QUIC by replacing sequence/acknowledgement and timestamp analysis with spin bit analysis, as described in <a href="#usage" class="xref">Section 3</a>.</p>
-<p id="rfc.section.4.p.2">This section currently focuses one initial use case, interdomain troubleshooting. Additional use cases will be added in future revisions; see https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are currently considering.</p>
+<p id="rfc.section.4.p.2">This section currently focuses two initial use cases. Additional use cases will be added in future revisions; see https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are currently considering.</p>
 <p id="rfc.section.4.p.3">In any case, the measurement methodology follows one of a few basic variants:</p>
 <p></p>
 
@@ -519,6 +546,13 @@ address {
 <p id="rfc.section.4.1.p.3">Comparing the evolution of passively-measured RTTs between a customer network and selected other networks on the Internet to short- and medium-term baseline measurements can similarly be used to isolate high latency to specific networks or network segments. For example, if the RTTs of all flows to a given content provider increase at the same time, the problem likely exists between the access network and the content provider, or in the content provider&#8217;s network itself. On the other hand, if the RTTs of all flows passing through the same access provider infrastructure change together, then the change is likely attributable to that infrastructure.</p>
 <p id="rfc.section.4.1.p.4">These measurements are particularly useful for traffic which is latency sensitive, such as interactive video applications. However, since high latency is often correlated with other network-layer issues such as chronic interconnect congestion <a href="#IMC-CONGESTION" class="xref">[IMC-CONGESTION]</a>, it is useful for general troubleshooting of network layer issues in an interdomain setting.</p>
 <p id="rfc.section.4.1.p.5">In this case, multiple RTT samples per flow are useful less for observing intraflow behavior, and more for generating sufficient samples for a given aggregate to make a high-quality measurement.</p>
+<h1 id="rfc.section.4.2">
+<a href="#rfc.section.4.2">4.2.</a> <a href="#bufferbloat-mitigation-in-cellular-networks" id="bufferbloat-mitigation-in-cellular-networks">Bufferbloat Mitigation in Cellular Networks</a>
+</h1>
+<p id="rfc.section.4.2.p.1">Cellular networks consist of multiple Radio Access Networks (RAN) where mobile devices are attached to base stations. It is common that base stations from different vendors and different generations are deployed in the same cellular network.</p>
+<p id="rfc.section.4.2.p.2">Due to the dynamic nature of RANs, base stations have typically been provisioned with large buffers to maximize throughput despite rapid changes in capacity. As a side effect, buffer bloat has become a common issue in such networks <a href="#WWMM-BLOAT" class="xref">[WWMM-BLOAT]</a>.</p>
+<p id="rfc.section.4.2.p.3">An effective way of mitigating buffer bloat without sacrificing too much throughput is to deploy Active Queue Management (AQM) in bottleneck routers and base stations. However, due to the variation in deployed base-stations it is not always possible to enable AQM at the bottlenecks, without massive infrastructure investments.</p>
+<p id="rfc.section.4.2.p.4">An alternative approach is to deploy AQM as a network function in a more centralized location than the traditional bottleneck nodes. Such an AQM monitors the RTT progression of flows and drops or marks packets when the measured latency is indicative of congestion. Such a function also has the possibility to detect misbehaving flows and reduce the negative impact they have on the network.</p>
 <h1 id="rfc.section.5">
 <a href="#rfc.section.5">5.</a> <a href="#privacy-and-security-considerations" id="privacy-and-security-considerations">Privacy and Security Considerations</a>
 </h1>
@@ -603,7 +637,7 @@ address {
 <tr>
 <td class="reference"><b id="TLS">[TLS]</b></td>
 <td class="top">
-<a>Rescorla, E.</a>, "<a href="https://tools.ietf.org/html/draft-ietf-tls-tls13-21">The Transport Layer Security (TLS) Protocol Version 1.3</a>", Internet-Draft draft-ietf-tls-tls13-21, July 2017.</td>
+<a>Rescorla, E.</a>, "<a href="https://tools.ietf.org/html/draft-ietf-tls-tls13-22">The Transport Layer Security (TLS) Protocol Version 1.3</a>", Internet-Draft draft-ietf-tls-tls13-22, November 2017.</td>
 </tr>
 <tr>
 <td class="reference"><b id="TMA-QOF">[TMA-QOF]</b></td>
@@ -624,6 +658,11 @@ address {
 <td class="reference"><b id="WIRE-IMAGE">[WIRE-IMAGE]</b></td>
 <td class="top">
 <a>Trammell, B.</a> and <a>M. Kuehlewind</a>, "<a href="https://tools.ietf.org/html/draft-trammell-wire-image-00">The Wire Image of a Network Protocol</a>", Internet-Draft draft-trammell-wire-image-00, November 2017.</td>
+</tr>
+<tr>
+<td class="reference"><b id="WWMM-BLOAT">[WWMM-BLOAT]</b></td>
+<td class="top">
+<a>Alfredsson, S.</a>, <a>Giudice, G.</a>, <a>Garcia, J.</a>, <a>Brunstrom, A.</a>, <a>Cicco, L.</a> and <a>S. Mascolo</a>, "<a>Impact of TCP Congestion Control on Bufferbloat in Cellular Networks (in Proc. IEEE WoWMoM 2013)</a>", June 2013.</td>
 </tr>
 </tbody></table>
 <h1 id="rfc.authors"><a href="#rfc.authors">Authors' Addresses</a></h1>
