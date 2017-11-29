@@ -130,6 +130,22 @@ informative:
       -
         ins: N. Brownlee
     date: 2014-04
+  WWMM-BLOAT:
+    title: Impact of TCP Congestion Control on Bufferbloat in Cellular Networks (in Proc. IEEE WoWMoM 2013)
+    author:
+      -     
+        ins: S. Alfredsson
+      -
+        ins: G. Giudice
+      -
+        ins: J. Garcia
+      - 
+        ins: A. Brunstrom
+      -
+        ins: L. Cicco
+      - 
+        ins: S. Mascolo
+    date: 2013-06
 
 --- abstract
 
@@ -213,7 +229,7 @@ bit, as described in {{usage}}.
 
 Since it is possible to measure handshake RTT without a spin bit (see
 {{other-bad-ideas}}), it is sufficient to include the spin bit in the short
-packet header. This proposal suggests to ues the second most significant bit
+packet header. This proposal suggests to use the second most significant bit
 (0x40) of the first octet in the short header for the spin bit.
 
 ~~~~~
@@ -448,6 +464,31 @@ In this case, multiple RTT samples per flow are useful less for observing
 intraflow behavior, and more for generating sufficient samples for a given
 aggregate to make a high-quality measurement.
 
+## Bufferbloat Mitigation in Cellular Networks
+
+Cellular networks consist of multiple Radio Access Networks (RAN) where 
+mobile devices are attached to base stations. It is common that base stations
+from different vendors and different generations are deployed in the same 
+cellular network. 
+
+Due to the dynamic nature of RANs, base stations have typically been 
+provisioned with large buffers to maximize throughput despite rapid changes in 
+capacity. As a side effect, buffer bloat has become a common issue in such 
+networks {{WWMM-BLOAT}}. 
+
+An effective way of mitigating buffer bloat without sacrificing too much 
+throughput is to deploy Active Queue Management (AQM) in bottleneck routers and 
+base stations. However, due to the variation in deployed base-stations it is 
+not always possible to enable AQM at the bottlenecks, without massive 
+infrastructure investments.
+
+An alternative approach is to deploy AQM as a network function in a more 
+centralized location than the traditional bottleneck nodes. Such an AQM 
+monitors the RTT progression of flows and drops or marks packets when the
+measured latency is indicative of congestion. Such a function also has the 
+possibility to detect misbehaving flows and reduce the negative impact they have 
+on the network. 
+ 
 # Privacy and Security Considerations
 
 The privacy considerations for the latency spin bit are essentially the same
