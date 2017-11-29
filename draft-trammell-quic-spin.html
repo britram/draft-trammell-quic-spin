@@ -283,7 +283,9 @@ address {
 <link href="#rfc.section.3.2" rel="Chapter" title="3.2 Alternate RTT Measurement Approaches for Diagnosing QUIC flows">
 <link href="#rfc.section.3.3" rel="Chapter" title="3.3 Experimental Evaluation">
 <link href="#rfc.section.4" rel="Chapter" title="4 Use Cases for Passive RTT Measurement">
-<link href="#rfc.section.4.1" rel="Chapter" title="4.1 Video Delivery Troubleshooting">
+<link href="#rfc.section.4.1" rel="Chapter" title="4.1 Interdomain Troubleshooting">
+<link href="#rfc.section.4.2" rel="Chapter" title="4.2 Latency as input to Active Queue Management">
+<link href="#rfc.section.4.3" rel="Chapter" title="4.3 Other latency measurement tasks">
 <link href="#rfc.section.5" rel="Chapter" title="5 Privacy and Security Considerations">
 <link href="#rfc.section.6" rel="Chapter" title="6 Acknowledgments">
 <link href="#rfc.references" rel="Chapter" title="7 Informative References">
@@ -295,7 +297,7 @@ address {
 
   <meta name="dct.creator" content="Trammell, B., Ed., De Vaere, P., Even, R., Fioccola, G., Fossati, T., Ihlar, M., Morton, A., and E. Stephan" />
   <meta name="dct.identifier" content="urn:ietf:id:draft-trammell-quic-spin-latest" />
-  <meta name="dct.issued" scheme="ISO8601" content="2017-11-28" />
+  <meta name="dct.issued" scheme="ISO8601" content="2017-11-29" />
   <meta name="dct.abstract" content="This document summarizes work to date on the addition of a &#8220;spin bit&#8221;, intended for explicit measurability of end-to-end RTT on QUIC flows. It proposes a detailed mechanism for the spin bit, describes how to use it to measure end-to-end latency, discusses corner cases and workarounds therefor in the measurement, describes experimental evaluation of the mechanism done to date, and examines the utility and privacy implications of the spin bit. As the overhead and risk associated with the spin bit are negligible, and the utility of a passive RTT measurement signal at higher resolution than once per flow is clear, this document advocates for the addition of the spin bit to the protocol." />
   <meta name="description" content="This document summarizes work to date on the addition of a &#8220;spin bit&#8221;, intended for explicit measurability of end-to-end RTT on QUIC flows. It proposes a detailed mechanism for the spin bit, describes how to use it to measure end-to-end latency, discusses corner cases and workarounds therefor in the measurement, describes experimental evaluation of the mechanism done to date, and examines the utility and privacy implications of the spin bit. As the overhead and risk associated with the spin bit are negligible, and the utility of a passive RTT measurement signal at higher resolution than once per flow is clear, this document advocates for the addition of the spin bit to the protocol." />
 
@@ -319,7 +321,7 @@ address {
 <td class="right">ETH Zurich</td>
 </tr>
 <tr>
-<td class="left">Expires: June 1, 2018</td>
+<td class="left">Expires: June 2, 2018</td>
 <td class="right">R. Even</td>
 </tr>
 <tr>
@@ -356,7 +358,7 @@ address {
 </tr>
 <tr>
 <td class="left"></td>
-<td class="right">AT&amp;T</td>
+<td class="right">AT&amp;T Labs</td>
 </tr>
 <tr>
 <td class="left"></td>
@@ -368,7 +370,7 @@ address {
 </tr>
 <tr>
 <td class="left"></td>
-<td class="right">November 28, 2017</td>
+<td class="right">November 29, 2017</td>
 </tr>
 
     	
@@ -384,7 +386,7 @@ address {
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at https://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on June 1, 2018.</p>
+<p>This Internet-Draft will expire on June 2, 2018.</p>
 <h1 id="rfc.copyrightnotice"><a href="#rfc.copyrightnotice">Copyright Notice</a></h1>
 <p>Copyright (c) 2017 IETF Trust and the persons identified as the document authors.  All rights reserved.</p>
 <p>This document is subject to BCP 78 and the IETF Trust's Legal Provisions Relating to IETF Documents (https://trustee.ietf.org/license-info) in effect on the date of publication of this document.  Please review these documents carefully, as they describe your rights and restrictions with respect to this document.  Code Components extracted from this document must include Simplified BSD License text as described in Section 4.e of the Trust Legal Provisions and are provided without warranty as described in the Simplified BSD License.</p>
@@ -410,7 +412,11 @@ address {
 </li>
 </ul><li>4.   <a href="#rfc.section.4">Use Cases for Passive RTT Measurement</a>
 </li>
-<ul><li>4.1.   <a href="#rfc.section.4.1">Video Delivery Troubleshooting</a>
+<ul><li>4.1.   <a href="#rfc.section.4.1">Interdomain Troubleshooting</a>
+</li>
+<li>4.2.   <a href="#rfc.section.4.2">Latency as input to Active Queue Management</a>
+</li>
+<li>4.3.   <a href="#rfc.section.4.3">Other latency measurement tasks</a>
 </li>
 </ul><li>5.   <a href="#rfc.section.5">Privacy and Security Considerations</a>
 </li>
@@ -468,7 +474,7 @@ address {
 <p id="rfc.section.3.p.1">When a QUIC flow is sending at full rate (i.e., neither application nor flow control limited), the latency spin bit in each direction changes value once per round-trip time (RTT). An on-path observer can observe the time difference between edges in the spin bit signal to measure one sample of end-to-end RTT.  Note that this measurement, as with passive RTT measurement for TCP, includes any transport protocol delay (e.g., delayed sending of acknowledgements) and/or application layer delay (e.g., waiting for a request to complete). It therefore provides devices on path a good instantaneous estimate of the RTT as experienced by the application. A simple linear smoothing or moving minimum filter can be applied to the stream of RTT information to get a more stable estimate.</p>
 <p id="rfc.section.3.p.2">We note that the Latency Spin Bit, and the measurements that can be done with it, can be seen as an end-to-end extension of a special case of the alternate marking method described in <a href="#ALT-MARK" class="xref">[ALT-MARK]</a>.</p>
 <h1 id="rfc.section.3.1">
-<a href="#rfc.section.3.1">3.1.</a> <a href="#limitations-and-workarounds" id="limitations-and-workarounds">Limitations and Workarounds</a>
+<a href="#rfc.section.3.1">3.1.</a> <a href="#limitations" id="limitations">Limitations and Workarounds</a>
 </h1>
 <p id="rfc.section.3.1.p.1">Application-limited and flow-control-limited senders can have application and transport layer delay, respectively, that are much greater than network RTT.  Therefore, the spin bit provides network latency information only when the sender is neither application nor flow control limited. When the sender is application-limited by periodic application traffic, where that period is longer than the RTT, measuring the spin bit provides information about the application period, not the RTT. Simple heuristics based on the observed data rate per flow or changes in the RTT series can be used to reject bad RTT samples due to application or flow control limitation.</p>
 <p id="rfc.section.3.1.p.2">Since the spin bit logic at each endpoint considers only samples on packets that advance the largest packet number seen, signal generation itself is resistent to reordering. However, reordering can cause problems at an observer by causing spurious edge detection and therefore low RTT estimates. This can be probabilistically mitigated by the observer tracking the low-order bits of the packet number, and rejecting edges that appear out-of-order.</p>
@@ -481,28 +487,41 @@ address {
 <h1 id="rfc.section.3.3">
 <a href="#rfc.section.3.3">3.3.</a> <a href="#experimental-evaluation" id="experimental-evaluation">Experimental Evaluation</a>
 </h1>
-<p id="rfc.section.3.3.p.1">[EDITOR&#8217;S NOTE: Summary of Piet&#8217;s work to date goes here.]</p>
+<p id="rfc.section.3.3.p.1">We have evaluated the effectiveness of the spin bit in an emulated network environment. The spin bit was added to a fork of <a href="#MINQ" class="xref">[MINQ]</a>, using the mechanism described in <a href="#mechanism" class="xref">Section 2</a>, but with the spin bit appearing in a measurement byte added to the header for passive measurability experiments. Spin bit measurement support was added to <a href="#MOKUMOKUREN" class="xref">[MOKUMOKUREN]</a>. Full results of these ongoing experiments are available online in <a href="#SPINBIT-REPORT" class="xref">[SPINBIT-REPORT]</a>, but we summarize our findings here.</p>
+<p id="rfc.section.3.3.p.2">First, we confirm that the spin bit works as advertised: it provides one useful RTT sample per RTT to any passive observer of the flow. This sample tracks each sender&#8217;s local instantaneous estimate of RTT as well as the expected RTT (i.e., defined by the emulation) fairly well. One surprising implication of this is that the spin bit provides <em>more</em> information than is available by local estimation to an endpoint which is mostly receiving data frames and sending mainly ACKs, and as such can also be useful in purely endpoint-local observations of the RTT evolution during the flow. The spin bit also works correctly under moderate to heavy packet loss and jitter.</p>
+<p id="rfc.section.3.3.p.3">Second, we confirm that the spin bit can be easily implemented without requiring deep integration into a QUIC implementation. Indeed, it could be implemented completely independently, as a shim, aside from the requirement that the spin bit value be integrity-protected along with the rest of the QUIC header.</p>
+<p id="rfc.section.3.3.p.4">Third, we performed experiments focused on the intermittent-sender problem described in <a href="#limitations" class="xref">Section 3.1</a>. We confirm that the spinbit does not provide useful RTT samples after the handshake when packets are only sent intermittently. Simple heuristics can be used to recognize this situation, however, and to reject these RTT samples. We also find that a simple sender-side heuristic can be used to determine whether a sample will be useful. If a sender sends a packet more than a specified delay (e.g. 1ms) after the last packet received by the client, it knows that any latency spin observation of that packet will be invalid. If a second &#8220;spin valid&#8221; bit were available, the sender could then mark that packet &#8220;spin invalid&#8221;. Our experiments show that this simple heuristic and spin validity bit are succesful in marking all packets whose RTT samples should be rejected.</p>
+<p id="rfc.section.3.3.p.5">Fourth, we performed experiments focused on the reordering problem described in <a href="#limitations" class="xref">Section 3.1</a>. We find that while reordering can cause spurious samples at a naive observer, two simple approaches can be used to reject spurious RTT samples due to reordering. First, a two-bit spin signal that always advances in a single direction (e.g. 00 -&gt; 01 -&gt; 10 -&gt; 11) successfully rejects all reordered samples, including under amounts of reordering that render the transport itself mostly useless. However, adding a bit is not necessary: having the observer keep the least significant bits of the packet number, and rejecting samples from packets that do not advance by one, as suggested in <a href="#limitations" class="xref">Section 3.1</a>, is essentially as successful as a two-bit spin signal in mitigating the effects of reordering on RTT measurement.</p>
+<p id="rfc.section.3.3.p.6">Fifth, we performed parallel active measurements using ping, as described in <a href="#other-bad-ideas" class="xref">Section 3.2</a>. In our emulated network, the ICMP packets and the QUIC packets traverse the same links with the same treatment, and share queues at each link, which mitigates most of the issues with ping. We find that while ping works as expected in measuring end-to-end RTT, it does not track the sender&#8217;s estimate of RTT, and as such does not measure the RTT experienced by the application layer as well as the spin bit does.</p>
+<p id="rfc.section.3.3.p.7">In summary, our experiments show that the spin bit is suitable for purpose, can be implemented with minimal disruption, and that most of the problems identified with it in specific corner cases can be easily mitigated. See <a href="#SPINBIT-REPORT" class="xref">[SPINBIT-REPORT]</a> for more.</p>
 <h1 id="rfc.section.4">
 <a href="#rfc.section.4">4.</a> <a href="#use-cases-for-passive-rtt-measurement" id="use-cases-for-passive-rtt-measurement">Use Cases for Passive RTT Measurement</a>
 </h1>
 <p id="rfc.section.4.p.1">This section describes current use cases for passive RTT measurement with TCP, i.e., the matching of packets based on sequence and acknowledgment numbers, or timestamps and timestamp echoes, in order to generate upstream and downstream RTT samples which can be added to get end-to-end RTT, as with handshake RTT in <a href="#other-bad-ideas" class="xref">Section 3.2</a>. These current use cases would be consumers of RTT samples measured from the spin bit as in <a href="#usage" class="xref">Section 3</a>.</p>
 <p id="rfc.section.4.p.2">In all cases, the basic measurement methodology follows one of a few basic variants. The RTT evolution of a flow or a set of flows can be compared to baseline or expected RTT measurements for flows with the same characterisitcs&#8230; [EDITOR&#8217;S NOTE: other variants go here]</p>
 <h1 id="rfc.section.4.1">
-<a href="#rfc.section.4.1">4.1.</a> <a href="#video-delivery-troubleshooting" id="video-delivery-troubleshooting">Video Delivery Troubleshooting</a>
+<a href="#rfc.section.4.1">4.1.</a> <a href="#interdomain-troubleshooting" id="interdomain-troubleshooting">Interdomain Troubleshooting</a>
 </h1>
-<p id="rfc.section.4.1.p.1">[EDITOR&#8217;S NOTE: merge with Emile&#8217;s interdomain troubleshooting section?]</p>
+<p id="rfc.section.4.1.p.1">[EDITOR&#8217;S NOTE: Emile, anything to add here?]</p>
 <p id="rfc.section.4.1.p.2">[EDITOR&#8217;S NOTE: this is rewritten from Roni&#8217;s text on video; Roni, please check.]</p>
 <p id="rfc.section.4.1.p.3">Network access providers are often the first point of contact by their customers when network problems impact the performance of bandwidth-intensive and latency-sensitive applications such as video, regardless of whether the root cause lies within the access provider&#8217;s network, the service provider&#8217;s network, on the Internet paths between them, or within the customer&#8217;s own network.</p>
 <p id="rfc.section.4.1.p.4">Many residential networks use WiFi (802.11) on the last segment, and WiFi signal strength degradation manifests in high first-hop delay, due to the fact that the MAC layer will retransmit loss packets in order to trade latency off for loss. Measuring the RTT between endpoints on the customer network and parts of the service provider&#8217;s own infrastructure (which have predictable delay characteristics) can be used to isolate this cause of performance problems.</p>
-<p id="rfc.section.4.1.p.5">Comparing the evolution of passively-measured RTTs between a customer network and selected other networks on the Internet to short- and medium-term baseline measurements can be used to isolate high latency to specific networks or network segments. For example, if the RTTs of all flows to a given service provider increase at the same time, the problem likely exists between the access network and the service provider, or in the service provider&#8217;s network itself. On the other hand, if the RTTs of all flows for a set of customers sharing some give access provider infrastructure increase, then the problem is likely attributable to that infrastructure.</p>
-<p id="rfc.section.4.1.p.6">In both of these cases, handshake RTT as in <a href="#other-bad-ideas" class="xref">Section 3.2</a> would provide limited information, presuming that its assumptions hold. Intraflow measurements are necessary in this case to increase the baseline and measurement data available, and to increase the chance that enough samples are available for arbitrarily small aggregates.</p>
-<p id="rfc.section.4.1.p.7">[EDITOR&#8217;S NOTE: Markus on AQM?]</p>
-<p id="rfc.section.4.1.p.8">[EDITOR&#8217;S NOTE: Others?]</p>
+<p id="rfc.section.4.1.p.5">Comparing the evolution of passively-measured RTTs between a customer network and selected other networks on the Internet to short- and medium-term baseline measurements can similarly be used to isolate high latency to specific networks or network segments. For example, if the RTTs of all flows to a given service provider increase at the same time, the problem likely exists between the access network and the service provider, or in the service provider&#8217;s network itself. On the other hand, if the RTTs of all flows for a set of customers sharing some give access provider infrastructure increase, then the problem is likely attributable to that infrastructure.</p>
+<p id="rfc.section.4.1.p.6">These measurements are particularly useful for traffic which is latency sensitive, such as interactive video applications. However, since high latency is often correlated with other network-layer issues such as chronic interconnect congestion <a href="#IMC-CONGESTION" class="xref">[IMC-CONGESTION]</a>, it is useful for general troubleshooting of network layer issues in an interdomain setting.</p>
+<p id="rfc.section.4.1.p.7">In all of these cases, handshake RTT as in <a href="#other-bad-ideas" class="xref">Section 3.2</a> would provide limited information, presuming that its assumptions hold. Intraflow measurements are necessary in this case to increase the baseline and measurement data available, to increase the chance that enough samples are available for arbitrarily small aggregates. Given that issues may be caused by misconfigured differential treatment of traffic, intraflow measurement also allows targeted troubleshooting of specific flows.</p>
+<h1 id="rfc.section.4.2">
+<a href="#rfc.section.4.2">4.2.</a> <a href="#latency-as-input-to-active-queue-management" id="latency-as-input-to-active-queue-management">Latency as input to Active Queue Management</a>
+</h1>
+<p id="rfc.section.4.2.p.1">[EDITOR&#8217;S NOTE: Marcus?]</p>
+<h1 id="rfc.section.4.3">
+<a href="#rfc.section.4.3">4.3.</a> <a href="#other-latency-measurement-tasks" id="other-latency-measurement-tasks">Other latency measurement tasks</a>
+</h1>
+<p id="rfc.section.4.3.p.1">[EDITOR&#8217;S NOTE: Others? Independent verification of network neutrality?]</p>
 <h1 id="rfc.section.5">
 <a href="#rfc.section.5">5.</a> <a href="#privacy-and-security-considerations" id="privacy-and-security-considerations">Privacy and Security Considerations</a>
 </h1>
 <p id="rfc.section.5.p.1">The privacy considerations for the latency spin bit are essentially the same as those for passive RTT measurement in general.</p>
-<p id="rfc.section.5.p.2">A concern was raised during the discussion of this feature within the QUIC working group and the QUIC RTT Design Team that high-resolution RTT information might be usable for geolocation. However, an evaluation based on RTT samples taken over 13,780 paths in the Internet from RIPE Atlas anchoring measurements <a href="#TRILAT" class="xref">[TRILAT]</a> shows that the magnitude and uncertainty of RTT data render the resolution of geolocation information that can be derived from Internet RTT is limited to national- or continental-scale; i.e., less resolution than is generally available from free, open IP geolocation databases. Therefore, in the general case, when an endpoint&#8217;s IP address is known, RTT information provides negligible additional information.</p>
+<p id="rfc.section.5.p.2">A concern was raised during the discussion of this feature within the QUIC working group and the QUIC RTT Design Team that high-resolution RTT information might be usable for geolocation. However, an evaluation based on RTT samples taken over 13,780 paths in the Internet from RIPE Atlas anchoring measurements <a href="#TRILAT" class="xref">[TRILAT]</a> shows that the magnitude and uncertainty of RTT data render the resolution of geolocation information that can be derived from Internet RTT is limited to national- or continental-scale; i.e., less resolution than is generally available from free, open IP geolocation databases. One reason for the inaccuracy of geolocation from network RTT is that Internet backbone transmission facilities do not follow the great-circle path between major nodes. Instead, major geographic features and the efficiency of connecting adjacent major cities influence the facility routing. An evaluation of ~3500 measurements on a mesh of 25 backbone nodes in the continental United States shows that 85% had RTT to great-circle error of 3ms or more, making location within US State boundaries ambigous <a href="#CONUS" class="xref">[CONUS]</a>.  Therefore, in the general case, when an endpoint&#8217;s IP address is known, RTT information provides negligible additional information.</p>
 <p id="rfc.section.5.p.3">RTT information may be used to infer the occupancy of queues along a path; indeed, this is part of its utility for performance measurement and diagnostics. When a link on given path has excessive buffering (on the order of hundreds of milliseconds or more; a situation colloquially referred to as &#8220;bufferbloat&#8221;), such that the difference in delay between an empty queue and a full queue dwarfs normal variance and RTT along the path, RTT variance during the lifetime of a flow can be used to infer the presence of traffic on the bottleneck link. In practice, however, this is not a concern for passive measurement of congestion-controlled traffic, since any observer in a situation to observe RTT passively need not infer the presence of the traffic, as it can observe it directly.</p>
 <p id="rfc.section.5.p.4">In addition, since RTT information contains application as well as network delay, patterns in RTT variance from minimum, and therefore application delay, can be used to infer or fingerprint application-layer behavior. However, as with the case above, this is not a concern with passive measurement, since the packet size and interarrival time sequence, which is also directly observable, carries more information than RTT variance sequence.</p>
 <p id="rfc.section.5.p.5">We therefore conclude that the high-resolution, per-flow exposure of RTT for passive measurement as provided by the spin bit poses negligible marginal risk to privacy.</p>
@@ -519,6 +538,26 @@ address {
 <td class="reference"><b id="ALT-MARK">[ALT-MARK]</b></td>
 <td class="top">
 <a>Fioccola, G.</a>, <a>Capello, A.</a>, <a>Cociglio, M.</a>, <a>Castaldelli, L.</a>, <a>Chen, M.</a>, <a>Zheng, L.</a>, <a>Mirsky, G.</a> and <a>T. Mizrahi</a>, "<a href="https://tools.ietf.org/html/draft-ietf-ippm-alt-mark-13">Alternate Marking method for passive and hybrid performance monitoring</a>", Internet-Draft draft-ietf-ippm-alt-mark-13, October 2017.</td>
+</tr>
+<tr>
+<td class="reference"><b id="CONUS">[CONUS]</b></td>
+<td class="top">
+<a>Morton, A.</a>, "<a>Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/acmacm/FIXME-TBD)</a>", September 2017.</td>
+</tr>
+<tr>
+<td class="reference"><b id="IMC-CONGESTION">[IMC-CONGESTION]</b></td>
+<td class="top">
+<a>Luckie, M.</a>, <a>Dhamdhere, A.</a>, <a>Clark, D.</a>, <a>Huffaker, B.</a> and <a>k. claffy</a>, "<a>Challenges in Inferring Internet Interdomain Congestion (in Proc. ACM IMC 2014)</a>", November 2014.</td>
+</tr>
+<tr>
+<td class="reference"><b id="MINQ">[MINQ]</b></td>
+<td class="top">
+<a>Rescorla, E.</a>, "<a>MINQ, a simple Go implementation of QUIC (https://github.com/ekr/minq)</a>", November 2017.</td>
+</tr>
+<tr>
+<td class="reference"><b id="MOKUMOKUREN">[MOKUMOKUREN]</b></td>
+<td class="top">
+<a>Trammell, B.</a>, "<a>Mokumokuren, a lightweight flow meter using gopacket (https://github.com/britram/mokumokuren)</a>", November 2017.</td>
 </tr>
 <tr>
 <td class="reference"><b id="QUIC-MGT">[QUIC-MGT]</b></td>
@@ -544,6 +583,11 @@ address {
 <td class="reference"><b id="RFC5357">[RFC5357]</b></td>
 <td class="top">
 <a>Hedayat, K.</a>, <a>Krzanowski, R.</a>, <a>Morton, A.</a>, <a>Yum, K.</a> and <a>J. Babiarz</a>, "<a href="https://tools.ietf.org/html/rfc5357">A Two-Way Active Measurement Protocol (TWAMP)</a>", RFC 5357, DOI 10.17487/RFC5357, October 2008.</td>
+</tr>
+<tr>
+<td class="reference"><b id="SPINBIT-REPORT">[SPINBIT-REPORT]</b></td>
+<td class="top">
+<a>De Vaere, P.</a>, "<a>Latency Spinbit Implementation Experience</a>", November 2017.</td>
 </tr>
 <tr>
 <td class="reference"><b id="TOKYO-PING">[TOKYO-PING]</b></td>
@@ -691,7 +735,7 @@ address {
 		<span class="family-name">Morton</span>
 	  </span>
 	</span>
-	<span class="org vcardline">AT&T</span>
+	<span class="org vcardline">AT&T Labs</span>
 	<span class="adr">
 	  
 	  <span class="vcardline">
