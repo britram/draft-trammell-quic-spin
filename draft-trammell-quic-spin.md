@@ -114,6 +114,22 @@ informative:
       -
         ins: k. claffy
     date: 2014-11
+  CACM-TCP:
+    title: Passively Measuring TCP Round-Trip Times (in Communications of the ACM)
+    author:
+      -
+        ins: S. Strowes
+    date: 2013-10
+  TMA-QOF:
+    title: Inline Data Integrity Signals for Passive Measurement (in Proc. TMA 2014)
+    author:
+      -
+        ins: B. Trammell
+      -
+        ins: D. Gugelmann
+      -
+        ins: N. Brownlee
+    date: 2014-04
 
 --- abstract
 
@@ -132,7 +148,48 @@ protocol.
 
 # Introduction
 
-\[EDITOR'S NOTE: Brian to write frontmatter. Why we care, why this draft exists.]
+The QUIC transport protocol {{?QUIC-TRANS=I-D.ietf-quic-transport}} is a
+UDP-encapsulated protocol integrated with Transport Layer Security (TLS)
+{{?TLS=I-D.ietf-tls-tls13}} to encrypt most of its protocol internals, beyond
+those handshake packets needed to establish or resume a TLS session, and
+information required to reassemble QUIC streams (the packet number) and to
+route QUIC packets to the correct machine in a load-balancing situation (the
+connection ID). In other words, in contrast to TCP, QUIC's wire image (see
+{{?WIRE-IMAGE=I-D.trammell-wire-image}}) exposes much less information about
+transport protocol state than TCP's wire image. Specifically, the fact that
+sequence and acknowledgement numbers and timestamps are cannot be seen by
+on-path observes in QUIC as they can be in the TCP means that passive TCP loss
+and latency measurement techniques that rely on this information (e.g.
+{{CACM-TCP}}, {{TMA-QOF}}) cannot be easily ported to work with QUIC.
+
+This document proposes a solution to this problem by adding a "latency spin
+bit" to the QUIC short header. This bit is designed solely for explicit
+passive measurability of the protocol. It provides one RTT sample per RTT to
+passive observers of QUIC traffic. It describes the mechanism, how it can be
+added to QUIC, and how it can be used by passive measurement facilities to
+generate RTT samples. It explores potential corner cases and shortcomings of
+the mechanism and how they can be worked around. It summarizes experimental
+results to date with an implementation of the spin bit built atop a recent
+QUIC implementation. It additionally describes use cases for passive RTT
+measurement at the resolution provided by the spin bit. It further reviews
+findings on privacy risk researched by the QUIC RTT Design Team, which was
+tasked by the IETF QUIC Working Group to determine the risk/utility tradeoff
+for the spin bit.
+
+The spin bit has low overhead, presents negligible privacy risk, and has clear
+utility in providing passive RTT measurability of QUIC that is far superior to
+QUIC's measurability without the spin bit, and equivalent to or better than
+TCP passive measurability.
+
+## About This Document
+
+This document is maintained in the GitHub repository
+https://github.com/britram/draft-trammell-quic-spin, and the editor's copy is
+available online at https://britram.github.io/draft-trammell-quic-spin.
+Current open issues on the document can be seen at
+https://github.com/britram/draft-trammell-quic-spin/issues. Comments and
+suggestions on this document can be made by filing an issue there, or by
+contacting the editor.
 
 # The Spin Bit Mechanism {#mechanism}
 
@@ -222,16 +279,17 @@ There are two broad alternatives to explicit signaling for passive RTT
 measurement for measuring the RTT experienced by QUIC flows.
 
 The first of these is handshake RTT measurement. As described in
-{{?QUIC-MGT=I-D.ietf-quic-manageability}}, the packets of the QUIC handshake are
-distinguishable on the wire in such a way that they can be used for one RTT
-measurement sample per flow: the delay between the client initial and the
+{{?QUIC-MGT=I-D.ietf-quic-manageability}}, the packets of the QUIC handshake
+are distinguishable on the wire in such a way that they can be used for one
+RTT measurement sample per flow: the delay between the client initial and the
 server cleartext packet can be used to measure "upstream" RTT (between the
 observer and the server), and the delay between the server cleartext packet
 and the next client cleartext packet can be used to measure "downstream" RTT
 (between the client and the observer). When RTT measurements are used in large
 aggregates (all flows traversing a large link, for example), a methodology
 based on handshake RTT could be used to generate sufficient samples for some
-use cases (e.g. \[EDITOR'S NOTE: cite use cases here]) without the spin bit.
+purposes without the spin bit.
+
 However, this methodology would rely on the assumption that the difference
 between handshake RTT and nominal in-flow RTT is negligible. Specifically, (1)
 any additional delay required to compute any cryptographic parameters must be
@@ -277,7 +335,8 @@ expected RTT (i.e., defined by the emulation) fairly well. One surprising
 implication of this is that the spin bit provides _more_ information than is
 available by local estimation to an endpoint which is mostly receiving data
 frames and sending mainly ACKs, and as such can also be useful in purely
-endpoint-local observations of the RTT evolution during the flow. The spin bit also works correctly under moderate to heavy packet loss and jitter.
+endpoint-local observations of the RTT evolution during the flow. The spin bit
+also works correctly under moderate to heavy packet loss and jitter.
 
 Second, we confirm that the spin bit can be easily implemented without
 requiring deep integration into a QUIC implementation. Indeed, it could be
@@ -320,28 +379,39 @@ the application layer as well as the spin bit does.
 
 In summary, our experiments show that the spin bit is suitable for purpose,
 can be implemented with minimal disruption, and that most of the problems
-identified with it in specific corner cases can be easily mitigated. See {{SPINBIT-REPORT}} for more.
+identified with it in specific corner cases can be easily mitigated. See
+{{SPINBIT-REPORT}} for more.
 
 # Use Cases for Passive RTT Measurement
 
-This section describes current use cases for passive RTT measurement with TCP,
-i.e., the matching of packets based on sequence and acknowledgment numbers, or
-timestamps and timestamp echoes, in order to generate upstream and downstream
-RTT samples which can be added to get end-to-end RTT, as with handshake RTT in
-{{other-bad-ideas}}. These current use cases would be consumers of RTT samples
-measured from the spin bit as in {{usage}}.
+This section describes use cases for passive RTT measurement. Most of these
+are currently achieved with TCP, i.e., the matching of packets based on
+sequence and acknowledgment numbers, or timestamps and timestamp echoes, in
+order to generate upstream and downstream RTT samples which can be added to
+get end-to-end RTT. These use cases could be achieved with QUIC by replacing
+sequence/acknowledgement and timestamp analysis with spin bit analysis, as
+described in {{usage}}.
 
-In all cases, the basic measurement methodology follows one of a few basic
-variants. The RTT evolution of a flow or a set of flows can be compared to
-baseline or expected RTT measurements for flows with the same
-characterisitcs... \[EDITOR'S NOTE: other variants go here]
+This section currently focuses on a single use case, interdomain
+troubleshooting; additional use cases will be added in future revisions; see
+https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are
+currently considering.
+
+In any case, the measurement methodology follows one of a few basic variants:
+
+- The RTT evolution of a flow or a set of flows can be compared to baseline or
+  expected RTT measurements for flows with the same characterisitcs in order
+  to detect or localize latency issues in a specific network.
+
+- The RTT evolution of a single flow can also be examined in detail to
+  diagnose performance issues with that flow.
+
+- The spin bit can be used to generate a large number of samples of RTT for a
+  flow aggregate (e.g., all flows between two given networks) without regard
+  to temporal evolution of the RTT, in order to examine the distribution of
+  RTTs for flows that should shart the same paths.
 
 ## Interdomain Troubleshooting
-
-\[EDITOR'S NOTE: Emile, anything to add here?]
-
-\[EDITOR'S NOTE: this is rewritten from Roni's text on video; Roni, please
-check.]
 
 Network access providers are often the first point of contact by their
 customers when network problems impact the performance of bandwidth-intensive
@@ -382,14 +452,6 @@ available for arbitrarily small aggregates. Given that issues may be caused by
 misconfigured differential treatment of traffic, intraflow measurement also
 allows targeted troubleshooting of specific flows.
 
-## Latency as input to Active Queue Management
-
-\[EDITOR'S NOTE: Marcus?]
-
-## Other latency measurement tasks
-
-\[EDITOR'S NOTE: Others? Independent verification of network neutrality?]
-
 # Privacy and Security Considerations
 
 The privacy considerations for the latency spin bit are essentially the same
@@ -403,15 +465,18 @@ measurements {{TRILAT}} shows that the magnitude and uncertainty of RTT data
 render the resolution of geolocation information that can be derived from
 Internet RTT is limited to national- or continental-scale; i.e., less
 resolution than is generally available from free, open IP geolocation
-databases. One reason for the inaccuracy of geolocation from network RTT
-is that Internet backbone transmission facilities do not follow the great-circle
-path between major nodes. Instead, major geographic features and the efficiency
-of connecting adjacent major cities influence the facility routing. An evaluation
-of ~3500 measurements on a mesh of 25 backbone nodes in the continental United States
-shows that 85% had RTT to great-circle error of 3ms or more, making
+databases.
+
+One reason for the inaccuracy of geolocation from network RTT is that Internet
+backbone transmission facilities do not follow the great-circle path between
+major nodes. Instead, major geographic features and the efficiency of
+connecting adjacent major cities influence the facility routing. An evaluation
+of ~3500 measurements on a mesh of 25 backbone nodes in the continental United
+States shows that 85% had RTT to great-circle error of 3ms or more, making
 location within US State boundaries ambigous {{CONUS}}.
-Therefore, in the general case, when an endpoint's IP address is
-known, RTT information provides negligible additional information.
+
+Therefore, in the general case, when an endpoint's IP address is known, RTT
+information provides negligible additional information.
 
 RTT information may be used to infer the occupancy of queues along a path;
 indeed, this is part of its utility for performance measurement and
@@ -443,13 +508,32 @@ itself. We recommend that implementations take advantage of this property, to
 reduce the risk that a errors in the implementation could leak private
 transport protocol state through the spin bit.
 
+Since the spin bit is disconnected from transport mechanics, a QUIC endpoint
+implementing the spin bit that has a model of the actual network RTT and a
+target RTT to expose can "lie" about its spin bit transitions, even without
+coordination with and the collusion of the other endpoint. This is not the
+case with TCP, which requires coordination and collusion to expose false
+information via its sequence and acknowledgment numbers and its timestamp
+option. When passive measurement is used for purposes where one endpoint might
+gain a material advantage by representing a false RTT, e.g. SLA verification
+or enforcement of telecommunications regulations, this situation raises a
+question about the trustworthiness of spin bit RTT measurements.
+
+This issue must be appreciated by users of spin bit information, but
+mitigation is simple, as QUIC implementations designed to lie about RTT
+through spin bit modification are subject to dynamic analysis along paths with
+known RTTs. We consider the ease of verification of lying in situations where
+this would be prohibited by regulation or contract, combined with the
+consequences of violation of said regulation or contract, to be a sufficient
+incentive in the general case not to do it.
+
 
 # Acknowledgments
 
 Many thanks to Christian Huitema, who originally proposed the spin bit as pull
-request 609 on {{?QUIC-TRANSPORT=I-D.ietf-quic-transport}}. Thanks to the QUIC
-RTT Design Team for discussions leading especially to the measurement
-limitations and privacy and security considerations sections.
+request 609 on {{QUIC-TRANS}}. Thanks to the QUIC RTT Design Team for
+discussions leading especially to the measurement limitations and privacy and
+security considerations sections.
 
 This work is partially supported by the European Commission under Horizon 2020
 grant agreement no. 688421 Measurement and Architecture for a Middleboxed
