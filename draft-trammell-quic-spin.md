@@ -392,8 +392,8 @@ get end-to-end RTT. These use cases could be achieved with QUIC by replacing
 sequence/acknowledgement and timestamp analysis with spin bit analysis, as
 described in {{usage}}.
 
-This section currently focuses on a single use case, interdomain
-troubleshooting; additional use cases will be added in future revisions; see
+This section currently focuses one initial use case, interdomain
+troubleshooting. Additional use cases will be added in future revisions; see
 https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are
 currently considering.
 
@@ -409,7 +409,8 @@ In any case, the measurement methodology follows one of a few basic variants:
 - The spin bit can be used to generate a large number of samples of RTT for a
   flow aggregate (e.g., all flows between two given networks) without regard
   to temporal evolution of the RTT, in order to examine the distribution of
-  RTTs for flows that should shart the same paths.
+  RTTs for a group of flows that should have similar RTT (e.g., because they
+  should share the same path(s)).
 
 ## Interdomain Troubleshooting
 
@@ -443,13 +444,9 @@ is often correlated with other network-layer issues such as chronic
 interconnect congestion {{IMC-CONGESTION}}, it is useful for general
 troubleshooting of network layer issues in an interdomain setting.
 
-In all of these cases, handshake RTT as in {{other-bad-ideas}} would provide
-limited information, presuming that its assumptions hold. Intraflow
-measurements are necessary in this case to increase the baseline and
-measurement data available, to increase the chance that enough samples are
-available for arbitrarily small aggregates. Given that issues may be caused by
-misconfigured differential treatment of traffic, intraflow measurement also
-allows targeted troubleshooting of specific flows.
+In this case, multiple RTT samples per flow are useful less for observing
+intraflow behavior, and more for generating sufficient samples for a given
+aggregate to make a high-quality measurement.
 
 # Privacy and Security Considerations
 
@@ -525,7 +522,6 @@ known RTTs. We consider the ease of verification of lying in situations where
 this would be prohibited by regulation or contract, combined with the
 consequences of violation of said regulation or contract, to be a sufficient
 incentive in the general case not to do it.
-
 
 # Acknowledgments
 
