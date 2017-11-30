@@ -76,12 +76,34 @@ informative:
       -
         ins: R. Bush
     date: 2014-10-23
+  CARRA-RTT:
+    title: Passive Online RTT Estimation for Flow-Aware Routers Using One-Way Traffic (NETWORKING 2010, LNCS 6091, pp. 109–121)
+    author:
+      -
+        ins: D. Carra
+      -
+        ins: K. Avrachenkov
+      -
+        ins: S. Alouf
+      -
+        ins: A. Blanc
+      -
+        ins: P. Nain
+      -
+        ins: G. Post
+    date: 2010
   CONUS:
     title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/acmacm/FIXME-TBD)
     author:
       -
         ins: A. Morton
     date: 2017-09-01
+  NOSPIN:
+    title: Description of a tool chain to evaluate Unidirectional Passive RTT measurement (and results) (https://github.com/acmacm/PassiveRTT)
+    author:
+      -
+        ins: A. Morton
+    date: 2017-10-05
   SPINBIT-REPORT:
     title: Latency Spinbit Implementation Experience
     author:
@@ -305,7 +327,7 @@ the packet number, and rejecting edges that appear out-of-order.
 
 ## Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
 
-There are two broad alternatives to explicit signaling for passive RTT
+There are three broad alternatives to explicit signaling for passive RTT
 measurement for measuring the RTT experienced by QUIC flows.
 
 The first of these is handshake RTT measurement. As described in
@@ -347,6 +369,42 @@ residential access network measurement under a network architecture and
 business model where the network operator owns the CPE), active measurement
 can be used to generate RTT samples at the cost of at least two non-productive
 packets sent though the network per sample.
+
+The third alternative relies on the inter-packet spacing to convey information
+about the RTT, and would therefore allow measurements confined to a single 
+direction of transmission, as described in {{CARRA-RTT}}.
+In {{NOSPIN}}, a tool-chain was assembled that allowed evaluation of a critical
+aspect of the {{CARRA-RTT}} method: extraction of inter-packet times of real packet streams
+and the analysis of frequencies present in the packet stream using the 
+Lomb-Scargle Periodogram. Several streams were evaluated, as summarized below:
+
+* It seems that Carra et al. {{CARRA-RTT}} took the noisy and low-confidence results of 
+a statistical process (no RTT-related frquency has been detected
+even after using very low alpha confidence) and added hueristics with sliding-window averaging to
+infer the fundamental frequency and RTT present in a unidirectional stream.
+
+* There appear to be several limitations on the streams that are applicable.
+Streams with long RTT (~50ms) are more likely to be suitable (having a 
+better match between packet rate and relatively low frequencies to detect).
+
+* None of the TCP streams analysed (to date) posess a sufficient packet rate
+such that the measured fundamental frequency or the multiples of the fundamental
+are actually within the detectable range. 
+
+* "Ideal" interarrival time streams were simulated with uniform sampling
+and period. The Lomb-Scargle Periodogram is surprisingly unable to detect
+the fundamental frequency at 100 Hz from the constant 10 ms packet spacing.
+
+* It is not clear if IETF QUIC protocol stream will possess the same inter-packet 
+arrival time features as TCP streams. Also, Carra et al. note that their process
+may not work if the TCP stream encounters a bottleneck, which would be the essential
+case for network troubleshooting. Mobile networks with time-slot service disciplines
+would likely cause similar issues as a bottleneck, by imposing the time-slot 
+interval on the spacing of many packets.
+
+* The Carra et al. {{CARRA-RTT}} calculation of minimum and maximum frquecies that can be detected 
+may not be applicable when the inter-arrival times are (both) the signal 
+being detected and govern the non-uniform sampling frequency. 
 
 ## Experimental Evaluation
 
