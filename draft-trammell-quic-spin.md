@@ -424,7 +424,7 @@ described in {{usage}}.
 
 This section currently focuses two initial use cases. Additional use cases
 will be added in future revisions; see
-https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are
+https://github.com/britram/draft-trammell-quic-spin/issues for use cases we are
 currently considering.
 
 In any case, the measurement methodology follows one of a few basic variants:
