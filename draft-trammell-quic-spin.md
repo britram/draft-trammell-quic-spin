@@ -133,17 +133,17 @@ informative:
   WWMM-BLOAT:
     title: Impact of TCP Congestion Control on Bufferbloat in Cellular Networks (in Proc. IEEE WoWMoM 2013)
     author:
-      -     
+      -
         ins: S. Alfredsson
       -
         ins: G. Giudice
       -
         ins: J. Garcia
-      - 
+      -
         ins: A. Brunstrom
       -
         ins: L. Cicco
-      - 
+      -
         ins: S. Mascolo
     date: 2013-06
 
@@ -236,7 +236,7 @@ packet header. This proposal suggests to use the second most significant bit
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+
-|0|S|C|K|Type(4)|
+|0|C|K|S|Type(4)|
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 +                     [Connection ID (64)]                      +
@@ -249,8 +249,22 @@ packet header. This proposal suggests to use the second most significant bit
 ~~~~~
 {: #fig-short-header title="Short Header Format including proposed Spin Bit"}
 
-This will shift the Connection ID flag and the Key Phase Bit to 0x20 and 0x10
-respectively, and will limit the number of available short packet types to 16.
+This will limit the number of available short packet types to 16. The short
+packet types will be redefined to the following values:
+
+| Type | Packet Number Size |
+|:-----|:-------------------|
+|  0xD | 4 octets           |
+|  0xE | 2 octets           |
+|  0xF | 1 octet            |
+{: #short-packet-types title="Short Header Packet Types after Definition of Spin Bit"}
+
+Note that this proposal changes the short header as defined in the editor's
+copy of {{QUIC-TRANS}} at the time of writing; regardless of where and how
+the spin bit is eventually defined, the key properties of the spin bit are (1)
+it's a single bit, (2) it spins as defined above, and (3) it appears only in
+the short header; i.e. after version negotiation and connection establishment
+are completed.
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
@@ -408,8 +422,8 @@ get end-to-end RTT. These use cases could be achieved with QUIC by replacing
 sequence/acknowledgement and timestamp analysis with spin bit analysis, as
 described in {{usage}}.
 
-This section currently focuses one initial use case, interdomain
-troubleshooting. Additional use cases will be added in future revisions; see
+This section currently focuses two initial use cases. Additional use cases
+will be added in future revisions; see
 https://github.com/britram/draft-trammell-spin-bit/issues for use cases we are
 currently considering.
 
@@ -466,29 +480,29 @@ aggregate to make a high-quality measurement.
 
 ## Bufferbloat Mitigation in Cellular Networks
 
-Cellular networks consist of multiple Radio Access Networks (RAN) where 
+Cellular networks consist of multiple Radio Access Networks (RAN) where
 mobile devices are attached to base stations. It is common that base stations
-from different vendors and different generations are deployed in the same 
-cellular network. 
+from different vendors and different generations are deployed in the same
+cellular network.
 
-Due to the dynamic nature of RANs, base stations have typically been 
-provisioned with large buffers to maximize throughput despite rapid changes in 
-capacity. As a side effect, buffer bloat has become a common issue in such 
-networks {{WWMM-BLOAT}}. 
+Due to the dynamic nature of RANs, base stations have typically been
+provisioned with large buffers to maximize throughput despite rapid changes in
+capacity. As a side effect, buffer bloat has become a common issue in such
+networks {{WWMM-BLOAT}}.
 
-An effective way of mitigating buffer bloat without sacrificing too much 
-throughput is to deploy Active Queue Management (AQM) in bottleneck routers and 
-base stations. However, due to the variation in deployed base-stations it is 
-not always possible to enable AQM at the bottlenecks, without massive 
+An effective way of mitigating buffer bloat without sacrificing too much
+throughput is to deploy Active Queue Management (AQM) in bottleneck routers and
+base stations. However, due to the variation in deployed base-stations it is
+not always possible to enable AQM at the bottlenecks, without massive
 infrastructure investments.
 
-An alternative approach is to deploy AQM as a network function in a more 
-centralized location than the traditional bottleneck nodes. Such an AQM 
+An alternative approach is to deploy AQM as a network function in a more
+centralized location than the traditional bottleneck nodes. Such an AQM
 monitors the RTT progression of flows and drops or marks packets when the
-measured latency is indicative of congestion. Such a function also has the 
-possibility to detect misbehaving flows and reduce the negative impact they have 
-on the network. 
- 
+measured latency is indicative of congestion. Such a function also has the
+possibility to detect misbehaving flows and reduce the negative impact they have
+on the network.
+
 # Privacy and Security Considerations
 
 The privacy considerations for the latency spin bit are essentially the same
