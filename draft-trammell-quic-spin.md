@@ -250,7 +250,7 @@ bit, as described in {{usage}}.
 ## Proposed Short Header Format Including Spin Bit
 
 Since it is possible to measure handshake RTT without a spin bit (see
-{{other-bad-ideas}}), it is sufficient to include the spin bit in the short
+{{handshake}}), it is sufficient to include the spin bit in the short
 packet header. This proposal suggests to use the second most significant bit
 (0x40) of the first octet in the short header for the spin bit.
 
@@ -377,7 +377,7 @@ rejecting samples from packets that do not advance by one, as suggested in
 mitigating the effects of reordering on RTT measurement.
 
 Fifth, we performed parallel active measurements using ping, as described in
-{{other-bad-ideas}}. In our emulated network, the ICMP packets and the QUIC
+{{just-ping-it}}. In our emulated network, the ICMP packets and the QUIC
 packets traverse the same links with the same treatment, and share queues at
 each link, which mitigates most of the issues with ping. We find that while
 ping works as expected in measuring end-to-end RTT, it does not track the
@@ -398,11 +398,6 @@ order to generate upstream and downstream RTT samples which can be added to
 get end-to-end RTT. These use cases could be achieved with QUIC by replacing
 sequence/acknowledgement and timestamp analysis with spin bit analysis, as
 described in {{usage}}.
-
-This section currently focuses two initial use cases. Additional use cases
-will be added in future revisions; see
-https://github.com/britram/draft-trammell-quic-spin/issues for use cases we are
-currently considering.
 
 In any case, the measurement methodology follows one of a few basic variants:
 
@@ -479,6 +474,19 @@ monitors the RTT progression of flows and drops or marks packets when the
 measured latency is indicative of congestion. Such a function also has the
 possibility to detect misbehaving flows and reduce the negative impact they have
 on the network.
+
+## Quality of Experience (QoE) monitoring for media streams
+
+\[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/8]
+
+## Third-Party Latency Verification
+
+\[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/6]
+
+## Internet Measurement Research
+
+\[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/5]
+
 
 # Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
 
