@@ -325,87 +325,6 @@ by causing spurious edge detection and therefore low RTT estimates. This can
 be probabilistically mitigated by the observer tracking the low-order bits of
 the packet number, and rejecting edges that appear out-of-order.
 
-## Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
-
-There are three broad alternatives to explicit signaling for passive RTT
-measurement for measuring the RTT experienced by QUIC flows.
-
-The first of these is handshake RTT measurement. As described in
-{{?QUIC-MGT=I-D.ietf-quic-manageability}}, the packets of the QUIC handshake
-are distinguishable on the wire in such a way that they can be used for one
-RTT measurement sample per flow: the delay between the client initial and the
-server cleartext packet can be used to measure "upstream" RTT (between the
-observer and the server), and the delay between the server cleartext packet
-and the next client cleartext packet can be used to measure "downstream" RTT
-(between the client and the observer). When RTT measurements are used in large
-aggregates (all flows traversing a large link, for example), a methodology
-based on handshake RTT could be used to generate sufficient samples for some
-purposes without the spin bit.
-
-However, this methodology would rely on the assumption that the difference
-between handshake RTT and nominal in-flow RTT is negligible. Specifically, (1)
-any additional delay required to compute any cryptographic parameters must be
-negligible with respect to network RTT; (2) any additional delay required to
-establish state along the path must be negligible with respect to network RTT;
-and (3) network treatment of initial packets in a flow must identical to that
-of later packets in the flow. When these assumptions cannot be shown to hold,
-spin-bit based RTT measurement is preferable to handshake RTT measurement,
-even for applications for which handshake RTT measurement would otherwise be
-suitable.
-
-The second alternative is parallel active measurement: using ICMP Echo Request
-and Reply {{?RFC0792}} {{?RFC4433}}, a dedicated measurement protocol like
-TWAMP {{?RFC5357}}, or a separate diagnostic QUIC flow to measure RTT.
-Regardless of protocol, the active measurement must be initiated by a client
-on the same network as the client of the QUIC flow(s) of interest, or a
-network close by in the Internet topology, toward the server. Note that there
-is no guarantee that ICMP flows will receive the same network treatment as the
-flows under study, both due to differential treatment of ICMP traffic and due
-to ECMP routing (see e.g. {{TOKYO-PING}}). TWAMP and QUIC diagnostic flows,
-though both use UDP, have similar issues regarding ECMP. However, in
-situations where the entity doing the measurement can guarantee that the
-active measurement traffic will traverse the subpaths of interest (e.g.
-residential access network measurement under a network architecture and
-business model where the network operator owns the CPE), active measurement
-can be used to generate RTT samples at the cost of at least two non-productive
-packets sent though the network per sample.
-
-The third alternative relies on the inter-packet spacing to convey information
-about the RTT, and would therefore allow measurements confined to a single 
-direction of transmission, as described in {{CARRA-RTT}}.
-In {{NOSPIN}}, a tool-chain was assembled that allowed evaluation of a critical
-aspect of the {{CARRA-RTT}} method: extraction of inter-packet times of real packet streams
-and the analysis of frequencies present in the packet stream using the 
-Lomb-Scargle Periodogram. Several streams were evaluated, as summarized below:
-
-* It seems that Carra et al. {{CARRA-RTT}} took the noisy and low-confidence results of 
-a statistical process (no RTT-related frquency has been detected
-even after using very low alpha confidence) and added hueristics with sliding-window averaging to
-infer the fundamental frequency and RTT present in a unidirectional stream.
-
-* There appear to be several limitations on the streams that are applicable.
-Streams with long RTT (~50ms) are more likely to be suitable (having a 
-better match between packet rate and relatively low frequencies to detect).
-
-* None of the TCP streams analysed (to date) posess a sufficient packet rate
-such that the measured fundamental frequency or the multiples of the fundamental
-are actually within the detectable range. 
-
-* "Ideal" interarrival time streams were simulated with uniform sampling
-and period. The Lomb-Scargle Periodogram is surprisingly unable to detect
-the fundamental frequency at 100 Hz from the constant 10 ms packet spacing.
-
-* It is not clear if IETF QUIC protocol stream will possess the same inter-packet 
-arrival time features as TCP streams. Also, Carra et al. note that their process
-may not work if the TCP stream encounters a bottleneck, which would be the essential
-case for network troubleshooting. Mobile networks with time-slot service disciplines
-would likely cause similar issues as a bottleneck, by imposing the time-slot 
-interval on the spacing of many packets.
-
-* The Carra et al. {{CARRA-RTT}} calculation of minimum and maximum frquecies that can be detected 
-may not be applicable when the inter-arrival times are (both) the signal 
-being detected and govern the non-uniform sampling frequency. 
-
 ## Experimental Evaluation
 
 We have evaluated the effectiveness of the spin bit in an emulated network
@@ -560,6 +479,100 @@ monitors the RTT progression of flows and drops or marks packets when the
 measured latency is indicative of congestion. Such a function also has the
 possibility to detect misbehaving flows and reduce the negative impact they have
 on the network.
+
+# Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
+
+There are three broad alternatives to explicit signaling for passive RTT
+measurement for measuring the RTT experienced by QUIC flows.
+
+## Handshake RTT measurement {#handshake}
+
+The first of these is handshake RTT measurement. As described in
+{{?QUIC-MGT=I-D.ietf-quic-manageability}}, the packets of the QUIC handshake
+are distinguishable on the wire in such a way that they can be used for one
+RTT measurement sample per flow: the delay between the client initial and the
+server cleartext packet can be used to measure "upstream" RTT (between the
+observer and the server), and the delay between the server cleartext packet
+and the next client cleartext packet can be used to measure "downstream" RTT
+(between the client and the observer). When RTT measurements are used in large
+aggregates (all flows traversing a large link, for example), a methodology
+based on handshake RTT could be used to generate sufficient samples for some
+purposes without the spin bit.
+
+However, this methodology would rely on the assumption that the difference
+between handshake RTT and nominal in-flow RTT is negligible. Specifically, (1)
+any additional delay required to compute any cryptographic parameters must be
+negligible with respect to network RTT; (2) any additional delay required to
+establish state along the path must be negligible with respect to network RTT;
+and (3) network treatment of initial packets in a flow must identical to that
+of later packets in the flow. When these assumptions cannot be shown to hold,
+spin-bit based RTT measurement is preferable to handshake RTT measurement,
+even for applications for which handshake RTT measurement would otherwise be
+suitable.
+
+## Parallel active measurement {#just-ping-it}
+
+The second alternative is parallel active measurement: using ICMP Echo Request
+and Reply {{?RFC0792}} {{?RFC4433}}, a dedicated measurement protocol like
+TWAMP {{?RFC5357}}, or a separate diagnostic QUIC flow to measure RTT.
+Regardless of protocol, the active measurement must be initiated by a client
+on the same network as the client of the QUIC flow(s) of interest, or a
+network close by in the Internet topology, toward the server. Note that there
+is no guarantee that ICMP flows will receive the same network treatment as the
+flows under study, both due to differential treatment of ICMP traffic and due
+to ECMP routing (see e.g. {{TOKYO-PING}}). TWAMP and QUIC diagnostic flows,
+though both use UDP, have similar issues regarding ECMP. However, in
+situations where the entity doing the measurement can guarantee that the
+active measurement traffic will traverse the subpaths of interest (e.g.
+residential access network measurement under a network architecture and
+business model where the network operator owns the CPE), active measurement
+can be used to generate RTT samples at the cost of at least two non-productive
+packets sent though the network per sample.
+
+## Frequency Analysis {#frequency-analysis}
+
+The third alternative, proposed during the QUIC RTT design team process,
+relies on the inter-packet spacing to convey information about the RTT, and
+would therefore allow measurements confined to a single direction of
+transmission, as described in {{CARRA-RTT}}.
+
+We evaluated the applicability of this work to passive RTT measurement in
+QUIC, and found it wanting. We assebled a toolchain, as described in
+{{NOSPIN}}, that allowed evaluation of a critical aspect of the {{CARRA-RTT}}
+method: extraction of inter-packet times of real packet streams and the
+analysis of frequencies present in the packet stream using the Lomb-Scargle
+Periodogram. Several streams were evaluated, as summarized below:
+
+* It seems that Carra et al. {{CARRA-RTT}} took the noisy and low-confidence
+  results of a statistical process (no RTT-related frquency has been detected
+  even after using very low alpha confidence) and added hueristics with
+  sliding-window averaging to infer the fundamental frequency and RTT present
+  in a unidirectional stream.
+
+* There appear to be several limitations on the streams that are applicable.
+  Streams with long RTT (~50ms) are more likely to be suitable (having a
+  better match between packet rate and relatively low frequencies to detect).
+
+* None of the TCP streams analysed (to date) posess a sufficient packet rate
+such that the measured fundamental frequency or the multiples of the fundamental
+are actually within the detectable range.
+
+* "Ideal" interarrival time streams were simulated with uniform sampling and
+  period. The Lomb-Scargle Periodogram is surprisingly unable to detect the
+  fundamental frequency at 100 Hz from the constant 10 ms packet spacing.
+
+* It is not clear if IETF QUIC protocol stream will possess the same
+  inter-packet arrival time features as TCP streams. Also, Carra et al. note
+  that their process may not work if the TCP stream encounters a bottleneck,
+  which would be the essential case for network troubleshooting. Mobile
+  networks with time-slot service disciplines would likely cause similar
+  issues as a bottleneck, by imposing the time-slot interval on the spacing of
+  many packets.
+
+* The Carra et al. {{CARRA-RTT}} calculation of minimum and maximum frquecies
+  that can be detected may not be applicable when the inter-arrival times are
+  (both) the signal being detected and govern the non-uniform sampling
+  frequency.
 
 # Privacy and Security Considerations
 
