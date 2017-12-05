@@ -285,6 +285,9 @@ address {
 <link href="#rfc.section.4" rel="Chapter" title="4 Use Cases for Passive RTT Measurement">
 <link href="#rfc.section.4.1" rel="Chapter" title="4.1 Interdomain Troubleshooting">
 <link href="#rfc.section.4.2" rel="Chapter" title="4.2 Bufferbloat Mitigation in Cellular Networks">
+<link href="#rfc.section.4.3" rel="Chapter" title="4.3 Quality of Experience (QoE) monitoring for media streams">
+<link href="#rfc.section.4.4" rel="Chapter" title="4.4 Third-Party Latency Verification">
+<link href="#rfc.section.4.5" rel="Chapter" title="4.5 Internet Measurement Research">
 <link href="#rfc.section.5" rel="Chapter" title="5 Alternate RTT Measurement Approaches for Diagnosing QUIC flows">
 <link href="#rfc.section.5.1" rel="Chapter" title="5.1 Handshake RTT measurement">
 <link href="#rfc.section.5.2" rel="Chapter" title="5.2 Parallel active measurement">
@@ -419,6 +422,12 @@ address {
 </li>
 <li>4.2.   <a href="#rfc.section.4.2">Bufferbloat Mitigation in Cellular Networks</a>
 </li>
+<li>4.3.   <a href="#rfc.section.4.3">Quality of Experience (QoE) monitoring for media streams</a>
+</li>
+<li>4.4.   <a href="#rfc.section.4.4">Third-Party Latency Verification</a>
+</li>
+<li>4.5.   <a href="#rfc.section.4.5">Internet Measurement Research</a>
+</li>
 </ul><li>5.   <a href="#rfc.section.5">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
 </li>
 <ul><li>5.1.   <a href="#rfc.section.5.1">Handshake RTT measurement</a>
@@ -463,7 +472,7 @@ address {
 <h1 id="rfc.section.2.1">
 <a href="#rfc.section.2.1">2.1.</a> <a href="#proposed-short-header-format-including-spin-bit" id="proposed-short-header-format-including-spin-bit">Proposed Short Header Format Including Spin Bit</a>
 </h1>
-<p id="rfc.section.2.1.p.1">Since it is possible to measure handshake RTT without a spin bit (see <a href="#other-bad-ideas" class="xref">Section 5</a>), it is sufficient to include the spin bit in the short packet header. This proposal suggests to use the second most significant bit (0x40) of the first octet in the short header for the spin bit.</p>
+<p id="rfc.section.2.1.p.1">Since it is possible to measure handshake RTT without a spin bit (see <a href="#handshake" class="xref">Section 5.1</a>), it is sufficient to include the spin bit in the short packet header. This proposal suggests to use the second most significant bit (0x40) of the first octet in the short header for the spin bit.</p>
 <div id="rfc.figure.1"></div>
 <div id="fig-short-header"></div>
 <pre>
@@ -525,14 +534,13 @@ address {
 <p id="rfc.section.3.2.p.3">Second, we confirm that the spin bit can be easily implemented without requiring deep integration into a QUIC implementation. Indeed, it could be implemented completely independently, as a shim, aside from the requirement that the spin bit value be integrity-protected along with the rest of the QUIC header.</p>
 <p id="rfc.section.3.2.p.4">Third, we performed experiments focused on the intermittent-sender problem described in <a href="#limitations" class="xref">Section 3.1</a>. We confirm that the spinbit does not provide useful RTT samples after the handshake when packets are only sent intermittently. Simple heuristics can be used to recognize this situation, however, and to reject these RTT samples. We also find that a simple sender-side heuristic can be used to determine whether a sample will be useful. If a sender sends a packet more than a specified delay (e.g. 1ms) after the last packet received by the client, it knows that any latency spin observation of that packet will be invalid. If a second &#8220;spin valid&#8221; bit were available, the sender could then mark that packet &#8220;spin invalid&#8221;. Our experiments show that this simple heuristic and spin validity bit are succesful in marking all packets whose RTT samples should be rejected.</p>
 <p id="rfc.section.3.2.p.5">Fourth, we performed experiments focused on the reordering problem described in <a href="#limitations" class="xref">Section 3.1</a>. We find that while reordering can cause spurious samples at a naive observer, two simple approaches can be used to reject spurious RTT samples due to reordering. First, a two-bit spin signal that always advances in a single direction (e.g. 00 -&gt; 01 -&gt; 10 -&gt; 11) successfully rejects all reordered samples, including under amounts of reordering that render the transport itself mostly useless. However, adding a bit is not necessary: having the observer keep the least significant bits of the packet number, and rejecting samples from packets that do not advance by one, as suggested in <a href="#limitations" class="xref">Section 3.1</a>, is essentially as successful as a two-bit spin signal in mitigating the effects of reordering on RTT measurement.</p>
-<p id="rfc.section.3.2.p.6">Fifth, we performed parallel active measurements using ping, as described in <a href="#other-bad-ideas" class="xref">Section 5</a>. In our emulated network, the ICMP packets and the QUIC packets traverse the same links with the same treatment, and share queues at each link, which mitigates most of the issues with ping. We find that while ping works as expected in measuring end-to-end RTT, it does not track the sender&#8217;s estimate of RTT, and as such does not measure the RTT experienced by the application layer as well as the spin bit does.</p>
+<p id="rfc.section.3.2.p.6">Fifth, we performed parallel active measurements using ping, as described in <a href="#just-ping-it" class="xref">Section 5.2</a>. In our emulated network, the ICMP packets and the QUIC packets traverse the same links with the same treatment, and share queues at each link, which mitigates most of the issues with ping. We find that while ping works as expected in measuring end-to-end RTT, it does not track the sender&#8217;s estimate of RTT, and as such does not measure the RTT experienced by the application layer as well as the spin bit does.</p>
 <p id="rfc.section.3.2.p.7">In summary, our experiments show that the spin bit is suitable for purpose, can be implemented with minimal disruption, and that most of the problems identified with it in specific corner cases can be easily mitigated. See <a href="#SPINBIT-REPORT" class="xref">[SPINBIT-REPORT]</a> for more.</p>
 <h1 id="rfc.section.4">
 <a href="#rfc.section.4">4.</a> <a href="#use-cases-for-passive-rtt-measurement" id="use-cases-for-passive-rtt-measurement">Use Cases for Passive RTT Measurement</a>
 </h1>
 <p id="rfc.section.4.p.1">This section describes use cases for passive RTT measurement. Most of these are currently achieved with TCP, i.e., the matching of packets based on sequence and acknowledgment numbers, or timestamps and timestamp echoes, in order to generate upstream and downstream RTT samples which can be added to get end-to-end RTT. These use cases could be achieved with QUIC by replacing sequence/acknowledgement and timestamp analysis with spin bit analysis, as described in <a href="#usage" class="xref">Section 3</a>.</p>
-<p id="rfc.section.4.p.2">This section currently focuses two initial use cases. Additional use cases will be added in future revisions; see https://github.com/britram/draft-trammell-quic-spin/issues for use cases we are currently considering.</p>
-<p id="rfc.section.4.p.3">In any case, the measurement methodology follows one of a few basic variants:</p>
+<p id="rfc.section.4.p.2">In any case, the measurement methodology follows one of a few basic variants:</p>
 <p></p>
 
 <ul>
@@ -555,6 +563,18 @@ address {
 <p id="rfc.section.4.2.p.2">Due to the dynamic nature of RANs, base stations have typically been provisioned with large buffers to maximize throughput despite rapid changes in capacity. As a side effect, buffer bloat has become a common issue in such networks <a href="#WWMM-BLOAT" class="xref">[WWMM-BLOAT]</a>.</p>
 <p id="rfc.section.4.2.p.3">An effective way of mitigating buffer bloat without sacrificing too much throughput is to deploy Active Queue Management (AQM) in bottleneck routers and base stations. However, due to the variation in deployed base-stations it is not always possible to enable AQM at the bottlenecks, without massive infrastructure investments.</p>
 <p id="rfc.section.4.2.p.4">An alternative approach is to deploy AQM as a network function in a more centralized location than the traditional bottleneck nodes. Such an AQM monitors the RTT progression of flows and drops or marks packets when the measured latency is indicative of congestion. Such a function also has the possibility to detect misbehaving flows and reduce the negative impact they have on the network.</p>
+<h1 id="rfc.section.4.3">
+<a href="#rfc.section.4.3">4.3.</a> <a href="#quality-of-experience-qoe-monitoring-for-media-streams" id="quality-of-experience-qoe-monitoring-for-media-streams">Quality of Experience (QoE) monitoring for media streams</a>
+</h1>
+<p id="rfc.section.4.3.p.1">[EDITOR&#8217;S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/8]</p>
+<h1 id="rfc.section.4.4">
+<a href="#rfc.section.4.4">4.4.</a> <a href="#third-party-latency-verification" id="third-party-latency-verification">Third-Party Latency Verification</a>
+</h1>
+<p id="rfc.section.4.4.p.1">[EDITOR&#8217;S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/6]</p>
+<h1 id="rfc.section.4.5">
+<a href="#rfc.section.4.5">4.5.</a> <a href="#internet-measurement-research" id="internet-measurement-research">Internet Measurement Research</a>
+</h1>
+<p id="rfc.section.4.5.p.1">[EDITOR&#8217;S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/5]</p>
 <h1 id="rfc.section.5">
 <a href="#rfc.section.5">5.</a> <a href="#other-bad-ideas" id="other-bad-ideas">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
 </h1>
@@ -572,7 +592,7 @@ address {
 <a href="#rfc.section.5.3">5.3.</a> <a href="#frequency-analysis" id="frequency-analysis">Frequency Analysis</a>
 </h1>
 <p id="rfc.section.5.3.p.1">The third alternative, proposed during the QUIC RTT design team process, relies on the inter-packet spacing to convey information about the RTT, and would therefore allow measurements confined to a single direction of transmission, as described in <a href="#CARRA-RTT" class="xref">[CARRA-RTT]</a>.</p>
-<p id="rfc.section.5.3.p.2">We evaluated the In <a href="#NOSPIN" class="xref">[NOSPIN]</a>, a tool-chain was assembled that allowed evaluation of a critical aspect of the <a href="#CARRA-RTT" class="xref">[CARRA-RTT]</a> method: extraction of inter-packet times of real packet streams and the analysis of frequencies present in the packet stream using the Lomb-Scargle Periodogram. Several streams were evaluated, as summarized below:</p>
+<p id="rfc.section.5.3.p.2">We evaluated the applicability of this work to passive RTT measurement in QUIC, and found it wanting. We assebled a toolchain, as described in <a href="#NOSPIN" class="xref">[NOSPIN]</a>, that allowed evaluation of a critical aspect of the <a href="#CARRA-RTT" class="xref">[CARRA-RTT]</a> method: extraction of inter-packet times of real packet streams and the analysis of frequencies present in the packet stream using the Lomb-Scargle Periodogram. Several streams were evaluated, as summarized below:</p>
 <p></p>
 
 <ul>
