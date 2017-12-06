@@ -136,6 +136,17 @@ informative:
       -
         ins: k. claffy
     date: 2014-11
+  IMC-TCPSIG:
+    title: TCP Congeston Signatures (ACM IMC 2017)
+    author:
+      -
+        ins: S. Sundaresan
+      -
+        ins: A. Dhamdhere
+      -
+        ins: M. Allman
+      -
+        ins: k claffy
   CACM-TCP:
     title: Passively Measuring TCP Round-Trip Times (in Communications of the ACM)
     author:
@@ -485,8 +496,19 @@ on the network.
 
 ## Internet Measurement Research
 
-\[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/5]
-
+As a large, distributed, engineered system with no centralized control, the
+Internet has emergent properties of interest to the research community not
+just for purely scientific curiosity, but also to provide applicable guidance
+to Internet engineering, Internet protocol design and development, network
+operations, and policy development. Latency measurements in particular are
+both an active area of research as well as an important tool for certain
+measurement studies (see, e.g. {{IMC-TCPSIG}}, from the most recent Internet
+Measurement Conference). While much of this work is currently done with active
+measurements, the ability to generate latency samples passively or using a
+hybrid measurement approach (i.e., through passive observation of
+purpose-generated active measurement traffic; see {{?RFC7799}}) can
+drastically increase the efficiency and scalability of these studies. A
+latency spin bit would make these techniques applicable to QUIC, as well.
 
 # Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
 
