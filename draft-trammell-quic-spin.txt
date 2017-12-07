@@ -92,8 +92,7 @@ Table of Contents
      4.1.  Interdomain Troubleshooting . . . . . . . . . . . . . . .  10
      4.2.  Bufferbloat Mitigation in Cellular Networks . . . . . . .  11
      4.3.  Quality of Experience (QoE) Monitoring for Media Streams   12
-     4.4.  Third-Party Latency Verification  . . . . . . . . . . . .  12
-     4.5.  Internet Measurement Research . . . . . . . . . . . . . .  12
+     4.4.  Internet Measurement Research . . . . . . . . . . . . . .  12
    5.  Alternate RTT Measurement Approaches for Diagnosing QUIC
        flows . . . . . . . . . . . . . . . . . . . . . . . . . . . .  12
      5.1.  Handshake RTT measurement . . . . . . . . . . . . . . . .  12
@@ -101,8 +100,9 @@ Table of Contents
      5.3.  Frequency Analysis  . . . . . . . . . . . . . . . . . . .  13
    6.  Privacy and Security Considerations . . . . . . . . . . . . .  14
    7.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  16
-   8.  Informative References  . . . . . . . . . . . . . . . . . . .  17
+   8.  Informative References  . . . . . . . . . . . . . . . . . . .  16
    Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  19
+
 
 
 
@@ -601,10 +601,10 @@ Internet-Draft                  Spin Bit                   December 2017
 
    Due to the dynamic nature of RANs, base stations have typically been
    provisioned with large buffers to maximize throughput despite rapid
-   changes in capacity.  As a side effect, buffer bloat has become a
+   changes in capacity.  As a side effect, bufferbloat has become a
    common issue in such networks [WWMM-BLOAT].
 
-   An effective way of mitigating buffer bloat without sacrificing too
+   An effective way of mitigating bufferbloat without sacrificing too
    much throughput is to deploy Active Queue Management (AQM) in
    bottleneck routers and base stations.  However, due to the variation
    in deployed base-stations it is not always possible to enable AQM at
@@ -630,12 +630,7 @@ Internet-Draft                  Spin Bit                   December 2017
    [EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-
    spin/issues/8]
 
-4.4.  Third-Party Latency Verification
-
-   [EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-
-   spin/issues/6]
-
-4.5.  Internet Measurement Research
+4.4.  Internet Measurement Research
 
    As a large, distributed, engineered system with no centralized
    control, the Internet has emergent properties of interest to the
@@ -666,6 +661,11 @@ Internet-Draft                  Spin Bit                   December 2017
    sample per flow: the delay between the client initial and the server
    cleartext packet can be used to measure "upstream" RTT (between the
    observer and the server), and the delay between the server cleartext
+   packet and the next client cleartext packet can be used to measure
+   "downstream" RTT (between the client and the observer).  When RTT
+   measurements are used in large aggregates (all flows traversing a
+   large link, for example), a methodology based on handshake RTT could
+
 
 
 
@@ -674,10 +674,6 @@ Trammell, et al.          Expires June 10, 2018                [Page 12]
 Internet-Draft                  Spin Bit                   December 2017
 
 
-   packet and the next client cleartext packet can be used to measure
-   "downstream" RTT (between the client and the observer).  When RTT
-   measurements are used in large aggregates (all flows traversing a
-   large link, for example), a methodology based on handshake RTT could
    be used to generate sufficient samples for some purposes without the
    spin bit.
 
@@ -721,7 +717,11 @@ Internet-Draft                  Spin Bit                   December 2017
    about the RTT, and would therefore allow measurements confined to a
    single direction of transmission, as described in [CARRA-RTT].
 
-
+   We evaluated the applicability of this work to passive RTT
+   measurement in QUIC, and found it wanting.  We assembled a toolchain,
+   as described in [NOSPIN], that allowed evaluation of a critical
+   aspect of the [CARRA-RTT] method: extraction of inter-packet times of
+   real packet streams and the analysis of frequencies present in the
 
 
 
@@ -730,11 +730,6 @@ Trammell, et al.          Expires June 10, 2018                [Page 13]
 Internet-Draft                  Spin Bit                   December 2017
 
 
-   We evaluated the applicability of this work to passive RTT
-   measurement in QUIC, and found it wanting.  We assembled a toolchain,
-   as described in [NOSPIN], that allowed evaluation of a critical
-   aspect of the [CARRA-RTT] method: extraction of inter-packet times of
-   real packet streams and the analysis of frequencies present in the
    packet stream using the Lomb-Scargle Periodogram.  Several streams
    were evaluated, as summarized below:
 
@@ -778,6 +773,11 @@ Internet-Draft                  Spin Bit                   December 2017
    The privacy considerations for the latency spin bit are essentially
    the same as those for passive RTT measurement in general.
 
+   A concern was raised during the discussion of this feature within the
+   QUIC working group and the QUIC RTT Design Team that high-resolution
+   RTT information might be usable for geolocation.  However, an
+   evaluation based on RTT samples taken over 13,780 paths in the
+   Internet from RIPE Atlas anchoring measurements [TRILAT] shows that
 
 
 
@@ -786,11 +786,6 @@ Trammell, et al.          Expires June 10, 2018                [Page 14]
 Internet-Draft                  Spin Bit                   December 2017
 
 
-   A concern was raised during the discussion of this feature within the
-   QUIC working group and the QUIC RTT Design Team that high-resolution
-   RTT information might be usable for geolocation.  However, an
-   evaluation based on RTT samples taken over 13,780 paths in the
-   Internet from RIPE Atlas anchoring measurements [TRILAT] shows that
    the magnitude and uncertainty of RTT data limit the resolution of
    geolocation information that can be derived from Internet RTT to
    national- or continental-scale; i.e., less resolution than is
@@ -811,15 +806,14 @@ Internet-Draft                  Spin Bit                   December 2017
    RTT information may be used to infer the occupancy of queues along a
    path; indeed, this is part of its utility for performance measurement
    and diagnostics.  When a link on a given path has excessive buffering
-   (on the order of hundreds of milliseconds or more; a situation
-   colloquially referred to as "bufferbloat"), such that the difference
-   in delay between an empty queue and a full queue dwarfs normal
-   variance and RTT along the path, RTT variance during the lifetime of
-   a flow can be used to infer the presence of traffic on the bottleneck
-   link.  In practice, however, this is not a concern for passive
-   measurement of congestion-controlled traffic, since any observer in a
-   situation to observe RTT passively need not infer the presence of the
-   traffic, as it can observe it directly.
+   (on the order of hundreds of milliseconds or more), such that the
+   difference in delay between an empty queue and a full queue dwarfs
+   normal variance and RTT along the path, RTT variance during the
+   lifetime of a flow can be used to infer the presence of traffic on
+   the bottleneck link.  In practice, however, this is not a concern for
+   passive measurement of congestion-controlled traffic, since any
+   observer in a situation to observe RTT passively need not infer the
+   presence of the traffic, as it can observe it directly.
 
    In addition, since RTT information contains application as well as
    network delay, patterns in RTT variance from minimum, and therefore
@@ -833,15 +827,6 @@ Internet-Draft                  Spin Bit                   December 2017
    RTT for passive measurement as provided by the spin bit poses
    negligible marginal risk to privacy.
 
-
-
-
-
-Trammell, et al.          Expires June 10, 2018                [Page 15]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    As shown in Section 2, the spin bit can be implemented separately
    from the rest of the mechanisms of the QUIC transport protocol, as it
    requires no access to any state other than that observable in the
@@ -850,27 +835,40 @@ Internet-Draft                  Spin Bit                   December 2017
    implementation could leak private transport protocol state through
    the spin bit.
 
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 15]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    Since the spin bit is disconnected from transport mechanics, a QUIC
    endpoint implementing the spin bit that has a model of the actual
    network RTT and a target RTT to expose can "lie" about its spin bit
-   transitions, even without coordination with and the collusion of the
-   other endpoint.  This is not the case with TCP, which requires
-   coordination and collusion to expose false information via its
-   sequence and acknowledgment numbers and its timestamp option.  When
-   passive measurement is used for purposes where one endpoint might
-   gain a material advantage by representing a false RTT, e.g.  SLA
+   transitions, by anticipating or delaying observed transitions, even
+   without coordination with and the collusion of the other endpoint.
+   This is not the case with TCP, which requires coordination and
+   collusion to expose false information via its sequence and
+   acknowledgment numbers and its timestamp option.  When passive
+   measurement is used for purposes where one endpoint might gain a
+   material advantage by representing a false RTT, e.g.  SLA
    verification or enforcement of telecommunications regulations, this
    situation raises a question about the trustworthiness of spin bit RTT
    measurements.
 
    This issue must be appreciated by users of spin bit information, but
    mitigation is simple, as QUIC implementations designed to lie about
-   RTT through spin bit modification are subject to dynamic analysis
-   along paths with known RTTs.  We consider the ease of verification of
-   lying in situations where this would be prohibited by regulation or
-   contract, combined with the consequences of violation of said
-   regulation or contract, to be a sufficient incentive in the general
-   case not to do it.
+   RTT through spin bit modification can easily be detected.  A lying
+   server can be contacted by an honest client under the control of a
+   verifying party, and the client's RTT estimate compared with the
+   spin-bit exposed estimate.  Though in the general case, it is
+   impossible to verify explicit path signals with two complicit
+   endpoints (see [WIRE-IMAGE]), a lying server/client pair may be
+   subject to dynamic analysis along paths with known RTTs.  We consider
+   the ease of verification of lying in situations where this would be
+   prohibited by regulation or contract, combined with the consequences
+   of violation of said regulation or contract, to be a sufficient
+   incentive in the general case not to do it.
 
 7.  Acknowledgments
 
@@ -886,6 +884,8 @@ Internet-Draft                  Spin Bit                   December 2017
    for Education, Research, and Innovation under contract no. 15.0268.
    This support does not imply endorsement.
 
+8.  Informative References
+
 
 
 
@@ -897,8 +897,6 @@ Trammell, et al.          Expires June 10, 2018                [Page 16]
 
 Internet-Draft                  Spin Bit                   December 2017
 
-
-8.  Informative References
 
    [ALT-MARK]
               Fioccola, G., Capello, A., Cociglio, M., Castaldelli, L.,
@@ -946,6 +944,8 @@ Internet-Draft                  Spin Bit                   December 2017
               Kuehlewind, M. and B. Trammell, "Manageability of the QUIC
               Transport Protocol", draft-ietf-quic-manageability-01
               (work in progress), October 2017.
+
+
 
 
 
