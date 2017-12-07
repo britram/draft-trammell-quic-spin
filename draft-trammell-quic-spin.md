@@ -207,14 +207,14 @@ connection ID). In other words, in contrast to TCP, QUIC's wire image (see
 {{?WIRE-IMAGE=I-D.trammell-wire-image}}) exposes much less information about
 transport protocol state than TCP's wire image. Specifically, the fact that
 sequence and acknowledgement numbers and timestamps cannot be seen by
-on-path observes in QUIC as they can be in the TCP means that passive TCP loss
+on-path observers in QUIC as they can be in the TCP means that passive TCP loss
 and latency measurement techniques that rely on this information (e.g.
 {{CACM-TCP}}, {{TMA-QOF}}) cannot be easily ported to work with QUIC.
 
 This document proposes a solution to this problem by adding a "latency spin
 bit" to the QUIC short header. This bit is designed solely for explicit
 passive measurability of the protocol. It provides one RTT sample per RTT to
-passive observers of QUIC traffic. It describes the mechanism, how it can be
+passive observers of QUIC traffic. This document describes the mechanism, how it can be
 added to QUIC, and how it can be used by passive measurement facilities to
 generate RTT samples. It explores potential corner cases and shortcomings of
 the mechanism and how they can be worked around. It summarizes experimental
@@ -262,7 +262,7 @@ bit, as described in {{usage}}.
 
 Since it is possible to measure handshake RTT without a spin bit (see
 {{handshake}}), it is sufficient to include the spin bit in the short
-packet header. This proposal suggests to use the second most significant bit
+packet header. This proposal suggests to use the fourth most significant bit
 (0x40) of the first octet in the short header for the spin bit.
 
 ~~~~~
@@ -313,7 +313,7 @@ experienced by the application. A simple linear smoothing or moving minimum
 filter can be applied to the stream of RTT information to get a more stable
 estimate.
 
-We note that the Latency Spin Bit, and the measurements that can be done with
+We note that the latency spin bit, and the measurements that can be done with
 it, can be seen as an end-to-end extension of a special case of the alternate
 marking method described in {{?ALT-MARK=I-D.ietf-ippm-alt-mark}}.
 
@@ -331,7 +331,7 @@ samples due to application or flow control limitation.
 
 Since the spin bit logic at each endpoint considers only samples on packets
 that advance the largest packet number seen, signal generation itself is
-resistent to reordering. However, reordering can cause problems at an observer
+resistant to reordering. However, reordering can cause problems at an observer
 by causing spurious edge detection and therefore low RTT estimates. This can
 be probabilistically mitigated by the observer tracking the low-order bits of
 the packet number, and rejecting edges that appear out-of-order.
@@ -363,7 +363,7 @@ that the spin bit value be integrity-protected along with the rest of the QUIC
 header.
 
 Third, we performed experiments focused on the intermittent-sender problem
-described in {{limitations}}. We confirm that the spinbit does not provide
+described in {{limitations}}. We confirm that the spin bit does not provide
 useful RTT samples after the handshake when packets are only sent
 intermittently. Simple heuristics can be used to recognize this situation,
 however, and to reject these RTT samples. We also find that a simple
@@ -373,7 +373,7 @@ after the last packet received by the client, it knows that any latency spin
 observation of that packet will be invalid. If a second "spin valid" bit were
 available, the sender could then mark that packet "spin invalid". Our
 experiments show that this simple heuristic and spin validity bit are
-succesful in marking all packets whose RTT samples should be rejected.
+successful in marking all packets whose RTT samples should be rejected.
 
 Fourth, we performed experiments focused on the reordering problem described
 in {{limitations}}. We find that while reordering can cause spurious samples
@@ -396,9 +396,8 @@ sender's estimate of RTT, and as such does not measure the RTT experienced by
 the application layer as well as the spin bit does.
 
 In summary, our experiments show that the spin bit is suitable for purpose,
-can be implemented with minimal disruption, and that most of the problems
-identified with it in specific corner cases can be easily mitigated. See
-{{SPINBIT-REPORT}} for more.
+can be implemented with minimal disruption, and that most of the identified
+problems can be easily mitigated. See {{SPINBIT-REPORT}} for more.
 
 # Use Cases for Passive RTT Measurement
 
@@ -486,7 +485,7 @@ measured latency is indicative of congestion. Such a function also has the
 possibility to detect misbehaving flows and reduce the negative impact they have
 on the network.
 
-## Quality of Experience (QoE) monitoring for media streams
+## Quality of Experience (QoE) Monitoring for Media Streams
 
 \[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/8]
 
@@ -513,7 +512,7 @@ latency spin bit would make these techniques applicable to QUIC, as well.
 # Alternate RTT Measurement Approaches for Diagnosing QUIC flows {#other-bad-ideas}
 
 There are three broad alternatives to explicit signaling for passive RTT
-measurement for measuring the RTT experienced by QUIC flows.
+measurement of the RTT experienced by QUIC flows.
 
 ## Handshake RTT measurement {#handshake}
 
@@ -534,7 +533,7 @@ between handshake RTT and nominal in-flow RTT is negligible. Specifically, (1)
 any additional delay required to compute any cryptographic parameters must be
 negligible with respect to network RTT; (2) any additional delay required to
 establish state along the path must be negligible with respect to network RTT;
-and (3) network treatment of initial packets in a flow must identical to that
+and (3) network treatment of initial packets in a flow must be identical to that
 of later packets in the flow. When these assumptions cannot be shown to hold,
 spin-bit based RTT measurement is preferable to handshake RTT measurement,
 even for applications for which handshake RTT measurement would otherwise be
@@ -567,15 +566,15 @@ would therefore allow measurements confined to a single direction of
 transmission, as described in {{CARRA-RTT}}.
 
 We evaluated the applicability of this work to passive RTT measurement in
-QUIC, and found it wanting. We assebled a toolchain, as described in
+QUIC, and found it wanting. We assembled a toolchain, as described in
 {{NOSPIN}}, that allowed evaluation of a critical aspect of the {{CARRA-RTT}}
 method: extraction of inter-packet times of real packet streams and the
 analysis of frequencies present in the packet stream using the Lomb-Scargle
 Periodogram. Several streams were evaluated, as summarized below:
 
 * It seems that Carra et al. {{CARRA-RTT}} took the noisy and low-confidence
-  results of a statistical process (no RTT-related frquency has been detected
-  even after using very low alpha confidence) and added hueristics with
+  results of a statistical process (no RTT-related frequency has been detected
+  even after using very low alpha confidence) and added heuristics with
   sliding-window averaging to infer the fundamental frequency and RTT present
   in a unidirectional stream.
 
@@ -583,7 +582,7 @@ Periodogram. Several streams were evaluated, as summarized below:
   Streams with long RTT (~50ms) are more likely to be suitable (having a
   better match between packet rate and relatively low frequencies to detect).
 
-* None of the TCP streams analysed (to date) posess a sufficient packet rate
+* None of the TCP streams analysed (to date) possess a sufficient packet rate
 such that the measured fundamental frequency or the multiples of the fundamental
 are actually within the detectable range.
 
@@ -599,7 +598,7 @@ are actually within the detectable range.
   issues as a bottleneck, by imposing the time-slot interval on the spacing of
   many packets.
 
-* The Carra et al. {{CARRA-RTT}} calculation of minimum and maximum frquecies
+* The Carra et al. {{CARRA-RTT}} calculation of minimum and maximum frequencies
   that can be detected may not be applicable when the inter-arrival times are
   (both) the signal being detected and govern the non-uniform sampling
   frequency.
@@ -614,8 +613,8 @@ working group and the QUIC RTT Design Team that high-resolution RTT
 information might be usable for geolocation. However, an evaluation based on
 RTT samples taken over 13,780 paths in the Internet from RIPE Atlas anchoring
 measurements {{TRILAT}} shows that the magnitude and uncertainty of RTT data
-render the resolution of geolocation information that can be derived from
-Internet RTT is limited to national- or continental-scale; i.e., less
+limit the resolution of geolocation information that can be derived from
+Internet RTT to national- or continental-scale; i.e., less
 resolution than is generally available from free, open IP geolocation
 databases.
 
@@ -625,14 +624,14 @@ major nodes. Instead, major geographic features and the efficiency of
 connecting adjacent major cities influence the facility routing. An evaluation
 of ~3500 measurements on a mesh of 25 backbone nodes in the continental United
 States shows that 85% had RTT to great-circle error of 3ms or more, making
-location within US State boundaries ambigous {{CONUS}}.
+location within US State boundaries ambiguous {{CONUS}}.
 
 Therefore, in the general case, when an endpoint's IP address is known, RTT
 information provides negligible additional information.
 
 RTT information may be used to infer the occupancy of queues along a path;
 indeed, this is part of its utility for performance measurement and
-diagnostics. When a link on given path has excessive buffering (on the order
+diagnostics. When a link on a given path has excessive buffering (on the order
 of hundreds of milliseconds or more; a situation colloquially referred to as
 "bufferbloat"), such that the difference in delay between an empty queue and a
 full queue dwarfs normal variance and RTT along the path, RTT variance during
@@ -657,7 +656,7 @@ As shown in {{mechanism}}, the spin bit can be implemented separately from the
 rest of the mechanisms of the QUIC transport protocol, as it requires no
 access to any state other than that observable in the QUIC packet header
 itself. We recommend that implementations take advantage of this property, to
-reduce the risk that a errors in the implementation could leak private
+reduce the risk that errors in the implementation could leak private
 transport protocol state through the spin bit.
 
 Since the spin bit is disconnected from transport mechanics, a QUIC endpoint
