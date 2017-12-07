@@ -214,13 +214,13 @@ and latency measurement techniques that rely on this information (e.g.
 This document proposes a solution to this problem by adding a "latency spin
 bit" to the QUIC short header. This bit is designed solely for explicit
 passive measurability of the protocol. It provides one RTT sample per RTT to
-passive observers of QUIC traffic. This document describes the mechanism, how it can be
-added to QUIC, and how it can be used by passive measurement facilities to
-generate RTT samples. It explores potential corner cases and shortcomings of
-the mechanism and how they can be worked around. It summarizes experimental
-results to date with an implementation of the spin bit built atop a recent
-QUIC implementation. It additionally describes use cases for passive RTT
-measurement at the resolution provided by the spin bit. It further reviews
+passive observers of QUIC traffic. This document describes the mechanism, how
+it can be added to QUIC, and how it can be used by passive measurement
+facilities to generate RTT samples. It explores potential corner cases and
+shortcomings of the mechanism and how they can be worked around. It summarizes
+experimental results to date with an implementation of the spin bit built atop
+a recent QUIC implementation. It additionally describes use cases for passive
+RTT measurement at the resolution provided by the spin bit. It further reviews
 findings on privacy risk researched by the QUIC RTT Design Team, which was
 tasked by the IETF QUIC Working Group to determine the risk/utility tradeoff
 for the spin bit.
@@ -242,28 +242,34 @@ contacting the editor.
 
 # The Spin Bit Mechanism {#mechanism}
 
-The latency spin bit enables latency monitoring from observation points on
-the network path. The bit is set by the endpoints in the following way:
+The latency spin bit enables latency monitoring from observation points on the
+network path. Each endpoint, client and server, maintains a spin value, 0 or
+1, for each QUIC connection, and sets the spin bit on packets it sends for
+that connection to that value. It also maintains the highest packet number
+seen from its peer on the connection. The value is then determined at each
+endpoint as follows:
 
-* The server sets the spin bit value to the value of the
-  spin bit in the packet received from the client with
-  the largest packet number.
+* The server initializes its spin value to 0. When it receives a packet from
+  the client, if that packet has a short header and if it increments the
+  highest packet number seen by the server from the client, it sets the spin
+  value to the spin bit in that packet.
 
-* The client sets the spin bit value to the opposite
-  of the value set in the packet received from the server with the
-  largest packet number, or to 0 if no packet as been received yet.
+* The client initializes its spin value to 0. When it receives a packet from
+  the server, if the packet has a short header and if it increments the
+  highest packet number seen by the client from the server, it sets the spin
+  value to the opposite of the spin bit in that packet.
 
-If packets are delivered in order, this procedure will cause the spin bit
-to change value in each direction once per round trip. Observation points can
-estimate the network latency by observing these changes in the latency spin
-bit, as described in {{usage}}.
+This procedure will cause the spin bit to change value in each direction once
+per round trip. Observation points can estimate the network latency by
+observing these changes in the latency spin bit, as described in {{usage}}.
+See {{illustration}} for an illustration of this mechanism in action.
 
 ## Proposed Short Header Format Including Spin Bit
 
 Since it is possible to measure handshake RTT without a spin bit (see
 {{handshake}}), it is sufficient to include the spin bit in the short
 packet header. This proposal suggests to use the fourth most significant bit
-(0x40) of the first octet in the short header for the spin bit.
+(0x10) of the first octet in the short header for the spin bit.
 
 ~~~~~
  0                   1                   2                   3
@@ -275,7 +281,7 @@ packet header. This proposal suggests to use the fourth most significant bit
 +                     [Connection ID (64)]                      +
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                      Packet Number (8/16/32)                ...
+|                    Packet Number (8/16/32)                  ...
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                     Protected Payload (*)                   ...
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -304,23 +310,26 @@ are completed.
 When a QUIC flow is sending at full rate (i.e., neither application nor flow
 control limited), the latency spin bit in each direction changes value once
 per round-trip time (RTT). An on-path observer can observe the time difference
-between edges in the spin bit signal to measure one sample of end-to-end RTT.
-Note that this measurement, as with passive RTT measurement for TCP, includes
-any transport protocol delay (e.g., delayed sending of acknowledgements)
-and/or application layer delay (e.g., waiting for a request to complete). It
-therefore provides devices on path a good instantaneous estimate of the RTT as
-experienced by the application. A simple linear smoothing or moving minimum
-filter can be applied to the stream of RTT information to get a more stable
-estimate.
+between edges in the spin bit signal in a single direction to measure one
+sample of end-to-end RTT. Note that this measurement, as with passive RTT
+measurement for TCP, includes any transport protocol delay (e.g., delayed
+sending of acknowledgements) and/or application layer delay (e.g., waiting for
+a request to complete). It therefore provides devices on path a good
+instantaneous estimate of the RTT as experienced by the application. A simple
+linear smoothing or moving minimum filter can be applied to the stream of RTT
+information to get a more stable estimate.
+
+An on-path observer that can see traffic in both directions (from client to
+server and from server to client) can also use the spin bit to measure
+"upstream" and "downstream" component RTT; i.e, the component of the
+end-to-end RTT attributable to the paths between the observer and the server
+and the observer and the client, respectively. It does this by measuring the
+delay between a spin edge observed in the upstream direction and that observed
+in the downstream direction, and vice versa.
 
 We note that the latency spin bit, and the measurements that can be done with
 it, can be seen as an end-to-end extension of a special case of the alternate
 marking method described in {{?ALT-MARK=I-D.ietf-ippm-alt-mark}}.
-
-## Illustration
-
-\[EDITOR'S NOTE: ASCII art from Piet's soundness evaluation goes here, Brian
-to add.]
 
 ## Limitations and Workarounds {#limitations}
 
@@ -338,8 +347,105 @@ Since the spin bit logic at each endpoint considers only samples on packets
 that advance the largest packet number seen, signal generation itself is
 resistant to reordering. However, reordering can cause problems at an observer
 by causing spurious edge detection and therefore low RTT estimates. This can
-be probabilistically mitigated by the observer tracking the low-order bits of
-the packet number, and rejecting edges that appear out-of-order.
+be probabilistically mitigated by the observer also tracking the low-order
+bits of the packet number, and rejecting edges that appear out-of-order.
+
+## Illustration
+
+To illustrate the operation of the spin bit, we consider a simplified model of
+a single path between client and server as a queue with slots for five
+packets, and assume that both client and server sent packets at a constant
+rate. If each packet moves one slot in the queue per clock tick, note that
+this network has a RTT of 10 ticks.
+
+Initially, during connection establishment, no packets with a spin bit are
+in flight, as shown in {{illus0}}.
+
+~~~~~
++--------+   -  -  -  -  -   +--------+
+|        |     -------->     |        |
+| Client |                   | Server |
+|        |     <--------     |        |
++--------+   -  -  -  -  -   +--------+
+~~~~~
+{: #illus0 title="Initial state, no spin bit between client and server"}
+
+Either the server, the client, or both can begin sending packets with short
+headers after connection establishment, as shown in {{illus1}}; here, no spin
+edges are yet in transit.
+
+~~~~~
++--------+   0  0  -  -  -   +--------+
+|        |     -------->     |        |
+| Client |                   | Server |
+|        |     <--------     |        |
++--------+   -  -  0  0  0   +--------+
+~~~~~
+{: #illus1 title="Client and server begin sending packets with spin 0"}
+
+Once the server's first 0-marked packet arrives at the client, the client sets
+its spin value to 1, and begins sending packets with the spin bit set, as
+shown in {{illus2}}. The spin edge is now in transit toward the server.
+
+~~~~~
++--------+   1  0  0  0  0   +--------+
+|        |     -------->     |        |
+| Client |                   | Server |
+|        |     <--------     |        |
++--------+   0  0  0  0  0   +--------+
+~~~~~
+{: #illus2 title="The bit begins spinning"}
+
+Five ticks later, this packet arrives at the server, which takes its spin
+value from it and reflects that value back on the next packet it sends, as
+shown in {{illus3}}. The spin edge is now in transit toward the client.
+
+~~~~~
++--------+   1  1  1  1  1   +--------+
+|        |     -------->     |        |
+| Client |                   | Server |
+|        |     <--------     |        |
++--------+   0  0  0  0  1   +--------+
+~~~~~
+{: #illus3 title="Server reflects the spin edge"}
+
+Five ticks later, the 1-marked packet arrives at the client, which inverts its
+spin value and sends the inverted value on the next packet it sends, as shown
+in {{illus4}}.
+
+~~~~~
+      obs. points  X  Y
++--------+   0  1  1  1  1   +--------+
+|        |     -------->     |        |
+| Client |                   | Server |
+|        |     <--------     |        |
++--------+   1  1  1  1  1   +--------+
+                      Y
+~~~~~
+{: #illus4 title="Client inverts the spin edge"}
+
+Here we can also see how measurement works. An observer watching the signal at
+observation point X in {{illus4}} will see an edge every 10 ticks, i.e. once
+per RTT. An observer watching the signal at a symmetric observation point Y in
+{{illus4}} will see a server-client edge 4 ticks after the client-server edge,
+and a client-server edge 6 ticks after the server-client edge, allowing it to
+compute component RTT.
+
+{{illus5}} shows how this mechanism works in the presence of reordering. Here,
+packet C carries the spin edge, and packet B is reordered on the way to the
+client. In this case, the client will begin sending spin 1 after the arrival
+of C, and ignore the spin bit 0 on packet B, since B < C; i.e. it does not
+increment the highest packet number seen.
+
+~~~~~
++--------+   0  0  0  0  0   +--------+
+|        |     -------->     |        |
+| Client |                   | Server |
+|        |     <--------     |        |
++--------+   1  0  1  0  0   +--------+
+    PN=      A  C  B  D  E
+~~~~~
+{: #illus5 title="Handling reordering"}
 
 ## Experimental Evaluation
 
@@ -686,9 +792,10 @@ incentive in the general case not to do it.
 # Acknowledgments
 
 Many thanks to Christian Huitema, who originally proposed the spin bit as pull
-request 609 on {{QUIC-TRANS}}. Thanks to the QUIC RTT Design Team for
-discussions leading especially to the measurement limitations and privacy and
-security considerations sections.
+request 609 on {{QUIC-TRANS}}. Thanks to Tobias Buehler for feedback on the
+draft. Special thanks to the QUIC RTT Design Team for discussions leading
+especially to the measurement limitations and privacy and security
+considerations sections.
 
 This work is partially supported by the European Commission under Horizon 2020
 grant agreement no. 688421 Measurement and Architecture for a Middleboxed
