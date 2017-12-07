@@ -580,10 +580,10 @@ cellular network.
 
 Due to the dynamic nature of RANs, base stations have typically been
 provisioned with large buffers to maximize throughput despite rapid changes in
-capacity. As a side effect, buffer bloat has become a common issue in such
+capacity. As a side effect, bufferbloat has become a common issue in such
 networks {{WWMM-BLOAT}}.
 
-An effective way of mitigating buffer bloat without sacrificing too much
+An effective way of mitigating bufferbloat without sacrificing too much
 throughput is to deploy Active Queue Management (AQM) in bottleneck routers and
 base stations. However, due to the variation in deployed base-stations it is
 not always possible to enable AQM at the bottlenecks, without massive
@@ -599,10 +599,6 @@ on the network.
 ## Quality of Experience (QoE) Monitoring for Media Streams
 
 \[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/8]
-
-## Third-Party Latency Verification
-
-\[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/6]
 
 ## Internet Measurement Research
 
@@ -743,14 +739,13 @@ information provides negligible additional information.
 RTT information may be used to infer the occupancy of queues along a path;
 indeed, this is part of its utility for performance measurement and
 diagnostics. When a link on a given path has excessive buffering (on the order
-of hundreds of milliseconds or more; a situation colloquially referred to as
-"bufferbloat"), such that the difference in delay between an empty queue and a
-full queue dwarfs normal variance and RTT along the path, RTT variance during
-the lifetime of a flow can be used to infer the presence of traffic on the
-bottleneck link. In practice, however, this is not a concern for passive
-measurement of congestion-controlled traffic, since any observer in a
-situation to observe RTT passively need not infer the presence of the traffic,
-as it can observe it directly.
+of hundreds of milliseconds or more), such that the difference in delay
+between an empty queue and a full queue dwarfs normal variance and RTT along
+the path, RTT variance during the lifetime of a flow can be used to infer the
+presence of traffic on the bottleneck link. In practice, however, this is not
+a concern for passive measurement of congestion-controlled traffic, since any
+observer in a situation to observe RTT passively need not infer the presence
+of the traffic, as it can observe it directly.
 
 In addition, since RTT information contains application as well as network
 delay, patterns in RTT variance from minimum, and therefore application delay,
@@ -772,22 +767,28 @@ transport protocol state through the spin bit.
 
 Since the spin bit is disconnected from transport mechanics, a QUIC endpoint
 implementing the spin bit that has a model of the actual network RTT and a
-target RTT to expose can "lie" about its spin bit transitions, even without
-coordination with and the collusion of the other endpoint. This is not the
-case with TCP, which requires coordination and collusion to expose false
-information via its sequence and acknowledgment numbers and its timestamp
-option. When passive measurement is used for purposes where one endpoint might
-gain a material advantage by representing a false RTT, e.g. SLA verification
-or enforcement of telecommunications regulations, this situation raises a
-question about the trustworthiness of spin bit RTT measurements.
+target RTT to expose can "lie" about its spin bit transitions, by anticipating
+or delaying observed transitions, even without coordination with and the
+collusion of the other endpoint. This is not the case with TCP, which requires
+coordination and collusion to expose false information via its sequence and
+acknowledgment numbers and its timestamp option. When passive measurement is
+used for purposes where one endpoint might gain a material advantage by
+representing a false RTT, e.g. SLA verification or enforcement of
+telecommunications regulations, this situation raises a question about the
+trustworthiness of spin bit RTT measurements.
 
 This issue must be appreciated by users of spin bit information, but
 mitigation is simple, as QUIC implementations designed to lie about RTT
-through spin bit modification are subject to dynamic analysis along paths with
-known RTTs. We consider the ease of verification of lying in situations where
-this would be prohibited by regulation or contract, combined with the
-consequences of violation of said regulation or contract, to be a sufficient
-incentive in the general case not to do it.
+through spin bit modification can easily be detected. A lying server can be
+contacted by an honest client under the control of a verifying party, and the
+client's RTT estimate compared with the spin-bit exposed estimate. Though in
+the general case, it is impossible to verify explicit path signals with two
+complicit endpoints (see {{WIRE-IMAGE}}), a lying server/client pair may be
+subject to dynamic analysis along paths with known RTTs. We consider the ease
+of verification of lying in situations where this would be prohibited by
+regulation or contract, combined with the consequences of violation of said
+regulation or contract, to be a sufficient incentive in the general case not
+to do it.
 
 # Acknowledgments
 
