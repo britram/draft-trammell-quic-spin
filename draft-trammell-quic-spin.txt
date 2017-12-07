@@ -5,7 +5,7 @@
 QUIC                                                    B. Trammell, Ed.
 Internet-Draft                                               P. De Vaere
 Intended status: Informational                                ETH Zurich
-Expires: June 9, 2018                                            R. Even
+Expires: June 10, 2018                                           R. Even
                                                                   Huawei
                                                              G. Fioccola
                                                           Telecom Italia
@@ -17,7 +17,7 @@ Expires: June 9, 2018                                            R. Even
                                                                AT&T Labs
                                                               E. Stephan
                                                                   Orange
-                                                       December 06, 2017
+                                                       December 07, 2017
 
 
        The Addition of a Spin Bit to the QUIC Transport Protocol
@@ -53,7 +53,7 @@ Status of This Memo
 
 
 
-Trammell, et al.          Expires June 9, 2018                  [Page 1]
+Trammell, et al.          Expires June 10, 2018                 [Page 1]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -61,7 +61,7 @@ Internet-Draft                  Spin Bit                   December 2017
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on June 9, 2018.
+   This Internet-Draft will expire on June 10, 2018.
 
 Copyright Notice
 
@@ -85,31 +85,31 @@ Table of Contents
    2.  The Spin Bit Mechanism  . . . . . . . . . . . . . . . . . . .   4
      2.1.  Proposed Short Header Format Including Spin Bit . . . . .   4
    3.  Using the Spin Bit for Passive RTT Measurement  . . . . . . .   5
-     3.1.  Limitations and Workarounds . . . . . . . . . . . . . . .   5
-     3.2.  Experimental Evaluation . . . . . . . . . . . . . . . . .   6
-   4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .   7
-     4.1.  Interdomain Troubleshooting . . . . . . . . . . . . . . .   8
-     4.2.  Bufferbloat Mitigation in Cellular Networks . . . . . . .   9
-     4.3.  Quality of Experience (QoE) monitoring for media streams    9
-     4.4.  Third-Party Latency Verification  . . . . . . . . . . . .   9
-     4.5.  Internet Measurement Research . . . . . . . . . . . . . .   9
+     3.1.  Limitations and Workarounds . . . . . . . . . . . . . . .   6
+     3.2.  Illustration  . . . . . . . . . . . . . . . . . . . . . .   6
+     3.3.  Experimental Evaluation . . . . . . . . . . . . . . . . .   8
+   4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .  10
+     4.1.  Interdomain Troubleshooting . . . . . . . . . . . . . . .  10
+     4.2.  Bufferbloat Mitigation in Cellular Networks . . . . . . .  11
+     4.3.  Quality of Experience (QoE) Monitoring for Media Streams   12
+     4.4.  Third-Party Latency Verification  . . . . . . . . . . . .  12
+     4.5.  Internet Measurement Research . . . . . . . . . . . . . .  12
    5.  Alternate RTT Measurement Approaches for Diagnosing QUIC
-       flows . . . . . . . . . . . . . . . . . . . . . . . . . . . .  10
-     5.1.  Handshake RTT measurement . . . . . . . . . . . . . . . .  10
-     5.2.  Parallel active measurement . . . . . . . . . . . . . . .  11
-     5.3.  Frequency Analysis  . . . . . . . . . . . . . . . . . . .  11
-   6.  Privacy and Security Considerations . . . . . . . . . . . . .  12
-   7.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  14
-   8.  Informative References  . . . . . . . . . . . . . . . . . . .  14
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  16
+       flows . . . . . . . . . . . . . . . . . . . . . . . . . . . .  12
+     5.1.  Handshake RTT measurement . . . . . . . . . . . . . . . .  12
+     5.2.  Parallel active measurement . . . . . . . . . . . . . . .  13
+     5.3.  Frequency Analysis  . . . . . . . . . . . . . . . . . . .  13
+   6.  Privacy and Security Considerations . . . . . . . . . . . . .  14
+   7.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  16
+   8.  Informative References  . . . . . . . . . . . . . . . . . . .  17
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  19
 
 
 
 
 
 
-
-Trammell, et al.          Expires June 9, 2018                  [Page 2]
+Trammell, et al.          Expires June 10, 2018                 [Page 2]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -126,7 +126,7 @@ Internet-Draft                  Spin Bit                   December 2017
    image (see [WIRE-IMAGE]) exposes much less information about
    transport protocol state than TCP's wire image.  Specifically, the
    fact that sequence and acknowledgement numbers and timestamps cannot
-   be seen by on-path observes in QUIC as they can be in the TCP means
+   be seen by on-path observers in QUIC as they can be in the TCP means
    that passive TCP loss and latency measurement techniques that rely on
    this information (e.g.  [CACM-TCP], [TMA-QOF]) cannot be easily
    ported to work with QUIC.
@@ -135,10 +135,10 @@ Internet-Draft                  Spin Bit                   December 2017
    "latency spin bit" to the QUIC short header.  This bit is designed
    solely for explicit passive measurability of the protocol.  It
    provides one RTT sample per RTT to passive observers of QUIC traffic.
-   It describes the mechanism, how it can be added to QUIC, and how it
-   can be used by passive measurement facilities to generate RTT
-   samples.  It explores potential corner cases and shortcomings of the
-   mechanism and how they can be worked around.  It summarizes
+   This document describes the mechanism, how it can be added to QUIC,
+   and how it can be used by passive measurement facilities to generate
+   RTT samples.  It explores potential corner cases and shortcomings of
+   the mechanism and how they can be worked around.  It summarizes
    experimental results to date with an implementation of the spin bit
    built atop a recent QUIC implementation.  It additionally describes
    use cases for passive RTT measurement at the resolution provided by
@@ -165,7 +165,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 9, 2018                  [Page 3]
+Trammell, et al.          Expires June 10, 2018                 [Page 3]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -173,29 +173,58 @@ Internet-Draft                  Spin Bit                   December 2017
 2.  The Spin Bit Mechanism
 
    The latency spin bit enables latency monitoring from observation
-   points on the network path.  The bit is set by the endpoints in the
-   following way:
+   points on the network path.  Each endpoint, client and server,
+   maintains a spin value, 0 or 1, for each QUIC connection, and sets
+   the spin bit on packets it sends for that connection to that value.
+   It also maintains the highest packet number seen from its peer on the
+   connection.  The value is then determined at each endpoint as
+   follows:
 
-   o  The server sets the spin bit value to the value of the spin bit in
-      the packet received from the client with the largest packet
-      number.
+   o  The server initializes its spin value to 0.  When it receives a
+      packet from the client, if that packet has a short header and if
+      it increments the highest packet number seen by the server from
+      the client, it sets the spin value to the spin bit in that packet.
 
-   o  The client sets the spin bit value to the opposite of the value
-      set in the packet received from the server with the largest packet
-      number, or to 0 if no packet as been received yet.
+   o  The client initializes its spin value to 0.  When it receives a
+      packet from the server, if the packet has a short header and if it
+      increments the highest packet number seen by the client from the
+      server, it sets the spin value to the opposite of the spin bit in
+      that packet.
 
-   If packets are delivered in order, this procedure will cause the spin
-   bit to change value in each direction once per round trip.
-   Observation points can estimate the network latency by observing
-   these changes in the latency spin bit, as described in Section 3.
+   This procedure will cause the spin bit to change value in each
+   direction once per round trip.  Observation points can estimate the
+   network latency by observing these changes in the latency spin bit,
+   as described in Section 3.  See Section 3.2 for an illustration of
+   this mechanism in action.
 
 2.1.  Proposed Short Header Format Including Spin Bit
 
    Since it is possible to measure handshake RTT without a spin bit (see
    Section 5.1), it is sufficient to include the spin bit in the short
-   packet header.  This proposal suggests to use the second most
-   significant bit (0x40) of the first octet in the short header for the
+   packet header.  This proposal suggests to use the fourth most
+   significant bit (0x10) of the first octet in the short header for the
    spin bit.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                 [Page 4]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
     0                   1                   2                   3
     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -206,7 +235,7 @@ Internet-Draft                  Spin Bit                   December 2017
    +                     [Connection ID (64)]                      +
    |                                                               |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                      Packet Number (8/16/32)                ...
+   |                    Packet Number (8/16/32)                  ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                     Protected Payload (*)                   ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -215,16 +244,6 @@ Internet-Draft                  Spin Bit                   December 2017
 
    This will limit the number of available short packet types to 16.
    The short packet types will be redefined to the following values:
-
-
-
-
-
-
-Trammell, et al.          Expires June 9, 2018                  [Page 4]
-
-Internet-Draft                  Spin Bit                   December 2017
-
 
                        +------+--------------------+
                        | Type | Packet Number Size |
@@ -251,16 +270,33 @@ Internet-Draft                  Spin Bit                   December 2017
    nor flow control limited), the latency spin bit in each direction
    changes value once per round-trip time (RTT).  An on-path observer
    can observe the time difference between edges in the spin bit signal
-   to measure one sample of end-to-end RTT.  Note that this measurement,
-   as with passive RTT measurement for TCP, includes any transport
-   protocol delay (e.g., delayed sending of acknowledgements) and/or
-   application layer delay (e.g., waiting for a request to complete).
-   It therefore provides devices on path a good instantaneous estimate
-   of the RTT as experienced by the application.  A simple linear
-   smoothing or moving minimum filter can be applied to the stream of
-   RTT information to get a more stable estimate.
+   in a single direction to measure one sample of end-to-end RTT.  Note
+   that this measurement, as with passive RTT measurement for TCP,
+   includes any transport protocol delay (e.g., delayed sending of
+   acknowledgements) and/or application layer delay (e.g., waiting for a
 
-   We note that the Latency Spin Bit, and the measurements that can be
+
+
+Trammell, et al.          Expires June 10, 2018                 [Page 5]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
+   request to complete).  It therefore provides devices on path a good
+   instantaneous estimate of the RTT as experienced by the application.
+   A simple linear smoothing or moving minimum filter can be applied to
+   the stream of RTT information to get a more stable estimate.
+
+   An on-path observer that can see traffic in both directions (from
+   client to server and from server to client) can also use the spin bit
+   to measure "upstream" and "downstream" component RTT; i.e, the
+   component of the end-to-end RTT attributable to the paths between the
+   observer and the server and the observer and the client,
+   respectively.  It does this by measuring the delay between a spin
+   edge observed in the upstream direction and that observed in the
+   downstream direction, and vice versa.
+
+   We note that the latency spin bit, and the measurements that can be
    done with it, can be seen as an end-to-end extension of a special
    case of the alternate marking method described in [ALT-MARK].
 
@@ -274,27 +310,129 @@ Internet-Draft                  Spin Bit                   December 2017
    periodic application traffic, where that period is longer than the
    RTT, measuring the spin bit provides information about the
    application period, not the RTT.  Simple heuristics based on the
-
-
-
-Trammell, et al.          Expires June 9, 2018                  [Page 5]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    observed data rate per flow or changes in the RTT series can be used
    to reject bad RTT samples due to application or flow control
    limitation.
 
    Since the spin bit logic at each endpoint considers only samples on
    packets that advance the largest packet number seen, signal
-   generation itself is resistent to reordering.  However, reordering
+   generation itself is resistant to reordering.  However, reordering
    can cause problems at an observer by causing spurious edge detection
    and therefore low RTT estimates.  This can be probabilistically
-   mitigated by the observer tracking the low-order bits of the packet
-   number, and rejecting edges that appear out-of-order.
+   mitigated by the observer also tracking the low-order bits of the
+   packet number, and rejecting edges that appear out-of-order.
 
-3.2.  Experimental Evaluation
+3.2.  Illustration
+
+   To illustrate the operation of the spin bit, we consider a simplified
+   model of a single path between client and server as a queue with
+   slots for five packets, and assume that both client and server sent
+   packets at a constant rate.  If each packet moves one slot in the
+   queue per clock tick, note that this network has a RTT of 10 ticks.
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                 [Page 6]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
+   Initially, during connection establishment, no packets with a spin
+   bit are in flight, as shown in Figure 2.
+
+   +--------+   -  -  -  -  -   +--------+
+   |        |     -------->     |        |
+   | Client |                   | Server |
+   |        |     <--------     |        |
+   +--------+   -  -  -  -  -   +--------+
+
+      Figure 2: Initial state, no spin bit between client and server
+
+   Either the server, the client, or both can begin sending packets with
+   short headers after connection establishment, as shown in Figure 3;
+   here, no spin edges are yet in transit.
+
+   +--------+   0  0  -  -  -   +--------+
+   |        |     -------->     |        |
+   | Client |                   | Server |
+   |        |     <--------     |        |
+   +--------+   -  -  0  0  0   +--------+
+
+       Figure 3: Client and server begin sending packets with spin 0
+
+   Once the server's first 0-marked packet arrives at the client, the
+   client sets its spin value to 1, and begins sending packets with the
+   spin bit set, as shown in Figure 4.  The spin edge is now in transit
+   toward the server.
+
+   +--------+   1  0  0  0  0   +--------+
+   |        |     -------->     |        |
+   | Client |                   | Server |
+   |        |     <--------     |        |
+   +--------+   0  0  0  0  0   +--------+
+
+                     Figure 4: The bit begins spinning
+
+   Five ticks later, this packet arrives at the server, which takes its
+   spin value from it and reflects that value back on the next packet it
+   sends, as shown in Figure 5.  The spin edge is now in transit toward
+   the client.
+
+   +--------+   1  1  1  1  1   +--------+
+   |        |     -------->     |        |
+   | Client |                   | Server |
+   |        |     <--------     |        |
+   +--------+   0  0  0  0  1   +--------+
+
+                  Figure 5: Server reflects the spin edge
+
+
+
+Trammell, et al.          Expires June 10, 2018                 [Page 7]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
+   Five ticks later, the 1-marked packet arrives at the client, which
+   inverts its spin value and sends the inverted value on the next
+   packet it sends, as shown in Figure 6.
+
+         obs. points  X  Y
+   +--------+   0  1  1  1  1   +--------+
+   |        |     -------->     |        |
+   | Client |                   | Server |
+   |        |     <--------     |        |
+   +--------+   1  1  1  1  1   +--------+
+                         Y
+
+                  Figure 6: Client inverts the spin edge
+
+   Here we can also see how measurement works.  An observer watching the
+   signal at observation point X in Figure 6 will see an edge every 10
+   ticks, i.e. once per RTT.  An observer watching the signal at a
+   symmetric observation point Y in Figure 6 will see a server-client
+   edge 4 ticks after the client-server edge, and a client-server edge 6
+   ticks after the server-client edge, allowing it to compute component
+   RTT.
+
+   Figure 7 shows how this mechanism works in the presence of
+   reordering.  Here, packet C carries the spin edge, and packet B is
+   reordered on the way to the client.  In this case, the client will
+   begin sending spin 1 after the arrival of C, and ignore the spin bit
+   0 on packet B, since B < C; i.e. it does not increment the highest
+   packet number seen.
+
+   +--------+   0  0  0  0  0   +--------+
+   |        |     -------->     |        |
+   | Client |                   | Server |
+   |        |     <--------     |        |
+   +--------+   1  0  1  0  0   +--------+
+       PN=      A  C  B  D  E
+
+                       Figure 7: Handling reordering
+
+3.3.  Experimental Evaluation
 
    We have evaluated the effectiveness of the spin bit in an emulated
    network environment.  The spin bit was added to a fork of [MINQ],
@@ -304,6 +442,13 @@ Internet-Draft                  Spin Bit                   December 2017
    [MOKUMOKUREN].  Full results of these ongoing experiments are
    available online in [SPINBIT-REPORT], but we summarize our findings
    here.
+
+
+
+Trammell, et al.          Expires June 10, 2018                 [Page 8]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
    First, we confirm that the spin bit works as advertised: it provides
    one useful RTT sample per RTT to any passive observer of the flow.
@@ -323,25 +468,17 @@ Internet-Draft                  Spin Bit                   December 2017
    protected along with the rest of the QUIC header.
 
    Third, we performed experiments focused on the intermittent-sender
-   problem described in Section 3.1.  We confirm that the spinbit does
+   problem described in Section 3.1.  We confirm that the spin bit does
    not provide useful RTT samples after the handshake when packets are
    only sent intermittently.  Simple heuristics can be used to recognize
    this situation, however, and to reject these RTT samples.  We also
    find that a simple sender-side heuristic can be used to determine
    whether a sample will be useful.  If a sender sends a packet more
    than a specified delay (e.g. 1ms) after the last packet received by
-
-
-
-Trammell, et al.          Expires June 9, 2018                  [Page 6]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    the client, it knows that any latency spin observation of that packet
    will be invalid.  If a second "spin valid" bit were available, the
    sender could then mark that packet "spin invalid".  Our experiments
-   show that this simple heuristic and spin validity bit are succesful
+   show that this simple heuristic and spin validity bit are successful
    in marking all packets whose RTT samples should be rejected.
 
    Fourth, we performed experiments focused on the reordering problem
@@ -361,6 +498,14 @@ Internet-Draft                  Spin Bit                   December 2017
    Fifth, we performed parallel active measurements using ping, as
    described in Section 5.2.  In our emulated network, the ICMP packets
    and the QUIC packets traverse the same links with the same treatment,
+
+
+
+Trammell, et al.          Expires June 10, 2018                 [Page 9]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    and share queues at each link, which mitigates most of the issues
    with ping.  We find that while ping works as expected in measuring
    end-to-end RTT, it does not track the sender's estimate of RTT, and
@@ -369,8 +514,8 @@ Internet-Draft                  Spin Bit                   December 2017
 
    In summary, our experiments show that the spin bit is suitable for
    purpose, can be implemented with minimal disruption, and that most of
-   the problems identified with it in specific corner cases can be
-   easily mitigated.  See [SPINBIT-REPORT] for more.
+   the identified problems can be easily mitigated.  See
+   [SPINBIT-REPORT] for more.
 
 4.  Use Cases for Passive RTT Measurement
 
@@ -385,14 +530,6 @@ Internet-Draft                  Spin Bit                   December 2017
 
    In any case, the measurement methodology follows one of a few basic
    variants:
-
-
-
-
-Trammell, et al.          Expires June 9, 2018                  [Page 7]
-
-Internet-Draft                  Spin Bit                   December 2017
-
 
    o  The RTT evolution of a flow or a set of flows can be compared to
       baseline or expected RTT measurements for flows with the same
@@ -418,6 +555,13 @@ Internet-Draft                  Spin Bit                   December 2017
    provider's network, the service provider's network, on the Internet
    paths between them, or within the customer's own network.
 
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 10]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    Many residential networks use WiFi (802.11) on the last segment, and
    WiFi signal strength degradation manifests in high first-hop delay,
    due to the fact that the MAC layer will retransmit packets lost at
@@ -441,15 +585,6 @@ Internet-Draft                  Spin Bit                   December 2017
    latency sensitive, such as interactive video applications.  However,
    since high latency is often correlated with other network-layer
    issues such as chronic interconnect congestion [IMC-CONGESTION], it
-
-
-
-
-Trammell, et al.          Expires June 9, 2018                  [Page 8]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    is useful for general troubleshooting of network layer issues in an
    interdomain setting.
 
@@ -475,6 +610,14 @@ Internet-Draft                  Spin Bit                   December 2017
    in deployed base-stations it is not always possible to enable AQM at
    the bottlenecks, without massive infrastructure investments.
 
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 11]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    An alternative approach is to deploy AQM as a network function in a
    more centralized location than the traditional bottleneck nodes.
    Such an AQM monitors the RTT progression of flows and drops or marks
@@ -482,7 +625,7 @@ Internet-Draft                  Spin Bit                   December 2017
    a function also has the possibility to detect misbehaving flows and
    reduce the negative impact they have on the network.
 
-4.3.  Quality of Experience (QoE) monitoring for media streams
+4.3.  Quality of Experience (QoE) Monitoring for Media Streams
 
    [EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-
    spin/issues/8]
@@ -498,14 +641,6 @@ Internet-Draft                  Spin Bit                   December 2017
    control, the Internet has emergent properties of interest to the
    research community not just for purely scientific curiosity, but also
    to provide applicable guidance to Internet engineering, Internet
-
-
-
-Trammell, et al.          Expires June 9, 2018                  [Page 9]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    protocol design and development, network operations, and policy
    development.  Latency measurements in particular are both an active
    area of research as well as an important tool for certain measurement
@@ -521,7 +656,7 @@ Internet-Draft                  Spin Bit                   December 2017
 5.  Alternate RTT Measurement Approaches for Diagnosing QUIC flows
 
    There are three broad alternatives to explicit signaling for passive
-   RTT measurement for measuring the RTT experienced by QUIC flows.
+   RTT measurement of the RTT experienced by QUIC flows.
 
 5.1.  Handshake RTT measurement
 
@@ -531,6 +666,14 @@ Internet-Draft                  Spin Bit                   December 2017
    sample per flow: the delay between the client initial and the server
    cleartext packet can be used to measure "upstream" RTT (between the
    observer and the server), and the delay between the server cleartext
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 12]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    packet and the next client cleartext packet can be used to measure
    "downstream" RTT (between the client and the observer).  When RTT
    measurements are used in large aggregates (all flows traversing a
@@ -544,23 +687,11 @@ Internet-Draft                  Spin Bit                   December 2017
    compute any cryptographic parameters must be negligible with respect
    to network RTT; (2) any additional delay required to establish state
    along the path must be negligible with respect to network RTT; and
-   (3) network treatment of initial packets in a flow must identical to
-   that of later packets in the flow.  When these assumptions cannot be
-   shown to hold, spin-bit based RTT measurement is preferable to
+   (3) network treatment of initial packets in a flow must be identical
+   to that of later packets in the flow.  When these assumptions cannot
+   be shown to hold, spin-bit based RTT measurement is preferable to
    handshake RTT measurement, even for applications for which handshake
    RTT measurement would otherwise be suitable.
-
-
-
-
-
-
-
-
-Trammell, et al.          Expires June 9, 2018                 [Page 10]
-
-Internet-Draft                  Spin Bit                   December 2017
-
 
 5.2.  Parallel active measurement
 
@@ -590,8 +721,17 @@ Internet-Draft                  Spin Bit                   December 2017
    about the RTT, and would therefore allow measurements confined to a
    single direction of transmission, as described in [CARRA-RTT].
 
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 13]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    We evaluated the applicability of this work to passive RTT
-   measurement in QUIC, and found it wanting.  We assebled a toolchain,
+   measurement in QUIC, and found it wanting.  We assembled a toolchain,
    as described in [NOSPIN], that allowed evaluation of a critical
    aspect of the [CARRA-RTT] method: extraction of inter-packet times of
    real packet streams and the analysis of frequencies present in the
@@ -600,8 +740,8 @@ Internet-Draft                  Spin Bit                   December 2017
 
    o  It seems that Carra et al.  [CARRA-RTT] took the noisy and low-
       confidence results of a statistical process (no RTT-related
-      frquency has been detected even after using very low alpha
-      confidence) and added hueristics with sliding-window averaging to
+      frequency has been detected even after using very low alpha
+      confidence) and added heuristics with sliding-window averaging to
       infer the fundamental frequency and RTT present in a
       unidirectional stream.
 
@@ -610,15 +750,7 @@ Internet-Draft                  Spin Bit                   December 2017
       suitable (having a better match between packet rate and relatively
       low frequencies to detect).
 
-
-
-
-Trammell, et al.          Expires June 9, 2018                 [Page 11]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
-   o  None of the TCP streams analysed (to date) posess a sufficient
+   o  None of the TCP streams analysed (to date) possess a sufficient
       packet rate such that the measured fundamental frequency or the
       multiples of the fundamental are actually within the detectable
       range.
@@ -637,7 +769,7 @@ Internet-Draft                  Spin Bit                   December 2017
       imposing the time-slot interval on the spacing of many packets.
 
    o  The Carra et al.  [CARRA-RTT] calculation of minimum and maximum
-      frquecies that can be detected may not be applicable when the
+      frequencies that can be detected may not be applicable when the
       inter-arrival times are (both) the signal being detected and
       govern the non-uniform sampling frequency.
 
@@ -646,15 +778,23 @@ Internet-Draft                  Spin Bit                   December 2017
    The privacy considerations for the latency spin bit are essentially
    the same as those for passive RTT measurement in general.
 
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 14]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    A concern was raised during the discussion of this feature within the
    QUIC working group and the QUIC RTT Design Team that high-resolution
    RTT information might be usable for geolocation.  However, an
    evaluation based on RTT samples taken over 13,780 paths in the
    Internet from RIPE Atlas anchoring measurements [TRILAT] shows that
-   the magnitude and uncertainty of RTT data render the resolution of
-   geolocation information that can be derived from Internet RTT is
-   limited to national- or continental-scale; i.e., less resolution than
-   is generally available from free, open IP geolocation databases.
+   the magnitude and uncertainty of RTT data limit the resolution of
+   geolocation information that can be derived from Internet RTT to
+   national- or continental-scale; i.e., less resolution than is
+   generally available from free, open IP geolocation databases.
 
    One reason for the inaccuracy of geolocation from network RTT is that
    Internet backbone transmission facilities do not follow the great-
@@ -663,23 +803,14 @@ Internet-Draft                  Spin Bit                   December 2017
    facility routing.  An evaluation of ~3500 measurements on a mesh of
    25 backbone nodes in the continental United States shows that 85% had
    RTT to great-circle error of 3ms or more, making location within US
-   State boundaries ambigous [CONUS].
-
-
-
-
-
-Trammell, et al.          Expires June 9, 2018                 [Page 12]
-
-Internet-Draft                  Spin Bit                   December 2017
-
+   State boundaries ambiguous [CONUS].
 
    Therefore, in the general case, when an endpoint's IP address is
    known, RTT information provides negligible additional information.
 
    RTT information may be used to infer the occupancy of queues along a
    path; indeed, this is part of its utility for performance measurement
-   and diagnostics.  When a link on given path has excessive buffering
+   and diagnostics.  When a link on a given path has excessive buffering
    (on the order of hundreds of milliseconds or more; a situation
    colloquially referred to as "bufferbloat"), such that the difference
    in delay between an empty queue and a full queue dwarfs normal
@@ -702,11 +833,20 @@ Internet-Draft                  Spin Bit                   December 2017
    RTT for passive measurement as provided by the spin bit poses
    negligible marginal risk to privacy.
 
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 15]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    As shown in Section 2, the spin bit can be implemented separately
    from the rest of the mechanisms of the QUIC transport protocol, as it
    requires no access to any state other than that observable in the
    QUIC packet header itself.  We recommend that implementations take
-   advantage of this property, to reduce the risk that a errors in the
+   advantage of this property, to reduce the risk that errors in the
    implementation could leak private transport protocol state through
    the spin bit.
 
@@ -723,13 +863,6 @@ Internet-Draft                  Spin Bit                   December 2017
    situation raises a question about the trustworthiness of spin bit RTT
    measurements.
 
-
-
-Trammell, et al.          Expires June 9, 2018                 [Page 13]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    This issue must be appreciated by users of spin bit information, but
    mitigation is simple, as QUIC implementations designed to lie about
    RTT through spin bit modification are subject to dynamic analysis
@@ -742,8 +875,9 @@ Internet-Draft                  Spin Bit                   December 2017
 7.  Acknowledgments
 
    Many thanks to Christian Huitema, who originally proposed the spin
-   bit as pull request 609 on [QUIC-TRANS].  Thanks to the QUIC RTT
-   Design Team for discussions leading especially to the measurement
+   bit as pull request 609 on [QUIC-TRANS].  Thanks to Tobias Buehler
+   for feedback on the draft.  Special thanks to the QUIC RTT Design
+   Team for discussions leading especially to the measurement
    limitations and privacy and security considerations sections.
 
    This work is partially supported by the European Commission under
@@ -751,6 +885,18 @@ Internet-Draft                  Spin Bit                   December 2017
    for a Middleboxed Internet (MAMI), and by the Swiss State Secretariat
    for Education, Research, and Innovation under contract no. 15.0268.
    This support does not imply endorsement.
+
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 16]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
 8.  Informative References
 
@@ -774,17 +920,6 @@ Internet-Draft                  Spin Bit                   December 2017
    [CONUS]    Morton, A., "Comparison of Backbone Node RTT and Great
               Circle Distances (https://github.com/acmacm/FIXME-TBD)",
               September 2017.
-
-
-
-
-
-
-
-Trammell, et al.          Expires June 9, 2018                 [Page 14]
-
-Internet-Draft                  Spin Bit                   December 2017
-
 
    [IMC-CONGESTION]
               Luckie, M., Dhamdhere, A., Clark, D., Huffaker, B., and k.
@@ -812,6 +947,13 @@ Internet-Draft                  Spin Bit                   December 2017
               Transport Protocol", draft-ietf-quic-manageability-01
               (work in progress), October 2017.
 
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 17]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    [QUIC-TRANS]
               Iyengar, J. and M. Thomson, "QUIC: A UDP-Based Multiplexed
               and Secure Transport", draft-ietf-quic-transport-08 (work
@@ -835,13 +977,6 @@ Internet-Draft                  Spin Bit                   December 2017
               Hybrid Types In-Between)", RFC 7799, DOI 10.17487/RFC7799,
               May 2016, <https://www.rfc-editor.org/info/rfc7799>.
 
-
-
-Trammell, et al.          Expires June 9, 2018                 [Page 15]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    [SPINBIT-REPORT]
               De Vaere, P., "Latency Spinbit Implementation Experience",
               November 2017.
@@ -863,6 +998,17 @@ Internet-Draft                  Spin Bit                   December 2017
               Geolocation
               (https://github.com/britram/trilateration/blob/paper-rev-
               1/paper.ipynb)", August 2017.
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 18]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
    [WIRE-IMAGE]
               Trammell, B. and M. Kuehlewind, "The Wire Image of a
@@ -889,15 +1035,6 @@ Authors' Addresses
    Email: piet@devae.re
 
 
-
-
-
-
-Trammell, et al.          Expires June 9, 2018                 [Page 16]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    Roni Even
    Huawei
 
@@ -920,6 +1057,13 @@ Internet-Draft                  Spin Bit                   December 2017
    Ericsson
 
    Email: marcus.ihlar@ericsson.com
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 19]
+
+Internet-Draft                  Spin Bit                   December 2017
 
 
    Al Morton
@@ -949,4 +1093,28 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 9, 2018                 [Page 17]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 10, 2018                [Page 20]
