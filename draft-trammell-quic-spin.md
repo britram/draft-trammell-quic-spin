@@ -317,6 +317,11 @@ We note that the Latency Spin Bit, and the measurements that can be done with
 it, can be seen as an end-to-end extension of a special case of the alternate
 marking method described in {{?ALT-MARK=I-D.ietf-ippm-alt-mark}}.
 
+## Illustration
+
+\[EDITOR'S NOTE: ASCII art from Piet's soundness evaluation goes here, Brian
+to add.]
+
 ## Limitations and Workarounds {#limitations}
 
 Application-limited and flow-control-limited senders can have application and
