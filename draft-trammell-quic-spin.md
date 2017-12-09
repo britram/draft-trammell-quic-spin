@@ -93,7 +93,7 @@ informative:
         ins: G. Post
     date: 2010
   CONUS:
-    title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/acmacm/FIXME-TBD)
+    title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/acmacm/CONUS-RTT)
     author:
       -
         ins: A. Morton
