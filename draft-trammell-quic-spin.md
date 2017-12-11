@@ -710,6 +710,41 @@ are actually within the detectable range.
   (both) the signal being detected and govern the non-uniform sampling
   frequency.
 
+# Greasing
+
+Routes, congestion levels and therefore latency between two fixed QUIC
+endpoints, as well as the shape of individual application flows, fluctuate in
+ways that are not totally predictable by an on path observer.  In general,
+there is no a-priori pattern for the spin-bit distribution that will always
+materialise on a certain flow aggregate, even for a single user.
+
+There has been discussion in the QUIC working group that greasing could be a
+strategy to counter an evil access provider that might gate access to its users
+on a valid spin bit signal.  Let's accept for a moment this threat model and
+consider the practical case of a home gateway that temporarily misbehaves, for
+example draining its queues slower than it'd normally do while a firmware
+download is in progress.  It would be ill-considered for an access provider
+(even a malicious one) to block, or otherwise interfere with, QUIC flows
+originating from behind that CPE solely based on the fact that RTTs are now
+different from "usual".  And that simply because of the sheer number of false
+negatives that the operator would get by setting an arbitrary threshold.
+
+So, the potential for ossification appears to be extremely low - in a sense,
+since it depends on so much external noise, the spin-bit is self-greasing.  In
+fact, implementing explicit greasing around the spin-bit might even be harmful
+as it'd potentially erode confidence in the veracity of the signal.
+
+However, if a greasing algorithm is really needed - for example, if we'd want
+to reuse the bit with different semantics in the future (i.e.: the spin-bit is
+not included in the header invariants), one very simple implementation would be
+as follows: each server will refuse to spin its bit on a per-flow basis with a
+given probability p, instead leaving it stuck to a randomly chosen value, 0
+or 1.  The client will then end up leaving its bit stuck to the opposite, or
+could detect this condition and also pick a randomly chosen stuck value.  The
+value chosen for p must be small enough to let the spin-bit mechanics work and
+large enough not to be seen as an error instead of an intentional protocol
+feature.
+
 # Privacy and Security Considerations
 
 The privacy considerations for the latency spin bit are essentially the same
