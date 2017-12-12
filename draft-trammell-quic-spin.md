@@ -605,10 +605,6 @@ measured latency is indicative of congestion. Such a function also has the
 possibility to detect misbehaving flows and reduce the negative impact they have
 on the network.
 
-## Quality of Experience (QoE) Monitoring for Media Streams
-
-\[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/8]
-
 ## Locating WiFi Problems in Home Networks
 
 Many residential networks use WiFi (802.11) on the last segment, and WiFi
