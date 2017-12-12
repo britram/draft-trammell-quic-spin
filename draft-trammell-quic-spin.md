@@ -349,7 +349,7 @@ resistant to reordering. However, reordering can cause problems at an observer
 by causing spurious edge detection and therefore low RTT estimates, if reordering
 occurs across a spin bit flip in the stream. This can
 be probabilistically mitigated by the observer also tracking the low-order
-bits of the packet number, and rejecting edges that appear out-of-order {{RFC4737}}.
+bits of the packet number, and rejecting edges that appear out-of-order {{?RFC4737}}.
 
 ## Illustration
 
@@ -545,38 +545,40 @@ root cause lies within the access provider's network, the service provider's
 network, on the Internet paths between them, or within the customer's own
 network.
 
-The network performance is currently measured by points of presence on-the-path 
-which extract spatial delay and loss metrics measurements 
-[SPATIAL] 
-from fields of 
-the transport layer (e.g. TCP) or of application layer (e.g. RTP). The information 
-is captured in the upper layer because neither the IP header nor the UDP layer includes 
-fields allowing the measurement of upstream and downstream delay and loss. 
+The network performance is currently measured by points of presence
+on-the-path which extract spatial delay and loss metrics measurements
+{{?RFC6049}} from fields of the transport layer (e.g. TCP) or of application
+layer (e.g. RTP). The information is captured in the upper layer because
+neither the IP header nor the UDP layer includes fields allowing the
+measurement of upstream and downstream delay and loss.
 
-Local network performance problems are detected with monitoring tools which 
-observe the variation of upstream metrics and downstream metrics. 
+Local network performance problems are detected with monitoring tools which
+observe the variation of upstream metrics and downstream metrics.
 
-Inter-domain troubleshooting relies on the same metrics but is not a pro-active task. 
+Inter-domain troubleshooting relies on the same metrics but is not a
+pro-active task. It is a recursive process which hones in on the domain and
+link responsible for the failure. In practice, inter-domain troubleshooting is
+a communication process between the Network Operations Center (NOC) teams of
+the networks on the path, because the root cause of a problem is rarely
+located on a single network, and requires cooperation and exchange of data
+between the NOCs.
 
-It is a recursive dichotomy process which identifies on which side is the point of failure. 
-In practice, inter-domain troubleshooting is a communication process between the NoC teams 
-of the networks on-the-path because the root cause of a problem which was not observed before 
-is rarely located on a single network and requires cooperation and exchange of data between 
-the NoCs. 
+One example is the troubleshooting performance degradation resulting from a
+change of routing policy on one side of the path which increases the burden on
+a defective line card of a device located somewhere on the path. The card's
+misbehavior introduces an abnormal reordered packets only in the traffic
+exchanged at line rate.
 
-One example is the troubleshooting performance degradation resulting from a change of 
-routing policy on one side of the path which increases the burden on a defective 
-line card of a device located somewhere on the path. The card's misbehavior 
-introduces an abnormal reordered packets only in the traffic exchanged at line rate. 
+Other examples are similar in terms of cooperation requirements and the need to refer
+to measurements. NOCs need to share the same measurement metrics and to
+measure these metrics on the same fields of the packet to enable a minimal
+level of technical cooperation.
 
-Other examples are similar in terms of cooperation requirements and the need to refer  
-to measurements. NoCs need to share the same measurement metrics and to measure these metrics 
-on the same fields of the packet to enable a minimal level of technical cooperation.
-
-Experimentation with the spinbit {{experiment}} has shown ability to replace the 
-current RTT measurement opportunities based on clear-text transport or application header 
-fields with a standard approach for measuring passive upstream and downstream RTT. 
-
+Experimentation with the spinbit {{experiment}} has shown ability to replace
+the current RTT measurement opportunities based on clear-text transport or
+application header fields with a standard approach for measuring passive
+upstream and downstream RTT, which are a fundamental metric for this
+diagnostic process.
 
 ## Bufferbloat Mitigation in Cellular Networks
 
@@ -616,8 +618,8 @@ between endpoints on the customer network and parts of the service provider's
 own infrastructure (which have predictable delay characteristics) can be used
 to isolate this cause of performance problems.
 
-The network provider can measure the RTT and packet loss in the home gateway 
-or an upstream point if there is no access to home gateway. A problem in the 
+The network provider can measure the RTT and packet loss in the home gateway
+or an upstream point if there is no access to home gateway. A problem in the
 WiFi network is identified by seeing high delay and low packet loss.
 
 These measurements are particularly useful for traffic which is latency
@@ -629,7 +631,6 @@ troubleshooting of network layer issues in an interdomain setting.
 In this case, multiple RTT samples per flow are useful less for observing
 intraflow behavior, and more for generating sufficient samples for a given
 aggregate to make a high-quality measurement.
-
 
 ## Internet Measurement Research
 
