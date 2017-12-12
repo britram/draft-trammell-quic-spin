@@ -286,9 +286,8 @@ address {
 <link href="#rfc.section.4" rel="Chapter" title="4 Use Cases for Passive RTT Measurement">
 <link href="#rfc.section.4.1" rel="Chapter" title="4.1 Inter-domain Troubleshooting">
 <link href="#rfc.section.4.2" rel="Chapter" title="4.2 Bufferbloat Mitigation in Cellular Networks">
-<link href="#rfc.section.4.3" rel="Chapter" title="4.3 Quality of Experience (QoE) Monitoring for Media Streams">
-<link href="#rfc.section.4.4" rel="Chapter" title="4.4 Locating WiFi Problems in Home Networks">
-<link href="#rfc.section.4.5" rel="Chapter" title="4.5 Internet Measurement Research">
+<link href="#rfc.section.4.3" rel="Chapter" title="4.3 Locating WiFi Problems in Home Networks">
+<link href="#rfc.section.4.4" rel="Chapter" title="4.4 Internet Measurement Research">
 <link href="#rfc.section.5" rel="Chapter" title="5 Alternate RTT Measurement Approaches for Diagnosing QUIC flows">
 <link href="#rfc.section.5.1" rel="Chapter" title="5.1 Handshake RTT measurement">
 <link href="#rfc.section.5.2" rel="Chapter" title="5.2 Parallel active measurement">
@@ -425,11 +424,9 @@ address {
 </li>
 <li>4.2.   <a href="#rfc.section.4.2">Bufferbloat Mitigation in Cellular Networks</a>
 </li>
-<li>4.3.   <a href="#rfc.section.4.3">Quality of Experience (QoE) Monitoring for Media Streams</a>
+<li>4.3.   <a href="#rfc.section.4.3">Locating WiFi Problems in Home Networks</a>
 </li>
-<li>4.4.   <a href="#rfc.section.4.4">Locating WiFi Problems in Home Networks</a>
-</li>
-<li>4.5.   <a href="#rfc.section.4.5">Internet Measurement Research</a>
+<li>4.4.   <a href="#rfc.section.4.4">Internet Measurement Research</a>
 </li>
 </ul><li>5.   <a href="#rfc.section.5">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
 </li>
@@ -634,7 +631,7 @@ address {
 <p id="rfc.section.4.1.p.3">Local network performance problems are detected with monitoring tools which observe the variation of upstream metrics and downstream metrics.</p>
 <p id="rfc.section.4.1.p.4">Inter-domain troubleshooting relies on the same metrics but is not a pro-active task. It is a recursive process which hones in on the domain and link responsible for the failure. In practice, inter-domain troubleshooting is a communication process between the Network Operations Center (NOC) teams of the networks on the path, because the root cause of a problem is rarely located on a single network, and requires cooperation and exchange of data between the NOCs.</p>
 <p id="rfc.section.4.1.p.5">One example is the troubleshooting performance degradation resulting from a change of routing policy on one side of the path which increases the burden on a defective line card of a device located somewhere on the path. The card&#8217;s misbehavior introduces an abnormal reordered packets only in the traffic exchanged at line rate.</p>
-<p id="rfc.section.4.1.p.6">Other examples are similar in terms of cooperation requirements and the need to refer<br> to measurements. NOCs need to share the same measurement metrics and to measure these metrics on the same fields of the packet to enable a minimal level of technical cooperation.</p>
+<p id="rfc.section.4.1.p.6">Other examples are similar in terms of cooperation requirements and the need to refer to measurements. NOCs need to share the same measurement metrics and to measure these metrics on the same fields of the packet to enable a minimal level of technical cooperation.</p>
 <p id="rfc.section.4.1.p.7">Experimentation with the spinbit <a href="#experiment" class="xref">Section 3.3</a> has shown ability to replace the current RTT measurement opportunities based on clear-text transport or application header fields with a standard approach for measuring passive upstream and downstream RTT, which are a fundamental metric for this diagnostic process.</p>
 <h1 id="rfc.section.4.2">
 <a href="#rfc.section.4.2">4.2.</a> <a href="#bufferbloat-mitigation-in-cellular-networks" id="bufferbloat-mitigation-in-cellular-networks">Bufferbloat Mitigation in Cellular Networks</a>
@@ -644,20 +641,16 @@ address {
 <p id="rfc.section.4.2.p.3">An effective way of mitigating bufferbloat without sacrificing too much throughput is to deploy Active Queue Management (AQM) in bottleneck routers and base stations. However, due to the variation in deployed base-stations it is not always possible to enable AQM at the bottlenecks, without massive infrastructure investments.</p>
 <p id="rfc.section.4.2.p.4">An alternative approach is to deploy AQM as a network function in a more centralized location than the traditional bottleneck nodes. Such an AQM monitors the RTT progression of flows and drops or marks packets when the measured latency is indicative of congestion. Such a function also has the possibility to detect misbehaving flows and reduce the negative impact they have on the network.</p>
 <h1 id="rfc.section.4.3">
-<a href="#rfc.section.4.3">4.3.</a> <a href="#quality-of-experience-qoe-monitoring-for-media-streams" id="quality-of-experience-qoe-monitoring-for-media-streams">Quality of Experience (QoE) Monitoring for Media Streams</a>
+<a href="#rfc.section.4.3">4.3.</a> <a href="#locating-wifi-problems-in-home-networks" id="locating-wifi-problems-in-home-networks">Locating WiFi Problems in Home Networks</a>
 </h1>
-<p id="rfc.section.4.3.p.1">[EDITOR&#8217;S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/8]</p>
+<p id="rfc.section.4.3.p.1">Many residential networks use WiFi (802.11) on the last segment, and WiFi signal strength degradation manifests in high first-hop delay, due to the fact that the MAC layer will retransmit packets lost at that layer. Measuring the RTT between endpoints on the customer network and parts of the service provider&#8217;s own infrastructure (which have predictable delay characteristics) can be used to isolate this cause of performance problems.</p>
+<p id="rfc.section.4.3.p.2">The network provider can measure the RTT and packet loss in the home gateway or an upstream point if there is no access to home gateway. A problem in the WiFi network is identified by seeing high delay and low packet loss.</p>
+<p id="rfc.section.4.3.p.3">These measurements are particularly useful for traffic which is latency sensitive, such as interactive video applications. However, since high latency is often correlated with other network-layer issues such as chronic interconnect congestion <a href="#IMC-CONGESTION" class="xref">[IMC-CONGESTION]</a>, it is useful for general troubleshooting of network layer issues in an interdomain setting.</p>
+<p id="rfc.section.4.3.p.4">In this case, multiple RTT samples per flow are useful less for observing intraflow behavior, and more for generating sufficient samples for a given aggregate to make a high-quality measurement.</p>
 <h1 id="rfc.section.4.4">
-<a href="#rfc.section.4.4">4.4.</a> <a href="#locating-wifi-problems-in-home-networks" id="locating-wifi-problems-in-home-networks">Locating WiFi Problems in Home Networks</a>
+<a href="#rfc.section.4.4">4.4.</a> <a href="#internet-measurement-research" id="internet-measurement-research">Internet Measurement Research</a>
 </h1>
-<p id="rfc.section.4.4.p.1">Many residential networks use WiFi (802.11) on the last segment, and WiFi signal strength degradation manifests in high first-hop delay, due to the fact that the MAC layer will retransmit packets lost at that layer. Measuring the RTT between endpoints on the customer network and parts of the service provider&#8217;s own infrastructure (which have predictable delay characteristics) can be used to isolate this cause of performance problems.</p>
-<p id="rfc.section.4.4.p.2">The network provider can measure the RTT and packet loss in the home gateway or an upstream point if there is no access to home gateway. A problem in the WiFi network is identified by seeing high delay and low packet loss.</p>
-<p id="rfc.section.4.4.p.3">These measurements are particularly useful for traffic which is latency sensitive, such as interactive video applications. However, since high latency is often correlated with other network-layer issues such as chronic interconnect congestion <a href="#IMC-CONGESTION" class="xref">[IMC-CONGESTION]</a>, it is useful for general troubleshooting of network layer issues in an interdomain setting.</p>
-<p id="rfc.section.4.4.p.4">In this case, multiple RTT samples per flow are useful less for observing intraflow behavior, and more for generating sufficient samples for a given aggregate to make a high-quality measurement.</p>
-<h1 id="rfc.section.4.5">
-<a href="#rfc.section.4.5">4.5.</a> <a href="#internet-measurement-research" id="internet-measurement-research">Internet Measurement Research</a>
-</h1>
-<p id="rfc.section.4.5.p.1">As a large, distributed, engineered system with no centralized control, the Internet has emergent properties of interest to the research community not just for purely scientific curiosity, but also to provide applicable guidance to Internet engineering, Internet protocol design and development, network operations, and policy development. Latency measurements in particular are both an active area of research as well as an important tool for certain measurement studies (see, e.g. <a href="#IMC-TCPSIG" class="xref">[IMC-TCPSIG]</a>, from the most recent Internet Measurement Conference). While much of this work is currently done with active measurements, the ability to generate latency samples passively or using a hybrid measurement approach (i.e., through passive observation of purpose-generated active measurement traffic; see <a href="#RFC7799" class="xref">[RFC7799]</a>) can drastically increase the efficiency and scalability of these studies. A latency spin bit would make these techniques applicable to QUIC, as well.</p>
+<p id="rfc.section.4.4.p.1">As a large, distributed, engineered system with no centralized control, the Internet has emergent properties of interest to the research community not just for purely scientific curiosity, but also to provide applicable guidance to Internet engineering, Internet protocol design and development, network operations, and policy development. Latency measurements in particular are both an active area of research as well as an important tool for certain measurement studies (see, e.g. <a href="#IMC-TCPSIG" class="xref">[IMC-TCPSIG]</a>, from the most recent Internet Measurement Conference). While much of this work is currently done with active measurements, the ability to generate latency samples passively or using a hybrid measurement approach (i.e., through passive observation of purpose-generated active measurement traffic; see <a href="#RFC7799" class="xref">[RFC7799]</a>) can drastically increase the efficiency and scalability of these studies. A latency spin bit would make these techniques applicable to QUIC, as well.</p>
 <h1 id="rfc.section.5">
 <a href="#rfc.section.5">5.</a> <a href="#other-bad-ideas" id="other-bad-ideas">Alternate RTT Measurement Approaches for Diagnosing QUIC flows</a>
 </h1>

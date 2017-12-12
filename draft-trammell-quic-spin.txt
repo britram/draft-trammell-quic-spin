@@ -91,18 +91,18 @@ Table of Contents
    4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .  10
      4.1.  Inter-domain Troubleshooting  . . . . . . . . . . . . . .  10
      4.2.  Bufferbloat Mitigation in Cellular Networks . . . . . . .  11
-     4.3.  Quality of Experience (QoE) Monitoring for Media Streams   12
-     4.4.  Locating WiFi Problems in Home Networks . . . . . . . . .  12
-     4.5.  Internet Measurement Research . . . . . . . . . . . . . .  13
+     4.3.  Locating WiFi Problems in Home Networks . . . . . . . . .  12
+     4.4.  Internet Measurement Research . . . . . . . . . . . . . .  12
    5.  Alternate RTT Measurement Approaches for Diagnosing QUIC
        flows . . . . . . . . . . . . . . . . . . . . . . . . . . . .  13
      5.1.  Handshake RTT measurement . . . . . . . . . . . . . . . .  13
-     5.2.  Parallel active measurement . . . . . . . . . . . . . . .  14
+     5.2.  Parallel active measurement . . . . . . . . . . . . . . .  13
      5.3.  Frequency Analysis  . . . . . . . . . . . . . . . . . . .  14
    6.  Privacy and Security Considerations . . . . . . . . . . . . .  15
    7.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  17
    8.  Informative References  . . . . . . . . . . . . . . . . . . .  17
    Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  20
+
 
 
 
@@ -589,10 +589,9 @@ Internet-Draft                  Spin Bit                   December 2017
    reordered packets only in the traffic exchanged at line rate.
 
    Other examples are similar in terms of cooperation requirements and
-   the need to refer
-   to measurements.  NOCs need to share the same measurement metrics and
-   to measure these metrics on the same fields of the packet to enable a
-   minimal level of technical cooperation.
+   the need to refer to measurements.  NOCs need to share the same
+   measurement metrics and to measure these metrics on the same fields
+   of the packet to enable a minimal level of technical cooperation.
 
    Experimentation with the spinbit Section 3.3 has shown ability to
    replace the current RTT measurement opportunities based on clear-text
@@ -609,7 +608,8 @@ Internet-Draft                  Spin Bit                   December 2017
 
    Due to the dynamic nature of RANs, base stations have typically been
    provisioned with large buffers to maximize throughput despite rapid
-
+   changes in capacity.  As a side effect, bufferbloat has become a
+   common issue in such networks [WWMM-BLOAT].
 
 
 
@@ -617,9 +617,6 @@ Trammell, et al.          Expires June 15, 2018                [Page 11]
 
 Internet-Draft                  Spin Bit                   December 2017
 
-
-   changes in capacity.  As a side effect, bufferbloat has become a
-   common issue in such networks [WWMM-BLOAT].
 
    An effective way of mitigating bufferbloat without sacrificing too
    much throughput is to deploy Active Queue Management (AQM) in
@@ -634,12 +631,7 @@ Internet-Draft                  Spin Bit                   December 2017
    a function also has the possibility to detect misbehaving flows and
    reduce the negative impact they have on the network.
 
-4.3.  Quality of Experience (QoE) Monitoring for Media Streams
-
-   [EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-
-   spin/issues/8]
-
-4.4.  Locating WiFi Problems in Home Networks
+4.3.  Locating WiFi Problems in Home Networks
 
    Many residential networks use WiFi (802.11) on the last segment, and
    WiFi signal strength degradation manifests in high first-hop delay,
@@ -665,16 +657,7 @@ Internet-Draft                  Spin Bit                   December 2017
    observing intraflow behavior, and more for generating sufficient
    samples for a given aggregate to make a high-quality measurement.
 
-
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 12]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
-4.5.  Internet Measurement Research
+4.4.  Internet Measurement Research
 
    As a large, distributed, engineered system with no centralized
    control, the Internet has emergent properties of interest to the
@@ -683,6 +666,14 @@ Internet-Draft                  Spin Bit                   December 2017
    protocol design and development, network operations, and policy
    development.  Latency measurements in particular are both an active
    area of research as well as an important tool for certain measurement
+
+
+
+Trammell, et al.          Expires June 15, 2018                [Page 12]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    studies (see, e.g.  [IMC-TCPSIG], from the most recent Internet
    Measurement Conference).  While much of this work is currently done
    with active measurements, the ability to generate latency samples
@@ -721,15 +712,6 @@ Internet-Draft                  Spin Bit                   December 2017
    (3) network treatment of initial packets in a flow must be identical
    to that of later packets in the flow.  When these assumptions cannot
    be shown to hold, spin-bit based RTT measurement is preferable to
-
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 13]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    handshake RTT measurement, even for applications for which handshake
    RTT measurement would otherwise be suitable.
 
@@ -740,6 +722,14 @@ Internet-Draft                  Spin Bit                   December 2017
    protocol like TWAMP [RFC5357], or a separate diagnostic QUIC flow to
    measure RTT.  Regardless of protocol, the active measurement must be
    initiated by a client on the same network as the client of the QUIC
+
+
+
+Trammell, et al.          Expires June 15, 2018                [Page 13]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    flow(s) of interest, or a network close by in the Internet topology,
    toward the server.  Note that there is no guarantee that ICMP flows
    will receive the same network treatment as the flows under study,
@@ -778,14 +768,6 @@ Internet-Draft                  Spin Bit                   December 2017
 
    o  There appear to be several limitations on the streams that are
       applicable.  Streams with long RTT (~50ms) are more likely to be
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 14]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
       suitable (having a better match between packet rate and relatively
       low frequencies to detect).
 
@@ -796,6 +778,14 @@ Internet-Draft                  Spin Bit                   December 2017
 
    o  "Ideal" interarrival time streams were simulated with uniform
       sampling and period.  The Lomb-Scargle Periodogram is surprisingly
+
+
+
+Trammell, et al.          Expires June 15, 2018                [Page 14]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
       unable to detect the fundamental frequency at 100 Hz from the
       constant 10 ms packet spacing.
 
@@ -834,14 +824,6 @@ Internet-Draft                  Spin Bit                   December 2017
    and the efficiency of connecting adjacent major cities both influence
    the facility routing.  An evaluation of ~3500 measurements on a mesh
    of 25 backbone nodes in the continental United States shows that 85%
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 15]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    had RTT to great-circle error of 3ms or more, making location within
    US State boundaries ambiguous [CONUS].
 
@@ -852,6 +834,14 @@ Internet-Draft                  Spin Bit                   December 2017
    path; indeed, this is part of its utility for performance measurement
    and diagnostics.  When a link on a given path has excessive buffering
    (on the order of hundreds of milliseconds or more), such that the
+
+
+
+Trammell, et al.          Expires June 15, 2018                [Page 15]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    difference in delay between an empty queue and a full queue dwarfs
    normal variance and RTT along the path, RTT variance during the
    lifetime of a flow can be used to infer the presence of traffic on
@@ -890,14 +880,6 @@ Internet-Draft                  Spin Bit                   December 2017
    acknowledgment numbers and its timestamp option.  When passive
    measurement is used for purposes where one endpoint might gain a
    material advantage by representing a false RTT, e.g.  SLA
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 16]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    verification or enforcement of telecommunications regulations, this
    situation raises a question about the trustworthiness of spin bit RTT
    measurements.
@@ -908,6 +890,14 @@ Internet-Draft                  Spin Bit                   December 2017
    server can be contacted by an honest client under the control of a
    verifying party, and the client's RTT estimate compared with the
    spin-bit exposed estimate.  Though in the general case, it is
+
+
+
+Trammell, et al.          Expires June 15, 2018                [Page 16]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    impossible to verify explicit path signals with two complicit
    endpoints (see [WIRE-IMAGE]), a lying server/client pair may be
    subject to dynamic analysis along paths with known RTTs.  We consider
@@ -943,6 +933,16 @@ Internet-Draft                  Spin Bit                   December 2017
               Strowes, S., "Passively Measuring TCP Round-Trip Times (in
               Communications of the ACM)", October 2013.
 
+   [CARRA-RTT]
+              Carra, D., Avrachenkov, K., Alouf, S., Blanc, A., Nain,
+              P., and G. Post, "Passive Online RTT Estimation for Flow-
+              Aware Routers Using One-Way Traffic (NETWORKING 2010, LNCS
+              6091, pp. 109-121)", 2010.
+
+   [CONUS]    Morton, A., "Comparison of Backbone Node RTT and Great
+              Circle Distances (https://github.com/acmacm/CONUS-RTT)",
+              September 2017.
+
 
 
 
@@ -953,16 +953,6 @@ Trammell, et al.          Expires June 15, 2018                [Page 17]
 
 Internet-Draft                  Spin Bit                   December 2017
 
-
-   [CARRA-RTT]
-              Carra, D., Avrachenkov, K., Alouf, S., Blanc, A., Nain,
-              P., and G. Post, "Passive Online RTT Estimation for Flow-
-              Aware Routers Using One-Way Traffic (NETWORKING 2010, LNCS
-              6091, pp. 109-121)", 2010.
-
-   [CONUS]    Morton, A., "Comparison of Backbone Node RTT and Great
-              Circle Distances (https://github.com/acmacm/CONUS-RTT)",
-              September 2017.
 
    [IMC-CONGESTION]
               Luckie, M., Dhamdhere, A., Clark, D., Huffaker, B., and k.
@@ -999,6 +989,16 @@ Internet-Draft                  Spin Bit                   December 2017
               RFC 792, DOI 10.17487/RFC0792, September 1981,
               <https://www.rfc-editor.org/info/rfc792>.
 
+   [RFC4433]  Kulkarni, M., Patel, A., and K. Leung, "Mobile IPv4
+              Dynamic Home Agent (HA) Assignment", RFC 4433,
+              DOI 10.17487/RFC4433, March 2006,
+              <https://www.rfc-editor.org/info/rfc4433>.
+
+   [RFC4737]  Morton, A., Ciavattone, L., Ramachandran, G., Shalunov,
+              S., and J. Perser, "Packet Reordering Metrics", RFC 4737,
+              DOI 10.17487/RFC4737, November 2006,
+              <https://www.rfc-editor.org/info/rfc4737>.
+
 
 
 
@@ -1009,16 +1009,6 @@ Trammell, et al.          Expires June 15, 2018                [Page 18]
 
 Internet-Draft                  Spin Bit                   December 2017
 
-
-   [RFC4433]  Kulkarni, M., Patel, A., and K. Leung, "Mobile IPv4
-              Dynamic Home Agent (HA) Assignment", RFC 4433,
-              DOI 10.17487/RFC4433, March 2006,
-              <https://www.rfc-editor.org/info/rfc4433>.
-
-   [RFC4737]  Morton, A., Ciavattone, L., Ramachandran, G., Shalunov,
-              S., and J. Perser, "Packet Reordering Metrics", RFC 4737,
-              DOI 10.17487/RFC4737, November 2006,
-              <https://www.rfc-editor.org/info/rfc4737>.
 
    [RFC5357]  Hedayat, K., Krzanowski, R., Morton, A., Yum, K., and J.
               Babiarz, "A Two-Way Active Measurement Protocol (TWAMP)",
@@ -1055,17 +1045,6 @@ Internet-Draft                  Spin Bit                   December 2017
               (https://github.com/britram/trilateration/blob/paper-rev-
               1/paper.ipynb)", August 2017.
 
-
-
-
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 19]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    [WIRE-IMAGE]
               Trammell, B. and M. Kuehlewind, "The Wire Image of a
               Network Protocol", draft-trammell-wire-image-01 (work in
@@ -1076,6 +1055,16 @@ Internet-Draft                  Spin Bit                   December 2017
               Cicco, L., and S. Mascolo, "Impact of TCP Congestion
               Control on Bufferbloat in Cellular Networks (in Proc. IEEE
               WoWMoM 2013)", June 2013.
+
+
+
+
+
+
+Trammell, et al.          Expires June 15, 2018                [Page 19]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
 Authors' Addresses
 
@@ -1115,13 +1104,6 @@ Authors' Addresses
    Email: marcus.ihlar@ericsson.com
 
 
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 20]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    Al Morton
    AT&T Labs
 
@@ -1135,42 +1117,4 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 21]
+Trammell, et al.          Expires June 15, 2018                [Page 20]
