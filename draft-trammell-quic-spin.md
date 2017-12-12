@@ -93,7 +93,7 @@ informative:
         ins: G. Post
     date: 2010
   CONUS:
-    title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/acmacm/FIXME-TBD)
+    title: Comparison of Backbone Node RTT and Great Circle Distances (https://github.com/acmacm/CONUS-RTT)
     author:
       -
         ins: A. Morton
@@ -185,7 +185,7 @@ informative:
 This document summarizes work to date on the addition of a "spin bit",
 intended for explicit measurability of end-to-end RTT on QUIC flows. It
 proposes a detailed mechanism for the spin bit, describes how to use it to
-measure end-to-end latency, discusses corner cases and workarounds therefor in
+measure end-to-end latency, discusses corner cases and their workarounds in
 the measurement, describes experimental evaluation of the mechanism done to
 date, and examines the utility and privacy implications of the spin bit. As
 the overhead and risk associated with the spin bit are negligible, and the
@@ -203,11 +203,11 @@ UDP-encapsulated protocol integrated with Transport Layer Security (TLS)
 those handshake packets needed to establish or resume a TLS session, and
 information required to reassemble QUIC streams (the packet number) and to
 route QUIC packets to the correct machine in a load-balancing situation (the
-connection ID). In other words, in contrast to TCP, QUIC's wire image (see
+connection ID). In contrast to TCP, QUIC's wire image (see
 {{?WIRE-IMAGE=I-D.trammell-wire-image}}) exposes much less information about
 transport protocol state than TCP's wire image. Specifically, the fact that
-sequence and acknowledgement numbers and timestamps cannot be seen by
-on-path observers in QUIC as they can be in the TCP means that passive TCP loss
+sequence and acknowledgement numbers and timestamps (available in TCP) cannot be seen by
+on-path observers in QUIC means that passive TCP loss
 and latency measurement techniques that rely on this information (e.g.
 {{CACM-TCP}}, {{TMA-QOF}}) cannot be easily ported to work with QUIC.
 
@@ -217,7 +217,7 @@ passive measurability of the protocol. It provides one RTT sample per RTT to
 passive observers of QUIC traffic. This document describes the mechanism, how
 it can be added to QUIC, and how it can be used by passive measurement
 facilities to generate RTT samples. It explores potential corner cases and
-shortcomings of the mechanism and how they can be worked around. It summarizes
+shortcomings of the mechanism and how they can be mitigated. It summarizes
 experimental results to date with an implementation of the spin bit built atop
 a recent QUIC implementation. It additionally describes use cases for passive
 RTT measurement at the resolution provided by the spin bit. It further reviews
@@ -245,19 +245,19 @@ contacting the editor.
 The latency spin bit enables latency monitoring from observation points on the
 network path. Each endpoint, client and server, maintains a spin value, 0 or
 1, for each QUIC connection, and sets the spin bit on packets it sends for
-that connection to that value. It also maintains the highest packet number
+that connection to the appropriate value (below). It also maintains the highest packet number
 seen from its peer on the connection. The value is then determined at each
 endpoint as follows:
 
 * The server initializes its spin value to 0. When it receives a packet from
   the client, if that packet has a short header and if it increments the
   highest packet number seen by the server from the client, it sets the spin
-  value to the spin bit in that packet.
+  value to the spin bit in the received packet.
 
 * The client initializes its spin value to 0. When it receives a packet from
   the server, if the packet has a short header and if it increments the
   highest packet number seen by the client from the server, it sets the spin
-  value to the opposite of the spin bit in that packet.
+  value to the opposite of the spin bit in the received packet.
 
 This procedure will cause the spin bit to change value in each direction once
 per round trip. Observation points can estimate the network latency by
@@ -268,7 +268,7 @@ See {{illustration}} for an illustration of this mechanism in action.
 
 Since it is possible to measure handshake RTT without a spin bit (see
 {{handshake}}), it is sufficient to include the spin bit in the short
-packet header. This proposal suggests to use the fourth most significant bit
+packet header. This proposal suggests using the fourth most significant bit
 (0x10) of the first octet in the short header for the spin bit.
 
 ~~~~~
@@ -301,7 +301,7 @@ packet types will be redefined to the following values:
 Note that this proposal changes the short header as defined in the editor's
 copy of {{QUIC-TRANS}} at the time of writing; regardless of where and how
 the spin bit is eventually defined, the key properties of the spin bit are (1)
-it's a single bit, (2) it spins as defined above, and (3) it appears only in
+it's a single bit, (2) it spins as defined in {{mechanism}}, and (3) it appears only in
 the short header; i.e. after version negotiation and connection establishment
 are completed.
 
@@ -346,9 +346,10 @@ samples due to application or flow control limitation.
 Since the spin bit logic at each endpoint considers only samples on packets
 that advance the largest packet number seen, signal generation itself is
 resistant to reordering. However, reordering can cause problems at an observer
-by causing spurious edge detection and therefore low RTT estimates. This can
+by causing spurious edge detection and therefore low RTT estimates, if reordering
+occurs across a spin bit flip in the stream. This can
 be probabilistically mitigated by the observer also tracking the low-order
-bits of the packet number, and rejecting edges that appear out-of-order.
+bits of the packet number, and rejecting edges that appear out-of-order {{RFC4737}}.
 
 ## Illustration
 
@@ -425,7 +426,7 @@ in {{illus4}}.
 {: #illus4 title="Client inverts the spin edge"}
 
 Here we can also see how measurement works. An observer watching the signal at
-observation point X in {{illus4}} will see an edge every 10 ticks, i.e. once
+single observation point X in {{illus4}} will see an edge every 10 ticks, i.e. once
 per RTT. An observer watching the signal at a symmetric observation point Y in
 {{illus4}} will see a server-client edge 4 ticks after the client-server edge,
 and a client-server edge 6 ticks after the server-client edge, allowing it to
@@ -434,7 +435,7 @@ compute component RTT.
 {{illus5}} shows how this mechanism works in the presence of reordering. Here,
 packet C carries the spin edge, and packet B is reordered on the way to the
 client. In this case, the client will begin sending spin 1 after the arrival
-of C, and ignore the spin bit 0 on packet B, since B < C; i.e. it does not
+of C, and ignore the spin bit flip to 1 on packet B, since B < C; i.e. it does not
 increment the highest packet number seen.
 
 ~~~~~
@@ -447,7 +448,7 @@ increment the highest packet number seen.
 ~~~~~
 {: #illus5 title="Handling reordering"}
 
-## Experimental Evaluation
+## Experimental Evaluation {#experiment}
 
 We have evaluated the effectiveness of the spin bit in an emulated network
 environment. The spin bit was added to a fork of {{MINQ}}, using the mechanism
@@ -494,7 +495,7 @@ in a single direction (e.g. 00 -> 01 -> 10 -> 11) successfully rejects all
 reordered samples, including under amounts of reordering that render the
 transport itself mostly useless. However, adding a bit is not necessary:
 having the observer keep the least significant bits of the packet number, and
-rejecting samples from packets that do not advance by one, as suggested in
+rejecting samples from packets that reverse the sequence {{RFC4737}}, as suggested in
 {{limitations}}, is essentially as successful as a two-bit spin signal in
 mitigating the effects of reordering on RTT measurement.
 
@@ -523,7 +524,7 @@ described in {{usage}}.
 In any case, the measurement methodology follows one of a few basic variants:
 
 - The RTT evolution of a flow or a set of flows can be compared to baseline or
-  expected RTT measurements for flows with the same characterisitcs in order
+  expected RTT measurements for flows with the same characteristics in order
   to detect or localize latency issues in a specific network.
 
 - The RTT evolution of a single flow can also be examined in detail to
@@ -535,7 +536,7 @@ In any case, the measurement methodology follows one of a few basic variants:
   RTTs for a group of flows that should have similar RTT (e.g., because they
   should share the same path(s)).
 
-## Interdomain Troubleshooting
+## Inter-domain Troubleshooting
 
 Network access providers are often the first point of contact by their
 customers when network problems impact the performance of bandwidth-intensive
@@ -544,32 +545,38 @@ root cause lies within the access provider's network, the service provider's
 network, on the Internet paths between them, or within the customer's own
 network.
 
-Many residential networks use WiFi (802.11) on the last segment, and WiFi
-signal strength degradation manifests in high first-hop delay, due to the fact
-that the MAC layer will retransmit packets lost at that layer. Measuring the RTT
-between endpoints on the customer network and parts of the service provider's
-own infrastructure (which have predictable delay characteristics) can be used
-to isolate this cause of performance problems.
+The network performance is currently measured by points of presence on-the-path 
+which extract spatial delay and loss metrics measurements 
+[SPATIAL] 
+from fields of 
+the transport layer (e.g. TCP) or of application layer (e.g. RTP). The information 
+is captured in the upper layer because neither the IP header nor the UDP layer includes 
+fields allowing the measurement of upstream and downstream delay and loss. 
 
-Comparing the evolution of passively-measured RTTs between a customer network
-and selected other networks on the Internet to short- and medium-term baseline
-measurements can similarly be used to isolate high latency to specific
-networks or network segments. For example, if the RTTs of all flows to a given
-content provider increase at the same time, the problem likely exists between
-the access network and the content provider, or in the content provider's
-network itself. On the other hand, if the RTTs of all flows passing through
-the same access provider infrastructure change together, then the change is
-likely attributable to that infrastructure.
+Local network performance problems are detected with monitoring tools which 
+observe the variation of upstream metrics and downstream metrics. 
 
-These measurements are particularly useful for traffic which is latency
-sensitive, such as interactive video applications. However, since high latency
-is often correlated with other network-layer issues such as chronic
-interconnect congestion {{IMC-CONGESTION}}, it is useful for general
-troubleshooting of network layer issues in an interdomain setting.
+Inter-domain troubleshooting relies on the same metrics but is not a pro-active task. 
 
-In this case, multiple RTT samples per flow are useful less for observing
-intraflow behavior, and more for generating sufficient samples for a given
-aggregate to make a high-quality measurement.
+It is a recursive dichotomy process which identifies on which side is the point of failure. 
+In practice, inter-domain troubleshooting is a communication process between the NoC teams 
+of the networks on-the-path because the root cause of a problem which was not observed before 
+is rarely located on a single network and requires cooperation and exchange of data between 
+the NoCs. 
+
+One example is the troubleshooting performance degradation resulting from a change of 
+routing policy on one side of the path which increases the burden on a defective 
+line card of a device located somewhere on the path. The card's misbehavior 
+introduces an abnormal reordered packets only in the traffic exchanged at line rate. 
+
+Other examples are similar in terms of cooperation requirements and the need to refer  
+to measurements. NoCs need to share the same measurement metrics and to measure these metrics 
+on the same fields of the packet to enable a minimal level of technical cooperation.
+
+Experimentation with the spinbit {{experiment}} has shown ability to replace the 
+current RTT measurement opportunities based on clear-text transport or application header 
+fields with a standard approach for measuring passive upstream and downstream RTT. 
+
 
 ## Bufferbloat Mitigation in Cellular Networks
 
@@ -599,6 +606,30 @@ on the network.
 ## Quality of Experience (QoE) Monitoring for Media Streams
 
 \[EDITOR'S NOTE: see https://github.com/britram/draft-trammell-quic-spin/issues/8]
+
+## Locating WiFi Problems in Home Networks
+
+Many residential networks use WiFi (802.11) on the last segment, and WiFi
+signal strength degradation manifests in high first-hop delay, due to the fact
+that the MAC layer will retransmit packets lost at that layer. Measuring the RTT
+between endpoints on the customer network and parts of the service provider's
+own infrastructure (which have predictable delay characteristics) can be used
+to isolate this cause of performance problems.
+
+The network provider can measure the RTT and packet loss in the home gateway 
+or an upstream point if there is no access to home gateway. A problem in the 
+WiFi network is identified by seeing high delay and low packet loss.
+
+These measurements are particularly useful for traffic which is latency
+sensitive, such as interactive video applications. However, since high latency
+is often correlated with other network-layer issues such as chronic
+interconnect congestion {{IMC-CONGESTION}}, it is useful for general
+troubleshooting of network layer issues in an interdomain setting.
+
+In this case, multiple RTT samples per flow are useful less for observing
+intraflow behavior, and more for generating sufficient samples for a given
+aggregate to make a high-quality measurement.
+
 
 ## Internet Measurement Research
 
@@ -700,10 +731,10 @@ are actually within the detectable range.
 * It is not clear if IETF QUIC protocol stream will possess the same
   inter-packet arrival time features as TCP streams. Also, Carra et al. note
   that their process may not work if the TCP stream encounters a bottleneck,
-  which would be the essential case for network troubleshooting. Mobile
+  which would be an essential circumstance for network troubleshooting. Mobile
   networks with time-slot service disciplines would likely cause similar
-  issues as a bottleneck, by imposing the time-slot interval on the spacing of
-  many packets.
+  issues as a bottleneck, by imposing their time-slot interval on the spacing of
+  most packets.
 
 * The Carra et al. {{CARRA-RTT}} calculation of minimum and maximum frequencies
   that can be detected may not be applicable when the inter-arrival times are
@@ -728,7 +759,7 @@ databases.
 One reason for the inaccuracy of geolocation from network RTT is that Internet
 backbone transmission facilities do not follow the great-circle path between
 major nodes. Instead, major geographic features and the efficiency of
-connecting adjacent major cities influence the facility routing. An evaluation
+connecting adjacent major cities both influence the facility routing. An evaluation
 of ~3500 measurements on a mesh of 25 backbone nodes in the continental United
 States shows that 85% had RTT to great-circle error of 3ms or more, making
 location within US State boundaries ambiguous {{CONUS}}.
