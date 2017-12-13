@@ -5,7 +5,7 @@
 QUIC                                                    B. Trammell, Ed.
 Internet-Draft                                               P. De Vaere
 Intended status: Informational                                ETH Zurich
-Expires: June 15, 2018                                           R. Even
+Expires: June 16, 2018                                           R. Even
                                                                   Huawei
                                                              G. Fioccola
                                                           Telecom Italia
@@ -17,7 +17,7 @@ Expires: June 15, 2018                                           R. Even
                                                                AT&T Labs
                                                               E. Stephan
                                                                   Orange
-                                                       December 12, 2017
+                                                       December 13, 2017
 
 
        The Addition of a Spin Bit to the QUIC Transport Protocol
@@ -53,7 +53,7 @@ Status of This Memo
 
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 1]
+Trammell, et al.          Expires June 16, 2018                 [Page 1]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -61,7 +61,7 @@ Internet-Draft                  Spin Bit                   December 2017
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on June 15, 2018.
+   This Internet-Draft will expire on June 16, 2018.
 
 Copyright Notice
 
@@ -90,26 +90,26 @@ Table of Contents
      3.3.  Experimental Evaluation . . . . . . . . . . . . . . . . .   8
    4.  Use Cases for Passive RTT Measurement . . . . . . . . . . . .  10
      4.1.  Inter-domain Troubleshooting  . . . . . . . . . . . . . .  10
-     4.2.  Bufferbloat Mitigation in Cellular Networks . . . . . . .  11
-     4.3.  Locating WiFi Problems in Home Networks . . . . . . . . .  12
-     4.4.  Internet Measurement Research . . . . . . . . . . . . . .  12
+     4.2.  Two-Point Intradomain Measurement . . . . . . . . . . . .  11
+     4.3.  Bufferbloat Mitigation in Cellular Networks . . . . . . .  12
+     4.4.  Locating WiFi Problems in Home Networks . . . . . . . . .  12
+     4.5.  Internet Measurement Research . . . . . . . . . . . . . .  13
    5.  Alternate RTT Measurement Approaches for Diagnosing QUIC
        flows . . . . . . . . . . . . . . . . . . . . . . . . . . . .  13
-     5.1.  Handshake RTT measurement . . . . . . . . . . . . . . . .  13
-     5.2.  Parallel active measurement . . . . . . . . . . . . . . .  13
-     5.3.  Frequency Analysis  . . . . . . . . . . . . . . . . . . .  14
-   6.  Privacy and Security Considerations . . . . . . . . . . . . .  15
-   7.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  17
-   8.  Informative References  . . . . . . . . . . . . . . . . . . .  17
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  20
+     5.1.  Handshake RTT measurement . . . . . . . . . . . . . . . .  14
+     5.2.  Parallel active measurement . . . . . . . . . . . . . . .  14
+     5.3.  Frequency Analysis  . . . . . . . . . . . . . . . . . . .  15
+   6.  Greasing  . . . . . . . . . . . . . . . . . . . . . . . . . .  16
+   7.  Privacy and Security Considerations . . . . . . . . . . . . .  17
+   8.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  18
+   9.  Informative References  . . . . . . . . . . . . . . . . . . .  19
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  21
 
 
 
 
 
-
-
-Trammell, et al.          Expires June 15, 2018                 [Page 2]
+Trammell, et al.          Expires June 16, 2018                 [Page 2]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -165,7 +165,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 3]
+Trammell, et al.          Expires June 16, 2018                 [Page 3]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -221,7 +221,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 4]
+Trammell, et al.          Expires June 16, 2018                 [Page 4]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -277,7 +277,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 5]
+Trammell, et al.          Expires June 16, 2018                 [Page 5]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -295,10 +295,6 @@ Internet-Draft                  Spin Bit                   December 2017
    respectively.  It does this by measuring the delay between a spin
    edge observed in the upstream direction and that observed in the
    downstream direction, and vice versa.
-
-   We note that the latency spin bit, and the measurements that can be
-   done with it, can be seen as an end-to-end extension of a special
-   case of the alternate marking method described in [ALT-MARK].
 
 3.1.  Limitations and Workarounds
 
@@ -331,15 +327,16 @@ Internet-Draft                  Spin Bit                   December 2017
    packets at a constant rate.  If each packet moves one slot in the
    queue per clock tick, note that this network has a RTT of 10 ticks.
 
+   Initially, during connection establishment, no packets with a spin
+   bit are in flight, as shown in Figure 2.
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 6]
+
+
+Trammell, et al.          Expires June 16, 2018                 [Page 6]
 
 Internet-Draft                  Spin Bit                   December 2017
 
-
-   Initially, during connection establishment, no packets with a spin
-   bit are in flight, as shown in Figure 2.
 
    +--------+   -  -  -  -  -   +--------+
    |        |     -------->     |        |
@@ -389,7 +386,10 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 7]
+
+
+
+Trammell, et al.          Expires June 16, 2018                 [Page 7]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -445,7 +445,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 8]
+Trammell, et al.          Expires June 16, 2018                 [Page 8]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -501,7 +501,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 15, 2018                 [Page 9]
+Trammell, et al.          Expires June 16, 2018                 [Page 9]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -557,7 +557,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 15, 2018                [Page 10]
+Trammell, et al.          Expires June 16, 2018                [Page 10]
 
 Internet-Draft                  Spin Bit                   December 2017
 
@@ -599,7 +599,44 @@ Internet-Draft                  Spin Bit                   December 2017
    measuring passive upstream and downstream RTT, which are a
    fundamental metric for this diagnostic process.
 
-4.2.  Bufferbloat Mitigation in Cellular Networks
+4.2.  Two-Point Intradomain Measurement
+
+   The spin bit is also useful as a basic signal for instantaneous
+   measurement of the treatment of QUIC traffic within a single network.
+   Though the primary design goal of the spin bit signal is to enable
+   single-observer on-path measurement of end-to-end RTT, the spin bit
+   can also be used by two cooperating observers with access to traffic
+   flowing in the same direction as an alternate marking signal, as
+   described in [ALT-MARK].  The only difference from alternate marking
+   with a generated signal is that the size of the alternation will
+   change with the flight size each RTT.  However, these changes do not
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 11]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
+   affect the applicability of the method that works for each marking
+   batch separately applied between two measurement points on the same
+   direction.  This two point measurement is an additional feature
+   enabled "for free" by the spin bit signal.
+
+   So, with more than one observer on the same direction, it can be
+   useful to segment the RTT and deduce the contribution to the RTT of
+   the portion of the network between two on-path observers.  This can
+   be easily performed by calculating the delay between two or more
+   measurement points on a single direction by applying [ALT-MARK].  In
+   this way, packet loss, delay and delay variation can be measured for
+   each segment of the network depending on the number and distribution
+   of the available on-path observation points.  When these observation
+   points are applied at network borders, the alternate-marking signal
+   can be used to measure the performance of QUIC traffic within a
+   network operator's own domain of responsibility. own portion of the
+   network.
+
+4.3.  Bufferbloat Mitigation in Cellular Networks
 
    Cellular networks consist of multiple Radio Access Networks (RAN)
    where mobile devices are attached to base stations.  It is common
@@ -610,13 +647,6 @@ Internet-Draft                  Spin Bit                   December 2017
    provisioned with large buffers to maximize throughput despite rapid
    changes in capacity.  As a side effect, bufferbloat has become a
    common issue in such networks [WWMM-BLOAT].
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 11]
-
-Internet-Draft                  Spin Bit                   December 2017
-
 
    An effective way of mitigating bufferbloat without sacrificing too
    much throughput is to deploy Active Queue Management (AQM) in
@@ -631,11 +661,19 @@ Internet-Draft                  Spin Bit                   December 2017
    a function also has the possibility to detect misbehaving flows and
    reduce the negative impact they have on the network.
 
-4.3.  Locating WiFi Problems in Home Networks
+4.4.  Locating WiFi Problems in Home Networks
 
    Many residential networks use WiFi (802.11) on the last segment, and
    WiFi signal strength degradation manifests in high first-hop delay,
    due to the fact that the MAC layer will retransmit packets lost at
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 12]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    that layer.  Measuring the RTT between endpoints on the customer
    network and parts of the service provider's own infrastructure (which
    have predictable delay characteristics) can be used to isolate this
@@ -657,7 +695,7 @@ Internet-Draft                  Spin Bit                   December 2017
    observing intraflow behavior, and more for generating sufficient
    samples for a given aggregate to make a high-quality measurement.
 
-4.4.  Internet Measurement Research
+4.5.  Internet Measurement Research
 
    As a large, distributed, engineered system with no centralized
    control, the Internet has emergent properties of interest to the
@@ -666,14 +704,6 @@ Internet-Draft                  Spin Bit                   December 2017
    protocol design and development, network operations, and policy
    development.  Latency measurements in particular are both an active
    area of research as well as an important tool for certain measurement
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 12]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    studies (see, e.g.  [IMC-TCPSIG], from the most recent Internet
    Measurement Conference).  While much of this work is currently done
    with active measurements, the ability to generate latency samples
@@ -687,6 +717,18 @@ Internet-Draft                  Spin Bit                   December 2017
 
    There are three broad alternatives to explicit signaling for passive
    RTT measurement of the RTT experienced by QUIC flows.
+
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 13]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
 5.1.  Handshake RTT measurement
 
@@ -722,14 +764,6 @@ Internet-Draft                  Spin Bit                   December 2017
    protocol like TWAMP [RFC5357], or a separate diagnostic QUIC flow to
    measure RTT.  Regardless of protocol, the active measurement must be
    initiated by a client on the same network as the client of the QUIC
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 13]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    flow(s) of interest, or a network close by in the Internet topology,
    toward the server.  Note that there is no guarantee that ICMP flows
    will receive the same network treatment as the flows under study,
@@ -743,6 +777,14 @@ Internet-Draft                  Spin Bit                   December 2017
    CPE), active measurement can be used to generate RTT samples at the
    cost of at least two non-productive packets sent though the network
    per sample.
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 14]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
 5.3.  Frequency Analysis
 
@@ -778,14 +820,6 @@ Internet-Draft                  Spin Bit                   December 2017
 
    o  "Ideal" interarrival time streams were simulated with uniform
       sampling and period.  The Lomb-Scargle Periodogram is surprisingly
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 14]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
       unable to detect the fundamental frequency at 100 Hz from the
       constant 10 ms packet spacing.
 
@@ -800,10 +834,71 @@ Internet-Draft                  Spin Bit                   December 2017
 
    o  The Carra et al.  [CARRA-RTT] calculation of minimum and maximum
       frequencies that can be detected may not be applicable when the
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 15]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
       inter-arrival times are (both) the signal being detected and
       govern the non-uniform sampling frequency.
 
-6.  Privacy and Security Considerations
+6.  Greasing
+
+   Routes, congestion levels and therefore latency between two fixed
+   QUIC endpoints, as well as the shape of individual application flows,
+   fluctuate in ways that are not totally predictable by an on path
+   observer.  In general, there is no a-priori pattern for the spin-bit
+   distribution that will always materialise on a certain flow
+   aggregate, even for a single user.
+
+   There has been discussion in the QUIC working group that greasing
+   could be a strategy to counter an evil access provider that might
+   gate access to its users on a valid spin bit signal.  Let's accept
+   for a moment this threat model and consider the practical case of a
+   home gateway that temporarily misbehaves, for example draining its
+   queues slower than it would normally do while a firmware download is
+   in progress.  It would be ill-considered for an access provider (even
+   a malicious one) to block, or otherwise interfere with, QUIC flows
+   originating from behind that CPE solely based on the fact that RTTs
+   are now different from "usual".  In fact, providing a numerical
+   assessment of what such "usual" RTT looks like would necessarily
+   include many paths with different length, and considerable RTT
+   variability within any fixed path, which is clearly beyond most ISPs'
+   reach.  But even assuming it were, there is a simple cost-benefit
+   counterargument here that the same effect (i.e., gating traffic from
+   or to a given user based on observed traffic patterns) could be
+   achieved with much cheaper and effective means (e.g., [SHBAIR]).
+
+   So, the potential for ossification appears to be extremely low.
+   Since it depends on so much external noise, the spin-bit result
+   variability is self-greasing to an extent.  In fact, implementing
+   explicit greasing around the spin-bit might even be harmful as it
+   would potentially erode confidence in the veracity of the signal.
+
+   However, if a greasing algorithm is really needed - for example, if
+   we want to reuse the bit with different semantics in the future
+   (i.e.: the spin-bit is not included in the header invariants), one
+   very simple implementation would be as follows: each server will
+   refuse to spin its bit on a per-flow basis with a given probability
+   p, instead leaving it stuck to a randomly chosen value, 0 or 1.  The
+   client will then end up leaving its bit stuck to the opposite value,
+   or could detect this condition and also pick a randomly chosen stuck
+   value.  The value chosen for p must be small enough to let the spin-
+   bit mechanics work and large enough not to be seen as an error
+   instead of an intentional protocol feature.
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 16]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
+7.  Privacy and Security Considerations
 
    The privacy considerations for the latency spin bit are essentially
    the same as those for passive RTT measurement in general.
@@ -834,14 +929,6 @@ Internet-Draft                  Spin Bit                   December 2017
    path; indeed, this is part of its utility for performance measurement
    and diagnostics.  When a link on a given path has excessive buffering
    (on the order of hundreds of milliseconds or more), such that the
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 15]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    difference in delay between an empty queue and a full queue dwarfs
    normal variance and RTT along the path, RTT variance during the
    lifetime of a flow can be used to infer the presence of traffic on
@@ -857,6 +944,15 @@ Internet-Draft                  Spin Bit                   December 2017
    concern with passive measurement, since the packet size and
    interarrival time sequence, which is also directly observable,
    carries more information than RTT variance sequence.
+
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 17]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
    We therefore conclude that the high-resolution, per-flow exposure of
    RTT for passive measurement as provided by the spin bit poses
@@ -890,14 +986,6 @@ Internet-Draft                  Spin Bit                   December 2017
    server can be contacted by an honest client under the control of a
    verifying party, and the client's RTT estimate compared with the
    spin-bit exposed estimate.  Though in the general case, it is
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 16]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    impossible to verify explicit path signals with two complicit
    endpoints (see [WIRE-IMAGE]), a lying server/client pair may be
    subject to dynamic analysis along paths with known RTTs.  We consider
@@ -906,7 +994,7 @@ Internet-Draft                  Spin Bit                   December 2017
    of violation of said regulation or contract, to be a sufficient
    incentive in the general case not to do it.
 
-7.  Acknowledgments
+8.  Acknowledgments
 
    Many thanks to Christian Huitema, who originally proposed the spin
    bit as pull request 609 on [QUIC-TRANS].  Thanks to Tobias Buehler
@@ -914,13 +1002,21 @@ Internet-Draft                  Spin Bit                   December 2017
    Team for discussions leading especially to the measurement
    limitations and privacy and security considerations sections.
 
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 18]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    This work is partially supported by the European Commission under
    Horizon 2020 grant agreement no. 688421 Measurement and Architecture
    for a Middleboxed Internet (MAMI), and by the Swiss State Secretariat
    for Education, Research, and Innovation under contract no. 15.0268.
    This support does not imply endorsement.
 
-8.  Informative References
+9.  Informative References
 
    [ALT-MARK]
               Fioccola, G., Capello, A., Cociglio, M., Castaldelli, L.,
@@ -943,17 +1039,6 @@ Internet-Draft                  Spin Bit                   December 2017
               Circle Distances (https://github.com/acmacm/CONUS-RTT)",
               September 2017.
 
-
-
-
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 17]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    [IMC-CONGESTION]
               Luckie, M., Dhamdhere, A., Clark, D., Huffaker, B., and k.
               claffy, "Challenges in Inferring Internet Interdomain
@@ -970,6 +1055,16 @@ Internet-Draft                  Spin Bit                   December 2017
               Trammell, B., "Mokumokuren, a lightweight flow meter using
               gopacket (https://github.com/britram/mokumokuren)",
               November 2017.
+
+
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 19]
+
+Internet-Draft                  Spin Bit                   December 2017
+
 
    [NOSPIN]   Morton, A., "Description of a tool chain to evaluate
               Unidirectional Passive RTT measurement (and results)
@@ -999,17 +1094,6 @@ Internet-Draft                  Spin Bit                   December 2017
               DOI 10.17487/RFC4737, November 2006,
               <https://www.rfc-editor.org/info/rfc4737>.
 
-
-
-
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 18]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
    [RFC5357]  Hedayat, K., Krzanowski, R., Morton, A., Yum, K., and J.
               Babiarz, "A Two-Way Active Measurement Protocol (TWAMP)",
               RFC 5357, DOI 10.17487/RFC5357, October 2008,
@@ -1023,9 +1107,25 @@ Internet-Draft                  Spin Bit                   December 2017
               Hybrid Types In-Between)", RFC 7799, DOI 10.17487/RFC7799,
               May 2016, <https://www.rfc-editor.org/info/rfc7799>.
 
+   [SHBAIR]   Shbair, W., Cholez, T., Francois, J., and I. Chrisment, "A
+              multi-level framework to identify HTTPS services (in Proc.
+              IEEE/IFIP NOMS)", April 2016.
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 20]
+
+Internet-Draft                  Spin Bit                   December 2017
+
+
    [SPINBIT-REPORT]
-              De Vaere, P., "Latency Spinbit Implementation Experience",
-              November 2017.
+              De Vaere, P., "Latency Spinbit Implementation Experience
+              (https://devae.re/f/eth/quic/spinbit_report/)", November
+              2017.
 
    [TLS]      Rescorla, E., "The Transport Layer Security (TLS) Protocol
               Version 1.3", draft-ietf-tls-tls13-22 (work in progress),
@@ -1056,16 +1156,6 @@ Internet-Draft                  Spin Bit                   December 2017
               Control on Bufferbloat in Cellular Networks (in Proc. IEEE
               WoWMoM 2013)", June 2013.
 
-
-
-
-
-
-Trammell, et al.          Expires June 15, 2018                [Page 19]
-
-Internet-Draft                  Spin Bit                   December 2017
-
-
 Authors' Addresses
 
    Brian Trammell (editor)
@@ -1078,6 +1168,14 @@ Authors' Addresses
    ETH Zurich
 
    Email: piet@devae.re
+
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 21]
+
+Internet-Draft                  Spin Bit                   December 2017
 
 
    Roni Even
@@ -1117,4 +1215,18 @@ Authors' Addresses
 
 
 
-Trammell, et al.          Expires June 15, 2018                [Page 20]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Trammell, et al.          Expires June 16, 2018                [Page 22]
