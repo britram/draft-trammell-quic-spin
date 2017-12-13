@@ -1046,7 +1046,7 @@ Internet-Draft                  Spin Bit                   December 2017
 
    [IMC-TCPSIG]
               Sundaresan, S., Dhamdhere, A., Allman, M., and . k claffy,
-              "TCP Congeston Signatures (ACM IMC 2017)", n.d..
+              "TCP Congestion Signatures (in Proc. ACM IMC 2017)", n.d..
 
    [MINQ]     Rescorla, E., "MINQ, a simple Go implementation of QUIC
               (https://github.com/ekr/minq)", November 2017.
@@ -1138,7 +1138,7 @@ Internet-Draft                  Spin Bit                   December 2017
    [TOKYO-PING]
               Pelsser, C., Cittadini, L., Vissicchio, S., and R. Bush,
               "From Paris to Tokyo - On the Suitability of ping to
-              Measure Latency (ACM IMC 2014)", October 2014.
+              Measure Latency (In Proc. ACM IMC 2014)", October 2014.
 
    [TRILAT]   Trammell, B., "On the Suitability of RTT Measurements for
               Geolocation
