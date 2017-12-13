@@ -257,12 +257,12 @@ Internet-Draft                  Spin Bit                   December 2017
 
       Table 1: Short Header Packet Types after Definition of Spin Bit
 
-   Note that this proposal changes the short header as defined in the
-   editor's copy of [QUIC-TRANS] at the time of writing; regardless of
-   where and how the spin bit is eventually defined, the key properties
-   of the spin bit are (1) it's a single bit, (2) it spins as defined in
-   Section 2, and (3) it appears only in the short header; i.e. after
-   version negotiation and connection establishment are completed.
+   Note that this proposal changes the short header as defined in
+   [QUIC-TRANS] at the time of writing; regardless of where and how the
+   spin bit is eventually defined, the key properties of the spin bit
+   are (1) it's a single bit, (2) it spins as defined in Section 2, and
+   (3) it appears only in the short header; i.e. after version
+   negotiation and connection establishment are completed.
 
 3.  Using the Spin Bit for Passive RTT Measurement
 
