@@ -339,10 +339,6 @@ and the observer and the client, respectively. It does this by measuring the
 delay between a spin edge observed in the upstream direction and that observed
 in the downstream direction, and vice versa.
 
-We note that the latency spin bit, and the measurements that can be done with
-it, can be seen as an end-to-end extension of a special case of the alternate
-marking method described in {{?ALT-MARK=I-D.ietf-ippm-alt-mark}}.
-
 ## Limitations and Workarounds {#limitations}
 
 Application-limited and flow-control-limited senders can have application and
@@ -523,7 +519,7 @@ In summary, our experiments show that the spin bit is suitable for purpose,
 can be implemented with minimal disruption, and that most of the identified
 problems can be easily mitigated. See {{SPINBIT-REPORT}} for more.
 
-# Use Cases for Passive RTT Measurement
+# Use Cases for Passive RTT Measurement {#use-cases}
 
 This section describes use cases for passive RTT measurement. Most of these
 are currently achieved with TCP, i.e., the matching of packets based on
@@ -591,6 +587,33 @@ the current RTT measurement opportunities based on clear-text transport or
 application header fields with a standard approach for measuring passive
 upstream and downstream RTT, which are a fundamental metric for this
 diagnostic process.
+
+## Two-Point Intradomain Measurement
+
+The spin bit is also useful as a basic signal for instantaneous measurement of
+the treatment of QUIC traffic within a single network. Though the primary
+design goal of the spin bit signal is to enable single-observer on-path
+measurement of end-to-end RTT, the spin bit can also be used by two
+cooperating observers with access to traffic flowing in the same direction as
+an alternate marking signal, as described in
+{{?ALT-MARK=I-D.ietf-ippm-alt-mark}}. The only difference from alternate
+marking with a generated signal is that the size of the alternation will
+change with the flight size each RTT. However, these changes do not affect the
+applicability of the method that works for each marking batch separately
+applied between two measurement points on the same direction. This two point
+measurement is an additional feature enabled "for free" by the spin bit
+signal.
+
+So, with more than one observer on the same direction, it can be useful to
+segment the RTT and deduce the contribution to the RTT of the portion of the
+network between two on-path observers. This can be easily performed by
+calculating the delay between two or more measurement points on a single
+direction by applying {{ALT-MARK}}. In this way, packet loss, delay and delay
+variation can be measured for each segment of the network depending on the
+number and distribution of the available on-path observation points. When
+these observation points are applied at network borders, the alternate-marking
+signal can be used to measure the performance of QUIC traffic within a network
+operator's own domain of responsibility. own portion of the network.
 
 ## Bufferbloat Mitigation in Cellular Networks
 
