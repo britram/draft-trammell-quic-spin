@@ -153,6 +153,18 @@ informative:
       -
         ins: S. Strowes
     date: 2013-10
+  SHBAIR:
+    title: A multi-level framework to identify HTTPS services (in Proc. IEEE/IFIP NOMS)
+    author:
+      -
+        ins: W. M. Shbair
+      -
+        ins: T. Cholez
+      -
+        ins: J. Francois
+      -
+        ins: I. Chrisment
+    date: 2016-04
   TMA-QOF:
     title: Inline Data Integrity Signals for Passive Measurement (in Proc. TMA 2014)
     author:
@@ -737,6 +749,47 @@ are actually within the detectable range.
   that can be detected may not be applicable when the inter-arrival times are
   (both) the signal being detected and govern the non-uniform sampling
   frequency.
+
+# Greasing
+
+Routes, congestion levels and therefore latency between two fixed QUIC
+endpoints, as well as the shape of individual application flows, fluctuate in
+ways that are not totally predictable by an on path observer.  In general,
+there is no a-priori pattern for the spin-bit distribution that will always
+materialise on a certain flow aggregate, even for a single user.
+
+There has been discussion in the QUIC working group that greasing could be a
+strategy to counter an evil access provider that might gate access to its users
+on a valid spin bit signal. Let’s accept for a moment this threat model and
+consider the practical case of a home gateway that temporarily misbehaves, for
+example draining its queues slower than it would normally do while a firmware
+download is in progress. It would be ill-considered for an access provider
+(even a malicious one) to block, or otherwise interfere with, QUIC flows
+originating from behind that CPE solely based on the fact that RTTs are now
+different from “usual”.  In fact, providing a numerical assessment of what such
+"usual" RTT looks like would necessarily include many paths with different
+length, and considerable RTT variability within any fixed path, which is
+clearly beyond most ISPs' reach.  But even assuming it were, there is a simple
+cost-benefit counterargument here that the same effect (i.e., gating traffic
+from or to a given user based on observed traffic patterns) could be achieved
+with much cheaper and effective means (e.g., {{SHBAIR}}).
+
+So, the potential for ossification appears to be extremely low.  Since it
+depends on so much external noise, the spin-bit result variability is
+self-greasing to an extent.  In fact, implementing explicit greasing around the
+spin-bit might even be harmful as it would potentially erode confidence in the
+veracity of the signal.
+
+However, if a greasing algorithm is really needed - for example, if we want
+to reuse the bit with different semantics in the future (i.e.: the spin-bit is
+not included in the header invariants), one very simple implementation would be
+as follows: each server will refuse to spin its bit on a per-flow basis with a
+given probability p, instead leaving it stuck to a randomly chosen value, 0 or
+1.  The client will then end up leaving its bit stuck to the opposite value, or
+could detect this condition and also pick a randomly chosen stuck value.  The
+value chosen for p must be small enough to let the spin-bit mechanics work and
+large enough not to be seen as an error instead of an intentional protocol
+feature.
 
 # Privacy and Security Considerations
 
