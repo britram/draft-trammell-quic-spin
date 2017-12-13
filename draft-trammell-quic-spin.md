@@ -310,12 +310,12 @@ packet types will be redefined to the following values:
 |  0xF | 1 octet            |
 {: #short-packet-types title="Short Header Packet Types after Definition of Spin Bit"}
 
-Note that this proposal changes the short header as defined in the editor's
-copy of {{QUIC-TRANS}} at the time of writing; regardless of where and how
-the spin bit is eventually defined, the key properties of the spin bit are (1)
-it's a single bit, (2) it spins as defined in {{mechanism}}, and (3) it appears only in
-the short header; i.e. after version negotiation and connection establishment
-are completed.
+Note that this proposal changes the short header as defined in {{QUIC-TRANS}}
+at the time of writing; regardless of where and how the spin bit is eventually
+defined, the key properties of the spin bit are (1) it's a single bit, (2) it
+spins as defined in {{mechanism}}, and (3) it appears only in the short
+header; i.e. after version negotiation and connection establishment are
+completed.
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
