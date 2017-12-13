@@ -65,7 +65,7 @@ informative:
         ins: B. Trammell
     date: 2017-08-30
   TOKYO-PING:
-    title: From Paris to Tokyo - On the Suitability of ping to Measure Latency (ACM IMC 2014)
+    title: From Paris to Tokyo - On the Suitability of ping to Measure Latency (In Proc. ACM IMC 2014)
     author:
       -
         ins: C. Pelsser
@@ -137,7 +137,7 @@ informative:
         ins: k. claffy
     date: 2014-11
   IMC-TCPSIG:
-    title: TCP Congeston Signatures (ACM IMC 2017)
+    title: TCP Congestion Signatures (in Proc. ACM IMC 2017)
     author:
       -
         ins: S. Sundaresan
