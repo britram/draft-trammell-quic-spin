@@ -105,7 +105,7 @@ informative:
         ins: A. Morton
     date: 2017-10-05
   SPINBIT-REPORT:
-    title: Latency Spinbit Implementation Experience
+    title: Latency Spinbit Implementation Experience (https://devae.re/f/eth/quic/spinbit_report/)
     author:
       -
         ins: P. De Vaere
