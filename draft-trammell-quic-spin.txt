@@ -5,7 +5,7 @@
 QUIC                                                    B. Trammell, Ed.
 Internet-Draft                                               P. De Vaere
 Intended status: Informational                                ETH Zurich
-Expires: June 16, 2018                                           R. Even
+Expires: September 23, 2018                                      R. Even
                                                                   Huawei
                                                              G. Fioccola
                                                           Telecom Italia
@@ -17,7 +17,7 @@ Expires: June 16, 2018                                           R. Even
                                                                AT&T Labs
                                                               E. Stephan
                                                                   Orange
-                                                       December 13, 2017
+                                                          March 22, 2018
 
 
        The Addition of a Spin Bit to the QUIC Transport Protocol
@@ -53,19 +53,19 @@ Status of This Memo
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 1]
+Trammell, et al.       Expires September 23, 2018               [Page 1]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on June 16, 2018.
+   This Internet-Draft will expire on September 23, 2018.
 
 Copyright Notice
 
-   Copyright (c) 2017 IETF Trust and the persons identified as the
+   Copyright (c) 2018 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 2]
+Trammell, et al.       Expires September 23, 2018               [Page 2]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
 1.  Introduction
@@ -165,9 +165,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 3]
+Trammell, et al.       Expires September 23, 2018               [Page 3]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
 2.  The Spin Bit Mechanism
@@ -221,9 +221,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 4]
+Trammell, et al.       Expires September 23, 2018               [Page 4]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
     0                   1                   2                   3
@@ -277,9 +277,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 5]
+Trammell, et al.       Expires September 23, 2018               [Page 5]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    request to complete).  It therefore provides devices on path a good
@@ -333,9 +333,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 6]
+Trammell, et al.       Expires September 23, 2018               [Page 6]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    +--------+   -  -  -  -  -   +--------+
@@ -389,9 +389,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 7]
+Trammell, et al.       Expires September 23, 2018               [Page 7]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    Five ticks later, the 1-marked packet arrives at the client, which
@@ -445,9 +445,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 8]
+Trammell, et al.       Expires September 23, 2018               [Page 8]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    First, we confirm that the spin bit works as advertised: it provides
@@ -501,9 +501,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                 [Page 9]
+Trammell, et al.       Expires September 23, 2018               [Page 9]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    and share queues at each link, which mitigates most of the issues
@@ -557,9 +557,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 10]
+Trammell, et al.       Expires September 23, 2018              [Page 10]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    The network performance is currently measured by points of presence
@@ -613,9 +613,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 11]
+Trammell, et al.       Expires September 23, 2018              [Page 11]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    affect the applicability of the method that works for each marking
@@ -669,9 +669,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 12]
+Trammell, et al.       Expires September 23, 2018              [Page 12]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    that layer.  Measuring the RTT between endpoints on the customer
@@ -725,9 +725,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 13]
+Trammell, et al.       Expires September 23, 2018              [Page 13]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
 5.1.  Handshake RTT measurement
@@ -781,9 +781,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 14]
+Trammell, et al.       Expires September 23, 2018              [Page 14]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
 5.3.  Frequency Analysis
@@ -837,9 +837,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 15]
+Trammell, et al.       Expires September 23, 2018              [Page 15]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
       inter-arrival times are (both) the signal being detected and
@@ -893,9 +893,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 16]
+Trammell, et al.       Expires September 23, 2018              [Page 16]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
 7.  Privacy and Security Considerations
@@ -949,9 +949,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 17]
+Trammell, et al.       Expires September 23, 2018              [Page 17]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    We therefore conclude that the high-resolution, per-flow exposure of
@@ -1005,9 +1005,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 18]
+Trammell, et al.       Expires September 23, 2018              [Page 18]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    This work is partially supported by the European Commission under
@@ -1061,9 +1061,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 19]
+Trammell, et al.       Expires September 23, 2018              [Page 19]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    [NOSPIN]   Morton, A., "Description of a tool chain to evaluate
@@ -1077,8 +1077,8 @@ Internet-Draft                  Spin Bit                   December 2017
 
    [QUIC-TRANS]
               Iyengar, J. and M. Thomson, "QUIC: A UDP-Based Multiplexed
-              and Secure Transport", draft-ietf-quic-transport-08 (work
-              in progress), December 2017.
+              and Secure Transport", draft-ietf-quic-transport-10 (work
+              in progress), March 2018.
 
    [RFC0792]  Postel, J., "Internet Control Message Protocol", STD 5,
               RFC 792, DOI 10.17487/RFC0792, September 1981,
@@ -1117,9 +1117,9 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 20]
+Trammell, et al.       Expires September 23, 2018              [Page 20]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    [SPINBIT-REPORT]
@@ -1128,8 +1128,8 @@ Internet-Draft                  Spin Bit                   December 2017
               2017.
 
    [TLS]      Rescorla, E., "The Transport Layer Security (TLS) Protocol
-              Version 1.3", draft-ietf-tls-tls13-22 (work in progress),
-              November 2017.
+              Version 1.3", draft-ietf-tls-tls13-28 (work in progress),
+              March 2018.
 
    [TMA-QOF]  Trammell, B., Gugelmann, D., and N. Brownlee, "Inline Data
               Integrity Signals for Passive Measurement (in Proc. TMA
@@ -1147,8 +1147,8 @@ Internet-Draft                  Spin Bit                   December 2017
 
    [WIRE-IMAGE]
               Trammell, B. and M. Kuehlewind, "The Wire Image of a
-              Network Protocol", draft-trammell-wire-image-01 (work in
-              progress), December 2017.
+              Network Protocol", draft-trammell-wire-image-02 (work in
+              progress), February 2018.
 
    [WWMM-BLOAT]
               Alfredsson, S., Giudice, G., Garcia, J., Brunstrom, A.,
@@ -1173,9 +1173,9 @@ Authors' Addresses
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 21]
+Trammell, et al.       Expires September 23, 2018              [Page 21]
 
-Internet-Draft                  Spin Bit                   December 2017
+Internet-Draft                  Spin Bit                      March 2018
 
 
    Roni Even
@@ -1229,4 +1229,4 @@ Internet-Draft                  Spin Bit                   December 2017
 
 
 
-Trammell, et al.          Expires June 16, 2018                [Page 22]
+Trammell, et al.       Expires September 23, 2018              [Page 22]
