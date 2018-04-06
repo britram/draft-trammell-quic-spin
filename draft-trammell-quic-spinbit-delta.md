@@ -103,7 +103,7 @@ are completed.
 
 ## Proposed Short Header Format Including Spin Bit
 
-As of version -10 of {{QUIC-TRANS}}, this proposal specifies
+As of the current editor's version of {{QUIC-TRANS}}, this proposal specifies
 using the fifth most significant bit (0x08) of the first octet in the short
 header for the spin bit.
 
@@ -151,6 +151,17 @@ This procedure will cause the spin bit to change value in each direction once
 per round trip. Observation points can estimate the network latency by
 observing these changes in the latency spin bit, as described in {{usage}}.
 See {{?SPIN-BIT=I-D.trammell-quic-spin}} for further illustration of this mechanism in action.
+
+## Resetting Spin Bit State
+
+Each client and server will resets it spin value to zero on any of the
+following events:
+
+- When initiating or responding to connection migration
+- When sending the first packet with a new Connection ID
+
+This reduces the risk that transient spin bit state can be used to link flows
+across connection migration or ID change.
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
@@ -269,7 +280,7 @@ providing a possibility to detect invalid edges due to reordering and edge loss.
 
 ## Proposed Short Header Format Including Spin Bit and VEC
 
-As of version -10 of {{QUIC-TRANS}}, this proposal specifies
+As of the current editor's version of {{QUIC-TRANS}}, this proposal specifies
 using the fifth most significant bit (0x08) of the first octet in the short
 header for the spin bit.
 
@@ -314,14 +325,14 @@ between client and server handling of the VEC:
   reflected as an edge with a VEC of 1; with a VEC of 1 as VEC of 2, and a VEC
   of 2 or 3 as a VEC of 3.
 
- This mechanism allows observers to recognize spurious edges due to reordering
- and delayed edges due to loss, since these packets will have been sent with
- VEC 0: they were not edges when they were sent. In addition, it allows senders
- to signal that a valid edge was delayed because the sender was
- application-limited: these edges are sent with the VEC set to 1 by the sender,
- prompting the VEC to count back up over the next RTT.
+This mechanism allows observers to recognize spurious edges due to reordering
+and delayed edges due to loss, since these packets will have been sent with
+VEC 0: they were not edges when they were sent. In addition, it allows senders
+to signal that a valid edge was delayed because the sender was
+application-limited: these edges are sent with the VEC set to 1 by the sender,
+prompting the VEC to count back up over the next RTT.
 
- ## Use of the VEC by a passive observer
+## Use of the VEC by a passive observer
 
 The VEC can be used by observers to determine whether an edge in the spin bit
 signal is valid or not, as follows:
