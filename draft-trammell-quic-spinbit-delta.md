@@ -94,7 +94,7 @@ https://github.com/britram/draft-trammell-quic-spin/issues. Comments and
 suggestions on this document can be made by filing an issue there, or by
 contacting the editor.
 
-# The Spin Bit Mechanism {#mechanism}
+# The Spin Bit Mechanism
 
 The latency spin bit enables latency monitoring from observation points on the
 network path. Since it is possible to measure handshake RTT without a spin bit, it is
@@ -126,9 +126,9 @@ header for the spin bit.
 {: #fig-short-header title="Short Header Format including proposed Spin Bit"}
 
 S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet 
-reception as explained in sec {[mechanism]}.
+reception as explained in sec {[spinbit]}.
 
-## The Spin Bit Mechanism {#mechanism}
+## Seeting the Spin Bit  {#spinbit}
 
 Each endpoint, client and server, maintains a spin value, 0 or
 1, for each QUIC connection, and sets the spin bit in the short header to the 
@@ -160,6 +160,15 @@ per round-trip time (RTT). An on-path observer can observe the time difference
 between edges (changes from 1 to 0 or 0 to 1) in the spin bit signal in a single direction to measure one
 sample of end-to-end RTT. 
 
+Further an observer should also remember the largest observed packet number 
+and reject edges that do not have a packet number that is larger than the last
+largest observed packet number.  This will detect spurious edges that can be 
+caused by reordering across a spin bit flip in the stream and would therefore lead 
+to too low RTT estimates, if not ignored.
+
+Further, the packet number can be used to filter out invalid samples that 
+indicate a too large RTT estimates due to loss of the actual edge in a burst of lost 
+packets. If the spin bit edge occurs after a long packet number gap, it should be rejected.
 
 Note that this measurement, as with passive RTT
 measurement for TCP, includes any transport protocol delay (e.g., delayed
@@ -169,6 +178,15 @@ instantaneous estimate of the RTT as experienced by the application. A simple
 linear smoothing or moving minimum filter can be applied to the stream of RTT
 information to get a more stable estimate.
 
+However, application-limited and flow-control-limited senders can have application and
+transport layer delay, respectively, that are much greater than network RTT.
+When the sender is application-limited and e.g. only sends small amount of 
+periodic application traffic, where that period is
+longer than the RTT, measuring the spin bit provides information about the
+application period, not the network RTT. Simple heuristics based on the observed data
+rate per flow or changes in the RTT series can be used to reject bad RTT
+samples due to application or flow control limitation.
+
 An on-path observer that can see traffic in both directions (from client to
 server and from server to client) can also use the spin bit to measure
 "upstream" and "downstream" component RTT; i.e, the component of the
@@ -176,31 +194,6 @@ end-to-end RTT attributable to the paths between the observer and the server
 and the observer and the client, respectively. It does this by measuring the
 delay between a spin edge observed in the upstream direction and that observed
 in the downstream direction, and vice versa.
-
-## Limitations
-
-Application-limited and flow-control-limited senders can have application and
-transport layer delay, respectively, that are much greater than network RTT.
-Therefore, the spin bit provides network latency information only when the
-sender is neither application nor flow control limited. When the sender is
-application-limited by periodic application traffic, where that period is
-longer than the RTT, measuring the spin bit provides information about the
-application period, not the RTT. Simple heuristics based on the observed data
-rate per flow or changes in the RTT series can be used to reject bad RTT
-samples due to application or flow control limitation.
-
-Since the spin bit logic at each endpoint considers only samples on packets
-that advance the largest packet number seen, signal generation itself is
-resistant to reordering and loss. However, reordering can cause problems at an
-observer by causing spurious edge detection and therefore low RTT estimates,
-if reordering occurs across a spin bit flip in the stream. Similarly, should
-an edge be lost in a burst of lost packets, causing a delayed edge detection
-and therefore high RTT estimates. When the packet number is observable,
-observation of the packet number can be used to reject lost and reordered
-edges.
-
-See also {{vec}} for a proposed enhancement which addresses all of these
-limitations, even when the packet number is encrypted.
 
 
 # Scope of the Experiment
@@ -230,7 +223,10 @@ This document has no actions for IANA.
 
 The spin bit is intended to expose end-to-end RTT to observers along the path,
 so the privacy considerations for the latency spin bit are essentially the
-same as those for passive RTT measurement in general.
+same as those for passive RTT measurement in general. However, it has been
+shown that these kind of RTT estimates do not provide a sufficiently high 
+enough accurancy for geo-locating, therefore the privacy risk of exposing
+these information is considered low.
 
 # Acknowledgments
 
@@ -257,15 +253,59 @@ endorsement.
 
 # The Valid Edge Counter {#vec}
 
+This mechanism is indented to provide addition information about the
+validity of the passively observed spin edges in case the packet number 
+can not be used for this purpose anymore.
+
 A one-bit spin signal is resistent to reordering during signal generation,
 since the spin value is only updated at each endpoint on a packet that
-advances the packet counter. However, it does not allow an observer to correct
-for reordered or lost edges, and it requires observers to use heuristics to
-determine whether an edge was delayed at the sender.
+advances the packet counter. However, wthout the packet number,
+an observer cannot easily detect reordering or infer a lost edges.
+Without the packet number, an passive observer would need to 
+use heuristics to single reject too low or too high RTT samples.
+However, such a filter could conceal exactly those effects that 
+an observer what to measure for troubleshooting. Further, such
+heuristics can not determine whether edges get constantly delayed at the sender,
+e.g. due to application limits, and therefore do not provide a 
+valid estimate in the first place.
 
-The Valid Edge Counter (VEC) addresses all these issues with two additional
-bits added to each packet, encoding values from 0 to 3. The VEC is set by each
-endpoint as follows; unlike the spin bit, note that there is no difference
+The Valid Edge Counter (VEC) addresses these issues with two additional
+bits added to each packet, encoding values from 0 to 3, indicating that
+an edge was considered to be valid when send out by the sender, and 
+providing a possibility to detect invalid edges due to reodering and edge loss.
+
+## Proposed Short Header Format Including Spin Bit and VEC
+
+As of version -10 of {{QUIC-TRANS}}, this proposal specifies
+using the fifth most significant bit (0x08) of the first octet in the short
+header for the spin bit.
+
+~~~~~
+
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+
+|0|K|1|1|0|S|VEC|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                Destination Connection ID (0..144)           ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      Packet Number (8/16/32)                ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                     Protected Payload (*)                   ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+~~~~~
+{: #fig-short-header title="Short Header Format including proposed Spin Bit"}
+
+S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet 
+reception as explained in sec {[spinbit]}.
+
+VEC: The Valid Edge Counter is rotated 2 and 3 on every valid spin bit edge and set to 1 on
+invalid edges as further explained in {{vec-bits}}. If the spin bit is not an edge the VEC is set to 0.
+
+## Setting the Valid Edge Counter (VEC) {#vec-bits}
+
+The VEC is set by each endpoint as follows; unlike the spin bit, note that there is no difference
 between client and server handling of the VEC:
 
 - By default, the VEC is set to 0.
@@ -274,15 +314,29 @@ between client and server handling of the VEC:
   was received, defaulting to 1ms), the VEC is set to 1.
 - If a packet contains an edge in the spin signal, and that edge is not
   delayed, the VEC is set to the value of the VEC that accompanied the last
-  incoming spin bit transition plus one, holding at 3.
+  incoming spin bit transition plus one, holding at 3. That means, if the edge 
+  transition is trigger by a packet that has a VEC of 0, the VEC in the packet
+  that will be sent out it set to 1, indicating an invalid edge as actually received 
+  edge that shoud have trigger the transition was probably lost. If the transition is
+  trigger by a packet with a VEC of 1, that edge was invalid that the new edge is valid 
+ again, indicated by a VEC of 2. A received VEC of 2, will result in a VEC of 3, and 
+ when a VEC of 3 is received, the new VEC will stay at 3.
+ 
+ This mechanism allows observers to recognize spurious edges due to reordering
+ and delayed edges due to loss, since these packets will have been sent with
+ VEC 0: they were not edges when they were sent. In addition, it allows senders
+ to signal that a valid edge was delayed because the sender was
+ application-limited: these edges are sent with the VEC set to 1 by the sender,
+ prompting the VEC to count back up over the next RTT.
+ 
+ ## Use of the VEC by a passive observer
 
 The VEC can be used by observers to determine whether an edge in the spin bit
 signal is valid or not, as follows:
 
-- A packet containing an no apparent edge in the spin signal, regardless of
-  the VEC value, cannot be used for RTT measurement.
-- A packet containing an apparent edge in the spin signal, but with a VEC of
-  0, cannot be used for RTT measurement.
+- A packet containing an apparent edge in the spin signal with a VEC of
+  0 is not a valid edge but may be caused by reordering or loss and therefore 
+  should be ignored.
 - A packet containing an apparent edge in the spin signal with a VEC of 1 can
   be used as a left edge (i.e., to start measuring an RTT sample), but not as
   a right edge (i.e., to take an RTT sample since the last edge).
@@ -296,10 +350,5 @@ signal is valid or not, as follows:
   be used as a left edge or right edge, and can be used to compute component
   RTT in either direction.
 
-This mechanism allows observers to recognize spurious edges due to reordering
-and delayed edges due to loss, since these packets will have been sent with
-VEC 0: they were not edges when they were sent. In addition, it allows senders
-to signal that a valid edge was delayed because the sender was
-application-limited: these edges are sent with the VEC set to 0 by the sender,
-prompting the VEC to count back up over the next RTT.
+
 
