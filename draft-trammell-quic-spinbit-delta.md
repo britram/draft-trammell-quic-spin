@@ -195,7 +195,6 @@ and the observer and the client, respectively. It does this by measuring the
 delay between a spin edge observed in the upstream direction and that observed
 in the downstream direction, and vice versa.
 
-
 # Scope of the Experiment
 
 This document specifies an experimental delta to the QUIC transport protocol.
