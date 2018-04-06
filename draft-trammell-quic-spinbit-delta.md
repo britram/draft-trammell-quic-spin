@@ -167,7 +167,7 @@ caused by reordering across a spin bit flip in the stream and would therefore le
 to too low RTT estimates, if not ignored.
 
 Further, the packet number can be used to filter out invalid samples that 
-indicate a too large RTT estimates due to loss of the actual edge in a burst of lost 
+indicate a too high RTT estimates due to loss of the actual edge in a burst of lost 
 packets. If the spin bit edge occurs after a long packet number gap, it should be rejected.
 
 Note that this measurement, as with passive RTT
