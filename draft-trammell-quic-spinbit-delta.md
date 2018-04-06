@@ -52,34 +52,30 @@ informative:
 
 --- abstract
 
-This document specifies the experimental addition of a latency spin bit to the
+This document specifies the addition of a latency spin bit to the
 QUIC transport protocol and describes how to use it to measure end-to-end
 latency. It is intended as a delta to the current specification of QUIC. An
-appendix describes the Valid Edge Counter mechanism, which increases the
-utility of the spin bit in less than ideal network and traffic conditions
+appendix describes the Valid Edge Counter mechanism, which can be used
+to determine the validity of an RTT sample in case of loss and reodering 
 without using the QUIC packet number.
 
 --- middle
 
 # Introduction
 
-The QUIC transport protocol {{?QUIC-TRANS=I-D.ietf-quic-transport}} is a
-UDP-encapsulated protocol integrated with Transport Layer Security (TLS)
-{{?TLS=I-D.ietf-tls-tls13}} to encrypt most of its protocol internals, beyond
-those handshake packets needed to establish or resume a TLS session, and
-information required to decrypt QUIC packets and to route QUIC packets to the
-correct machine in a load-balancing situation (the connection ID). In contrast
-to TCP, QUIC's wire image (see {{?WIRE-IMAGE=I-D.trammell-wire-image}})
-exposes much less information about transport protocol state than TCP's wire
-image. Specifically, the fact that sequence and acknowledgement numbers and
-timestamps (available in TCP) cannot be seen by on-path observers in QUIC
-means that passive TCP loss and latency measurement techniques that rely on
-this information (e.g. {{CACM-TCP}}, {{TMA-QOF}}) cannot be easily ported to
-work with QUIC.
+The QUIC transport protocol {{?QUIC-TRANS=I-D.ietf-quic-transport}} uses
+Transport Layer Security (TLS) {{?TLS=I-D.ietf-tls-tls13}} to encrypt most of 
+its protocol internals. In contrast to TCP where the sequence and 
+acknowledgement numbers and timestamps (if the respective option is in use) 
+can be seen by on-path observers and used to estimate end-to-end latency, 
+QUIC's wire image (see {{?WIRE-IMAGE=I-D.trammell-wire-image}})
+exposes currently not expose any information that can be used for passive 
+latency measurement techniques that rely on
+this information (e.g. {{CACM-TCP}}, {{TMA-QOF}}).
 
-This document proposes a solution to this problem by adding an explicit signal
+This document adds an explicit signal
 for passive latency measurability to the QUIC short header: a "spin bit".
-Observation of the spin bit provides one RTT sample per RTT to passive
+Passive observation of the spin bit provides one RTT sample per RTT to passive
 observers of QUIC traffic. This document describes the mechanism, how it can
 be added to QUIC, and how it can be used by passive measurement facilities to
 generate RTT samples.
@@ -101,33 +97,14 @@ contacting the editor.
 # The Spin Bit Mechanism {#mechanism}
 
 The latency spin bit enables latency monitoring from observation points on the
-network path. Each endpoint, client and server, maintains a spin value, 0 or
-1, for each QUIC connection, and sets the spin bit on packets it sends for
-that connection to the appropriate value (below). It also maintains the
-highest packet number seen from its peer on the connection. The value is then
-determined at each endpoint as follows:
-
-* The server initializes its spin value to 0. When it receives a packet from
-  the client, if that packet has a short header and if it increments the
-  highest packet number seen by the server from the client, it sets the spin
-  value to the spin bit in the received packet.
-
-* The client initializes its spin value to 0. When it receives a packet from
-  the server, if the packet has a short header and if it increments the
-  highest packet number seen by the client from the server, it sets the spin
-  value to the opposite of the spin bit in the received packet.
-
-This procedure will cause the spin bit to change value in each direction once
-per round trip. Observation points can estimate the network latency by
-observing these changes in the latency spin bit, as described in {{usage}}.
-See {{illustration}} for an illustration of this mechanism in action.
+network path. Since it is possible to measure handshake RTT without a spin bit, it is
+sufficient to include the spin bit in the short packet header. The spin bit
+therefore appears only after version negotiation and connection establishment
+are completed. 
 
 ## Proposed Short Header Format Including Spin Bit
 
-Since it is possible to measure handshake RTT without a spin bit, it is
-sufficient to include the spin bit in the short packet header. The spin bit
-therefore appears only after version negotiation and connection establishment
-are completed. As of version -10 of {{QUIC-TRANS}}, this proposal specifies
+As of version -10 of {{QUIC-TRANS}}, this proposal specifies
 using the fifth most significant bit (0x08) of the first octet in the short
 header for the spin bit.
 
@@ -148,16 +125,43 @@ header for the spin bit.
 ~~~~~
 {: #fig-short-header title="Short Header Format including proposed Spin Bit"}
 
-This change limits the number of available short packet types to 4. The short
-packet type definitions are unchanged.
+S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet 
+reception as explained in sec {[mechanism]}.
+
+## The Spin Bit Mechanism {#mechanism}
+
+Each endpoint, client and server, maintains a spin value, 0 or
+1, for each QUIC connection, and sets the spin bit in the short header to the 
+currently stored value when a packet with a short header is sent out. 
+The spin value is initialized to 0 on both side, at the client as well as the server
+at connection start. Each endpoint also remebers the
+highest packet number seen from its peer on the connection. The spin value is then
+determined at each endpoint as follows:
+
+* When it receives a packet from
+the client, if that packet has a short header and if it increments the
+highest packet number seen by the server from the client, it sets the spin
+value to the value obsovered in the spin bit in the received packet.
+
+* When it receives a packet from
+the server, if the packet has a short header and if it increments the
+highest packet number seen by the client from the server, it sets the spin
+value to the opposite of the spin bit in the received packet.
+
+This procedure will cause the spin bit to change value in each direction once
+per round trip. Observation points can estimate the network latency by
+observing these changes in the latency spin bit, as described in {{usage}}.
+See {{?SPIN-BIT=I-D.trammell-quic-spin-bit}} for further illustration of this mechanism in action.
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
-When a QUIC flow is sending at full rate (i.e., neither application nor flow
-control limited), the latency spin bit in each direction changes value once
+When a QUIC flow is continuously sending data, the latency spin bit in each direction changes value once
 per round-trip time (RTT). An on-path observer can observe the time difference
-between edges in the spin bit signal in a single direction to measure one
-sample of end-to-end RTT. Note that this measurement, as with passive RTT
+between edges (changes from 1 to 0 or 0 to 1) in the spin bit signal in a single direction to measure one
+sample of end-to-end RTT. 
+
+
+Note that this measurement, as with passive RTT
 measurement for TCP, includes any transport protocol delay (e.g., delayed
 sending of acknowledgements) and/or application layer delay (e.g., waiting for
 a request to complete). It therefore provides devices on path a good
@@ -198,104 +202,6 @@ edges.
 See also {{vec}} for a proposed enhancement which addresses all of these
 limitations, even when the packet number is encrypted.
 
-## Illustration {#illustration}
-
-\[EDITOR'S NOTE: probably cut this]
-
-To illustrate the operation of the spin bit, we consider a simplified model of
-a single path between client and server as a queue with slots for five
-packets, and assume that both client and server send packets at a constant
-rate. If each packet moves one slot in the queue per clock tick, note that
-this bidirectional path has a RTT of 10 ticks.
-
-Initially, during connection establishment, no packets with a spin bit are
-in flight, as shown in {{illus0}}.
-
-~~~~~
-+--------+   -  -  -  -  -   +--------+
-|        |     -------->     |        |
-| Client |                   | Server |
-|        |     <--------     |        |
-+--------+   -  -  -  -  -   +--------+
-~~~~~
-{: #illus0 title="Initial state, no spin bit between client and server"}
-
-Either the server, the client, or both can begin sending packets with short
-headers after connection establishment, as shown in {{illus1}}; here, no spin
-edges are yet in transit.
-
-~~~~~
-+--------+   0  0  -  -  -   +--------+
-|        |     -------->     |        |
-| Client |                   | Server |
-|        |     <--------     |        |
-+--------+   -  -  0  0  0   +--------+
-~~~~~
-{: #illus1 title="Client and server begin sending packets with spin 0"}
-
-Once the server's first 0-marked packet arrives at the client, the client sets
-its spin value to 1, and begins sending packets with the spin bit set, as
-shown in {{illus2}}. The spin edge is now in transit toward the server.
-
-~~~~~
-+--------+   1  0  0  0  0   +--------+
-|        |     -------->     |        |
-| Client |                   | Server |
-|        |     <--------     |        |
-+--------+   0  0  0  0  0   +--------+
-~~~~~
-{: #illus2 title="The bit begins spinning"}
-
-Five ticks later, this packet arrives at the server, which takes its spin
-value from it and reflects that value back on the next packet it sends, as
-shown in {{illus3}}. The spin edge is now in transit toward the client.
-
-~~~~~
-+--------+   1  1  1  1  1   +--------+
-|        |     -------->     |        |
-| Client |                   | Server |
-|        |     <--------     |        |
-+--------+   0  0  0  0  1   +--------+
-~~~~~
-{: #illus3 title="Server reflects the spin edge"}
-
-Five ticks later, the 1-marked packet arrives at the client, which inverts its
-spin value and sends the inverted value on the next packet it sends, as shown
-in {{illus4}}.
-
-~~~~~
-      obs. points  X  Y
-+--------+   0  1  1  1  1   +--------+
-|        |     -------->     |        |
-| Client |                   | Server |
-|        |     <--------     |        |
-+--------+   1  1  1  1  1   +--------+
-                      Y
-~~~~~
-{: #illus4 title="Client inverts the spin edge"}
-
-Here we can also see how measurement works. An observer watching the signal at
-single observation point X in {{illus4}} will see an edge every 10 ticks, i.e. once
-per RTT. An observer watching the signal at a symmetric observation point Y in
-{{illus4}} will see a server-client edge 4 ticks after the client-server edge,
-and a client-server edge 6 ticks after the server-client edge, allowing it to
-compute component RTT.
-
-{{illus5}} shows how this mechanism works in the presence of reordering. Here,
-packet C carries the spin edge, and packet B is reordered on the way to the
-client. In this case, the client will begin sending spin 1 after the arrival
-of C, and ignore the spin bit flip to 1 on packet B, since B < C; i.e. it does not
-increment the highest packet number seen.
-
-~~~~~
-+--------+   0  0  0  0  0   +--------+
-|        |     -------->     |        |
-| Client |                   | Server |
-|        |     <--------     |        |
-+--------+   1  0  1  0  0   +--------+
-    PN=      A  C  B  D  E
-~~~~~
-{: #illus5 title="Handling reordering"}
 
 # Scope of the Experiment
 
