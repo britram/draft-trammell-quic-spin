@@ -24,6 +24,11 @@ author:
     name: Mirja Kuehlewind
     org: ETH Zurich
     email: mirja.kuehlewind@tik.ee.ethz.ch
+  -
+    ins: P. De Vaere
+    name: Piet De Vaere
+    org: ETH Zurich
+    email: piet@devae.re
 normative:
 
 informative:
@@ -326,7 +331,6 @@ same as those for passive RTT measurement in general.
 This document is derived from {{?I-D.trammell-quic-spin}}, which was the work
 of the following authors in addition to the editor:
 
-- Piet De Vaere, ETH Zurich
 - Roni Even, Huawei
 - Giuseppe Fioccola, Telecom Italia
 - Thomas Fossati, Nokia
@@ -347,29 +351,44 @@ endorsement.
 
 # The Valid Edge Counter {#vec}
 
-The Valid Edge Counter (VEC) is an additional two bit signal, encoding values
-0 to 3, that works together with the spin bit to help observers reject invalid
-RTT samples in the presence of loss, reordering, and delayed edges due to
-application-limited senders.
+A one-bit spin signal is resistent to reordering during signal generation,
+since the spin value is only updated at each endpoint on a packet that
+advances the packet counter. However, it does not allow an observer to correct
+for reordered or lost edges, and it requires observers to use heuristics to
+determine whether an edge was delayed at the sender.
 
-To implement the VEC mechanism in addition to the spin bit:
+The Valid Edge Counter (VEC) addresses all these issues with two additional
+bits added to each packet, encoding values from 0 to 3. The VEC is set by each
+endpoint as follows; unlike the spin bit, note that there is no difference
+between client and server handling of the VEC:
 
-- Each sender maintains a VEC value, containing the VEC on the last spin edge
-  (a packet that changes the spin value) it received from its peer.
-- The sender sets the VEC to 0 on any packet not containing a spin edge, or
-  containing a delayed spin edge (a packet that has a spin bit different than
-  the last packet sent, but sent more than a certain amount of time after the
-  incoming packet that changed the spin value).
-- The sender sets the VEC to its VEC value incremented by 1 on any packet
-  containing a non-delayed spin edge. The VEC is clamped to 3, instead of
-  wrapping around: incrementing a VEC of 3 yields 3.
+- By default, the VEC is set to 0.
+- If a packet contains an edge (transition 0->1 or 1->0) in the spin signal,
+  and that edge is delayed (sent more than a configured delay since the edge
+  was received, defaulting to 1ms), the VEC is set to 1.
+- If a packet contains an edge in the spin signal, and that edge is not
+  delayed, the VEC is set to the value of the VEC that accompanied the last
+  incoming spin bit transition plus one, holding at 3.
 
-Note that unlike the spin bit, the VEC mechanism is the same on both the
-client and the server. The endpoints still use the packet number to decide
-whether or not to update their spin values.
+The VEC can be used by observers to determine whether an edge in the spin bit
+signal is valid or not, as follows:
 
-When measuring RTT using the spin bit with VEC, only edges containing VEC 3
-will be used to generate RTT samples.
+- A packet containing an no apparent edge in the spin signal, regardless of
+  the VEC value, cannot be used for RTT measurement.
+- A packet containing an apparent edge in the spin signal, but with a VEC of
+  0, cannot be used for RTT measurement.
+- A packet containing an apparent edge in the spin signal with a VEC of 1 can
+  be used as a left edge (i.e., to start measuring an RTT sample), but not as
+  a right edge (i.e., to take an RTT sample since the last edge).
+- A packet containing an apparent edge in the spin signal with a VEC of 2 can
+  be used as a left edge, but not as a right edge. If the observation point is
+  symmetric (i.e, it can see both upstream and downstream packets in the
+  flow), the packet can also be used to take a component RTT sample on the
+  segment of the path between the observation point and the direction in which
+  the previous VEC 1 edge was seen.
+- A packet containing an apparent edge in the spin signal with a VEC of 3 can
+  be used as a left edge or right edge, and can be used to compute component
+  RTT in either direction.
 
 This mechanism allows observers to recognize spurious edges due to reordering
 and delayed edges due to loss, since these packets will have been sent with
