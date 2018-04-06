@@ -56,7 +56,7 @@ This document specifies the addition of a latency spin bit to the
 QUIC transport protocol and describes how to use it to measure end-to-end
 latency. It is intended as a delta to the current specification of QUIC. An
 appendix describes the Valid Edge Counter mechanism, which can be used
-to determine the validity of an RTT sample in case of loss and reodering 
+to determine the validity of an RTT sample in case of loss and reordering 
 without using the QUIC packet number.
 
 --- middle
@@ -128,20 +128,20 @@ header for the spin bit.
 S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet 
 reception as explained in sec {[spinbit]}.
 
-## Seeting the Spin Bit  {#spinbit}
+## Setting the Spin Bit  {#spinbit}
 
 Each endpoint, client and server, maintains a spin value, 0 or
 1, for each QUIC connection, and sets the spin bit in the short header to the 
 currently stored value when a packet with a short header is sent out. 
 The spin value is initialized to 0 on both side, at the client as well as the server
-at connection start. Each endpoint also remebers the
+at connection start. Each endpoint also remembers the
 highest packet number seen from its peer on the connection. The spin value is then
 determined at each endpoint as follows:
 
 * When it receives a packet from
 the client, if that packet has a short header and if it increments the
 highest packet number seen by the server from the client, it sets the spin
-value to the value obsovered in the spin bit in the received packet.
+value to the value observed in the spin bit in the received packet.
 
 * When it receives a packet from
 the server, if the packet has a short header and if it increments the
@@ -224,7 +224,7 @@ The spin bit is intended to expose end-to-end RTT to observers along the path,
 so the privacy considerations for the latency spin bit are essentially the
 same as those for passive RTT measurement in general. However, it has been
 shown that these kind of RTT estimates do not provide a sufficiently high 
-enough accurancy for geo-locating, therefore the privacy risk of exposing
+enough accuracy for geo-locating, therefore the privacy risk of exposing
 these information is considered low.
 
 # Acknowledgments
@@ -258,7 +258,7 @@ can not be used for this purpose anymore.
 
 A one-bit spin signal is resistent to reordering during signal generation,
 since the spin value is only updated at each endpoint on a packet that
-advances the packet counter. However, wthout the packet number,
+advances the packet counter. However, without the packet number,
 an observer cannot easily detect reordering or infer a lost edges.
 Without the packet number, an passive observer would need to 
 use heuristics to single reject too low or too high RTT samples.
@@ -271,7 +271,7 @@ valid estimate in the first place.
 The Valid Edge Counter (VEC) addresses these issues with two additional
 bits added to each packet, encoding values from 0 to 3, indicating that
 an edge was considered to be valid when send out by the sender, and 
-providing a possibility to detect invalid edges due to reodering and edge loss.
+providing a possibility to detect invalid edges due to reordering and edge loss.
 
 ## Proposed Short Header Format Including Spin Bit and VEC
 
@@ -316,7 +316,7 @@ between client and server handling of the VEC:
   incoming spin bit transition plus one, holding at 3. That means, if the edge 
   transition is trigger by a packet that has a VEC of 0, the VEC in the packet
   that will be sent out it set to 1, indicating an invalid edge as actually received 
-  edge that shoud have trigger the transition was probably lost. If the transition is
+  edge that should have trigger the transition was probably lost. If the transition is
   trigger by a packet with a VEC of 1, that edge was invalid that the new edge is valid 
  again, indicated by a VEC of 2. A received VEC of 2, will result in a VEC of 3, and 
  when a VEC of 3 is received, the new VEC will stay at 3.
