@@ -1,7 +1,7 @@
 ---
-title: The Latency Spin Bit for the QUIC Transport Protocol
+title: The QUIC Latency Spin Bit
 abbrev: QUIC Spin Bit
-docname: draft-trammell-quic-spinbit-delta-latest
+docname: draft-ietf-quic-spin-exp-latest
 date:
 category: exp
 
@@ -24,11 +24,6 @@ author:
     name: Mirja Kuehlewind
     org: ETH Zurich
     email: mirja.kuehlewind@tik.ee.ethz.ch
-  -
-    ins: P. De Vaere
-    name: Piet De Vaere
-    org: ETH Zurich
-    email: piet@devae.re
 normative:
 
 informative:
@@ -79,10 +74,6 @@ observers of QUIC traffic. This document describes the mechanism, how it can
 be added to QUIC, and how it can be used by passive measurement facilities to
 generate RTT samples.
 
-{{vec}} specifies an additional Valid Edge Counter, which can be used to
-improve the fidelity of spin bit measurements under less than ideal network
-and/or traffic conditions.
-
 ## About This Document
 
 This document is maintained in the GitHub repository
@@ -125,43 +116,39 @@ header for the spin bit.
 {: #fig-short-header title="Short Header Format including proposed Spin Bit"}
 
 S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet
-reception as explained in sec {{spinbit}}.
+reception as explained in {{spinbit}}.
 
-## Setting the Spin Bit  {#spinbit}
+## Setting the Spin Bit on Outgoing Packets {#spinbit}
 
-Each endpoint, client and server, maintains a spin value, 0 or
-1, for each QUIC connection, and sets the spin bit in the short header to the
-currently stored value when a packet with a short header is sent out.
-The spin value is initialized to 0 on both side, at the client as well as the server
-at connection start. Each endpoint also remembers the
-highest packet number seen from its peer on the connection. The spin value is then
-determined at each endpoint as follows:
+Each endpoint, client and server, maintains a spin value, 0 or 1, for each
+QUIC connection, and sets the spin bit in the short header to the currently
+stored value when a packet with a short header is sent out. The spin value is
+initialized to 0 on both side, at the client as well as the server at
+connection start. Each endpoint also remembers the highest packet number seen
+from its peer on the connection. The spin value is then determined at each
+endpoint as follows:
 
-* When it receives a packet from
-the client, if that packet has a short header and if it increments the
-highest packet number seen by the server from the client, it sets the spin
-value to the value observed in the spin bit in the received packet.
+* When it receives a packet from the client, if that packet has a short header
+  and if it increments the highest packet number seen by the server from the
+  client, it sets the spin value to the value observed in the spin bit in the
+  received packet.
 
-* When it receives a packet from
-the server, if the packet has a short header and if it increments the
-highest packet number seen by the client from the server, it sets the spin
-value to the opposite of the spin bit in the received packet.
+* When it receives a packet from the server, if the packet has a short header
+  and if it increments the highest packet number seen by the client from the
+  server, it sets the spin value to the opposite of the spin bit in the
+  received packet.
 
 This procedure will cause the spin bit to change value in each direction once
 per round trip. Observation points can estimate the network latency by
 observing these changes in the latency spin bit, as described in {{usage}}.
 See {{?SPIN-BIT=I-D.trammell-quic-spin}} for further illustration of this mechanism in action.
 
-## Resetting Spin Bit State
+## Resetting Spin Value State
 
-Each client and server will resets it spin value to zero on any of the
-following events:
-
-- When initiating or responding to connection migration
-- When sending the first packet with a new Connection ID
-
-This reduces the risk that transient spin bit state can be used to link flows
-across connection migration or ID change.
+Each client and server resets it spin value to zero when sending the
+first packet in a given with a new Connection ID. This reduces the risk that
+transient spin bit state can be used to link flows across connection migration
+or ID change.
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
@@ -221,8 +208,9 @@ bit.
 
 This document describes a one-bit latency spin signal. A three-bit latency
 spin signal, which provides reordering, loss, and edge delay resistance even
-without cleartext packet numbers in the QUIC header, is described in {{vec}};
-experimentation with this approach is also encouraged.
+without cleartext packet numbers in the QUIC header, is described in
+{{?QUIC-SPIN=I-D.trammell-quic-spin}}; experimentation with this approach is
+also encouraged.
 
 # IANA Considerations
 
@@ -239,9 +227,10 @@ these information is considered low.
 
 # Acknowledgments
 
-This document is derived from {{?I-D.trammell-quic-spin}}, which was the work
-of the following authors in addition to the editor:
+This document is derived from {{QUIC-SPIN}}, which was the work of the
+following authors in addition to the editor of this document:
 
+- Piet De Vaere, ETH Zurich
 - Roni Even, Huawei
 - Giuseppe Fioccola, Telecom Italia
 - Thomas Fossati, Nokia
@@ -250,108 +239,12 @@ of the following authors in addition to the editor:
 - Emile Stephan, Orange
 
 The QUIC Spin Bit was originally specified in a slightly different form by
-Christian Huitema, and the Valid Edge Counter mechanism in {{vec}} was first
-specified by Piet De Vaere.
+Christian Huitema.
 
 This work is partially supported by the European Commission under Horizon 2020
 grant agreement no. 688421 Measurement and Architecture for a Middleboxed
 Internet (MAMI), and by the Swiss State Secretariat for Education, Research,
 and Innovation under contract no. 15.0268. This support does not imply
 endorsement.
-
---- back
-
-# The Valid Edge Counter {#vec}
-
-This mechanism is indented to provide additional information about the validity
-of the passively observed spin edges without using information from a
-cleartext packet number.
-
-A one-bit spin signal is resistent to reordering during signal generation,
-since the spin value is only updated at each endpoint on a packet that
-advances the packet counter. However, without using the packet number, a
-passive observer can neither detect reordered nor lost edges, and it must use
-heuristics to reject delayed edges.
-
-The Valid Edge Counter (VEC) addresses these issues with two additional
-bits added to each packet, encoding values from 0 to 3, indicating that
-an edge was considered to be valid when send out by the sender, and
-providing a possibility to detect invalid edges due to reordering and edge loss.
-
-## Proposed Short Header Format Including Spin Bit and VEC
-
-As of the current editor's version of {{QUIC-TRANS}}, this proposal specifies
-using the fifth most significant bit (0x08) of the first octet in the short
-header for the spin bit.
-
-\[EDITOR'S NOTE: verify this with quic-transport editors]
-
-~~~~~
-
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+
-|0|K|1|VEC|S|T T|
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                Destination Connection ID (0..144)           ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                      Packet Number (8/16/32)                ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                     Protected Payload (*)                   ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-~~~~~
-{: #fig-vec-header title="Short Header Format Spin Bit and VEC"}
-
-S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet
-reception as explained in sec {{spinbit}}.
-
-VEC: The Valid Edge Counter is set as defined in {{vec-bits}}. If the spin bit
-field does not contain an edge, the VEC is set to 0.
-
-## Setting the Valid Edge Counter (VEC) {#vec-bits}
-
-The VEC is set by each endpoint as follows; unlike the spin bit, note that there is no difference
-between client and server handling of the VEC:
-
-- By default, the VEC is set to 0.
-- If a packet contains an edge (transition 0->1 or 1->0) in the spin signal,
-  and that edge is delayed (sent more than a configured delay since the edge
-  was received, defaulting to 1ms), the VEC is set to 1.
-- If a packet contains an edge in the spin signal, and that edge is not
-  delayed, the VEC is set to the value of the VEC that accompanied the last
-  incoming spin bit transition plus one. This counter holds at 3, instead of
-  cycling around. In other words, an edge received with a VEC of 0 will be
-  reflected as an edge with a VEC of 1; with a VEC of 1 as VEC of 2, and a VEC
-  of 2 or 3 as a VEC of 3.
-
-This mechanism allows observers to recognize spurious edges due to reordering
-and delayed edges due to loss, since these packets will have been sent with
-VEC 0: they were not edges when they were sent. In addition, it allows senders
-to signal that a valid edge was delayed because the sender was
-application-limited: these edges are sent with the VEC set to 1 by the sender,
-prompting the VEC to count back up over the next RTT.
-
-## Use of the VEC by a passive observer
-
-The VEC can be used by observers to determine whether an edge in the spin bit
-signal is valid or not, as follows:
-
-- A packet containing an apparent edge in the spin signal with a VEC of 0 is
-  not a valid edge, but may be have been caused by reordering or loss, or was
-  marked as delayed by the sender. It should therefore be ignored.
-- A packet containing an apparent edge in the spin signal with a VEC of 1 can
-  be used as a left edge (i.e., to start measuring an RTT sample), but not as
-  a right edge (i.e., to take an RTT sample since the last edge).
-- A packet containing an apparent edge in the spin signal with a VEC of 2 can
-  be used as a left edge, but not as a right edge. If the observation point is
-  symmetric (i.e, it can see both upstream and downstream packets in the
-  flow), the packet can also be used to take a component RTT sample on the
-  segment of the path between the observation point and the direction in which
-  the previous VEC 1 edge was seen.
-- A packet containing an apparent edge in the spin signal with a VEC of 3 can
-  be used as a left edge or right edge, and can be used to compute component
-  RTT in either direction.
-
 
 

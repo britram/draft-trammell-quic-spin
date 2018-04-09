@@ -1,6 +1,6 @@
 ---
-title: The Addition of a Spin Bit to the QUIC Transport Protocol
-abbrev: Spin Bit
+title: Adding Explicit Passive Measurability of Two-Way Latency to the QUIC Transport Protocol
+abbrev: Spin Bits
 docname: draft-trammell-quic-spin-latest
 date:
 category: info
@@ -56,6 +56,15 @@ author:
     email: emile.stephan@orange.com
 
 normative:
+  QUIC-SPIN-EXP:
+    title: The QUIC Latency Spin Bit (draft-ietf-quic-spin-exp-00)
+    author:
+      -
+        ins: B. Trammell
+      -
+        ins: M. Kuehlewind
+    date: 2018-04-09
+
 
 informative:
   TRILAT:
@@ -194,16 +203,15 @@ informative:
 
 --- abstract
 
-This document summarizes work to date on the addition of a "spin bit",
-intended for explicit measurability of end-to-end RTT on QUIC flows. It
-proposes a detailed mechanism for the spin bit, describes how to use it to
-measure end-to-end latency, discusses corner cases and their workarounds in
-the measurement, describes experimental evaluation of the mechanism done to
-date, and examines the utility and privacy implications of the spin bit. As
-the overhead and risk associated with the spin bit are negligible, and the
-utility of a passive RTT measurement signal at higher resolution than once per
-flow is clear, this document advocates for the addition of the spin bit to the
-protocol.
+This document describes  the addition of a "spin bit", intended for explicit
+measurability of end-to-end RTT, to the QUIC transport protocol. It proposes a
+detailed mechanism for the spin bit, as well as an additional mechanism,
+called the valid edge counter, to increase the fidelity of the latency signal
+in less than ideal network conditions. It describes how to use the latency
+spin signal to measure end-to-end latency, discusses corner cases and their
+workarounds in the measurement, describes experimental evaluation of the
+mechanism done to date, and examines the utility and privacy implications of
+the spin bit.
 
 --- middle
 
@@ -218,10 +226,10 @@ route QUIC packets to the correct machine in a load-balancing situation (the
 connection ID). In contrast to TCP, QUIC's wire image (see
 {{?WIRE-IMAGE=I-D.trammell-wire-image}}) exposes much less information about
 transport protocol state than TCP's wire image. Specifically, the fact that
-sequence and acknowledgement numbers and timestamps (available in TCP) cannot be seen by
-on-path observers in QUIC means that passive TCP loss
-and latency measurement techniques that rely on this information (e.g.
-{{CACM-TCP}}, {{TMA-QOF}}) cannot be easily ported to work with QUIC.
+sequence and acknowledgement numbers and timestamps (available in TCP) cannot
+be seen by on-path observers in QUIC means that passive TCP loss and latency
+measurement techniques that rely on this information (e.g. {{CACM-TCP}},
+{{TMA-QOF}}) cannot be easily ported to work with QUIC.
 
 This document proposes a solution to this problem by adding a "latency spin
 bit" to the QUIC short header. This bit is designed solely for explicit
@@ -229,13 +237,16 @@ passive measurability of the protocol. It provides one RTT sample per RTT to
 passive observers of QUIC traffic. This document describes the mechanism, how
 it can be added to QUIC, and how it can be used by passive measurement
 facilities to generate RTT samples. It explores potential corner cases and
-shortcomings of the mechanism and how they can be mitigated. It summarizes
-experimental results to date with an implementation of the spin bit built atop
-a recent QUIC implementation. It additionally describes use cases for passive
-RTT measurement at the resolution provided by the spin bit. It further reviews
-findings on privacy risk researched by the QUIC RTT Design Team, which was
-tasked by the IETF QUIC Working Group to determine the risk/utility tradeoff
-for the spin bit.
+shortcomings of the mechanism, and proposes an extention called the Valid Edge
+Counter (VEC) to mitigate them. It further details findings on privacy risk
+researched by the QUIC RTT Design Team, which was tasked by the IETF QUIC
+Working Group to determine the risk/utility tradeoff for the spin bit.
+
+Appendices summarize experimental results to date with an implementation of
+the spin bit built atop a recent QUIC implementation, describe use cases for
+passive RTT measurement at the resolution provided by the spin bit, explore
+alternatives to the spin bit for passive latency measurement of QUIC flows,
+and discuss the necessity of "greasing" the spin bit.
 
 The spin bit has low overhead, presents negligible privacy risk, and has clear
 utility in providing passive RTT measurability of QUIC that is far superior to
@@ -243,6 +254,12 @@ QUIC's measurability without the spin bit, and equivalent to or better than
 TCP passive measurability.
 
 ## About This Document
+
+{{QUIC-SPIN-EXP}} specifies the addition of the spin bit to the QUIC transport
+protocol for experimental purposes. This document provides background for that
+specification, documents work done in the development of the spin bit
+proposal, and extends it with the VEC signal for loss, reordering, and delay
+compensation without relying on the QUIC packet number.
 
 This document is maintained in the GitHub repository
 https://github.com/britram/draft-trammell-quic-spin, and the editor's copy is
@@ -276,46 +293,8 @@ per round trip. Observation points can estimate the network latency by
 observing these changes in the latency spin bit, as described in {{usage}}.
 See {{illustration}} for an illustration of this mechanism in action.
 
-## Proposed Short Header Format Including Spin Bit
-
-Since it is possible to measure handshake RTT without a spin bit (see
-{{handshake}}), it is sufficient to include the spin bit in the short
-packet header. This proposal suggests using the fourth most significant bit
-(0x10) of the first octet in the short header for the spin bit.
-
-~~~~~
- 0                   1                   2                   3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+
-|0|C|K|S|Type(4)|
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-+                     [Connection ID (64)]                      +
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                    Packet Number (8/16/32)                  ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                     Protected Payload (*)                   ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-~~~~~
-{: #fig-short-header title="Short Header Format including proposed Spin Bit"}
-
-This will limit the number of available short packet types to 16. The short
-packet types will be redefined to the following values:
-
-| Type | Packet Number Size |
-|:-----|:-------------------|
-|  0xD | 4 octets           |
-|  0xE | 2 octets           |
-|  0xF | 1 octet            |
-{: #short-packet-types title="Short Header Packet Types after Definition of Spin Bit"}
-
-Note that this proposal changes the short header as defined in {{QUIC-TRANS}}
-at the time of writing; regardless of where and how the spin bit is eventually
-defined, the key properties of the spin bit are (1) it's a single bit, (2) it
-spins as defined in {{mechanism}}, and (3) it appears only in the short
-header; i.e. after version negotiation and connection establishment are
-completed.
+The defails of the addition of the spin bit to the QUIC short header are given
+in {{QUIC-SPIN-EXP}}.
 
 # Using the Spin Bit for Passive RTT Measurement {#usage}
 
@@ -358,6 +337,9 @@ by causing spurious edge detection and therefore low RTT estimates, if reorderin
 occurs across a spin bit flip in the stream. This can
 be probabilistically mitigated by the observer also tracking the low-order
 bits of the packet number, and rejecting edges that appear out-of-order {{?RFC4737}}.
+
+All of these limitations are addressed by an enhancement to the spin bit, the
+Valid Edge Counter, described in detail in {{vec}}.
 
 ## Illustration
 
@@ -456,7 +438,195 @@ increment the highest packet number seen.
 ~~~~~
 {: #illus5 title="Handling reordering"}
 
-## Experimental Evaluation {#experiment}
+# The Valid Edge Counter {#vec}
+
+This mechanism is indented to provide additional information about the validity
+of the passively observed spin edges without using information from a
+cleartext packet number.
+
+A one-bit spin signal is resistent to reordering during signal generation,
+since the spin value is only updated at each endpoint on a packet that
+advances the packet counter. However, without using the packet number, a
+passive observer can neither detect reordered nor lost edges, and it must use
+heuristics to reject delayed edges.
+
+The Valid Edge Counter (VEC) addresses these issues with two additional
+bits added to each packet, encoding values from 0 to 3, indicating that
+an edge was considered to be valid when send out by the sender, and
+providing a possibility to detect invalid edges due to reordering and edge loss.
+
+## Proposed Short Header Format Including Spin Bit and VEC
+
+As of the current editor's version of {{QUIC-TRANS}}, this proposal specifies
+using bit 0x04 of the first octet in the short header for the spin bit, and
+the bits 0x18 for the valid edge counter. Note that these values are subject
+to change frequently to
+
+~~~~~
+
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+
+|0|K|1|VEC|S|T T|
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                Destination Connection ID (0..144)           ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      Packet Number (8/16/32)                ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                     Protected Payload (*)                   ...
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+~~~~~
+{: #fig-vec-header title="Short Header Format Spin Bit and VEC"}
+
+S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet
+reception as explained in {{mechanism}}.
+
+VEC: The Valid Edge Counter is set as defined in {{vec-bits}}. If the spin bit
+field does not contain an edge, the VEC is set to 0.
+
+## Setting the Valid Edge Counter (VEC) {#vec-bits}
+
+The VEC is set by each endpoint as follows; unlike the spin bit, note that
+there is no difference between client and server handling of the VEC:
+
+- By default, the VEC is set to 0.
+- If a packet contains an edge (transition 0->1 or 1->0) in the spin signal,
+  and that edge is delayed (sent more than a configured delay since the edge
+  was received, defaulting to 1ms), the VEC is set to 1.
+- If a packet contains an edge in the spin signal, and that edge is not
+  delayed, the VEC is set to the value of the VEC that accompanied the last
+  incoming spin bit transition plus one. This counter holds at 3, instead of
+  cycling around. In other words, an edge received with a VEC of 0 will be
+  reflected as an edge with a VEC of 1; with a VEC of 1 as VEC of 2, and a VEC
+  of 2 or 3 as a VEC of 3.
+
+This mechanism allows observers to recognize spurious edges due to reordering
+and delayed edges due to loss, since these packets will have been sent with
+VEC 0: they were not edges when they were sent. In addition, it allows senders
+to signal that a valid edge was delayed because the sender was
+application-limited: these edges are sent with the VEC set to 1 by the sender,
+prompting the VEC to count back up over the next RTT.
+
+## Use of the VEC by a passive observer
+
+The VEC can be used by observers to determine whether an edge in the spin bit
+signal is valid or not, as follows:
+
+- A packet containing an apparent edge in the spin signal with a VEC of 0 is
+  not a valid edge, but may be have been caused by reordering or loss, or was
+  marked as delayed by the sender. It should therefore be ignored.
+- A packet containing an apparent edge in the spin signal with a VEC of 1 can
+  be used as a left edge (i.e., to start measuring an RTT sample), but not as
+  a right edge (i.e., to take an RTT sample since the last edge).
+- A packet containing an apparent edge in the spin signal with a VEC of 2 can
+  be used as a left edge, but not as a right edge. If the observation point is
+  symmetric (i.e, it can see both upstream and downstream packets in the
+  flow), the packet can also be used to take a component RTT sample on the
+  segment of the path between the observation point and the direction in which
+  the previous VEC 1 edge was seen.
+- A packet containing an apparent edge in the spin signal with a VEC of 3 can
+  be used as a left edge or right edge, and can be used to compute component
+  RTT in either direction.
+
+
+# Privacy and Security Considerations
+
+The privacy considerations for the latency spin bit are essentially the same
+as those for passive RTT measurement in general.
+
+A concern was raised during the discussion of this feature within the QUIC
+working group and the QUIC RTT Design Team that high-resolution RTT
+information might be usable for geolocation. However, an evaluation based on
+RTT samples taken over 13,780 paths in the Internet from RIPE Atlas anchoring
+measurements {{TRILAT}} shows that the magnitude and uncertainty of RTT data
+limit the resolution of geolocation information that can be derived from
+Internet RTT to national- or continental-scale; i.e., less
+resolution than is generally available from free, open IP geolocation
+databases.
+
+One reason for the inaccuracy of geolocation from network RTT is that Internet
+backbone transmission facilities do not follow the great-circle path between
+major nodes. Instead, major geographic features and the efficiency of
+connecting adjacent major cities both influence the facility routing. An evaluation
+of ~3500 measurements on a mesh of 25 backbone nodes in the continental United
+States shows that 85% had RTT to great-circle error of 3ms or more, making
+location within US State boundaries ambiguous {{CONUS}}.
+
+Therefore, in the general case, when an endpoint's IP address is known, RTT
+information provides negligible additional information.
+
+RTT information may be used to infer the occupancy of queues along a path;
+indeed, this is part of its utility for performance measurement and
+diagnostics. When a link on a given path has excessive buffering (on the order
+of hundreds of milliseconds or more), such that the difference in delay
+between an empty queue and a full queue dwarfs normal variance and RTT along
+the path, RTT variance during the lifetime of a flow can be used to infer the
+presence of traffic on the bottleneck link. In practice, however, this is not
+a concern for passive measurement of congestion-controlled traffic, since any
+observer in a situation to observe RTT passively need not infer the presence
+of the traffic, as it can observe it directly.
+
+In addition, since RTT information contains application as well as network
+delay, patterns in RTT variance from minimum, and therefore application delay,
+can be used to infer or fingerprint application-layer behavior. However, as
+with the case above, this is not a concern with passive measurement, since the
+packet size and interarrival time sequence, which is also directly observable,
+carries more information than RTT variance sequence.
+
+We therefore conclude that the high-resolution, per-flow exposure of RTT for
+passive measurement as provided by the spin bit poses negligible marginal risk
+to privacy.
+
+As shown in {{mechanism}}, the spin bit can be implemented separately from the
+rest of the mechanisms of the QUIC transport protocol, as it requires no
+access to any state other than that observable in the QUIC packet header
+itself. We recommend that implementations take advantage of this property, to
+reduce the risk that errors in the implementation could leak private
+transport protocol state through the spin bit.
+
+Since the spin bit is disconnected from transport mechanics, a QUIC endpoint
+implementing the spin bit that has a model of the actual network RTT and a
+target RTT to expose can "lie" about its spin bit transitions, by anticipating
+or delaying observed transitions, even without coordination with and the
+collusion of the other endpoint. This is not the case with TCP, which requires
+coordination and collusion to expose false information via its sequence and
+acknowledgment numbers and its timestamp option. When passive measurement is
+used for purposes where one endpoint might gain a material advantage by
+representing a false RTT, e.g. SLA verification or enforcement of
+telecommunications regulations, this situation raises a question about the
+trustworthiness of spin bit RTT measurements.
+
+This issue must be appreciated by users of spin bit information, but
+mitigation is simple, as QUIC implementations designed to lie about RTT
+through spin bit modification can easily be detected. A lying server can be
+contacted by an honest client under the control of a verifying party, and the
+client's RTT estimate compared with the spin-bit exposed estimate. Though in
+the general case, it is impossible to verify explicit path signals with two
+complicit endpoints (see {{WIRE-IMAGE}}), a lying server/client pair may be
+subject to dynamic analysis along paths with known RTTs. We consider the ease
+of verification of lying in situations where this would be prohibited by
+regulation or contract, combined with the consequences of violation of said
+regulation or contract, to be a sufficient incentive in the general case not
+to do it.
+
+# Acknowledgments
+
+Many thanks to Christian Huitema, who originally proposed the spin bit as pull
+request 609 on {{QUIC-TRANS}}. Thanks to Tobias Buehler for feedback on the
+draft. Special thanks to the QUIC RTT Design Team for discussions leading
+especially to the measurement limitations and privacy and security
+considerations sections.
+
+This work is partially supported by the European Commission under Horizon 2020
+grant agreement no. 688421 Measurement and Architecture for a Middleboxed
+Internet (MAMI), and by the Swiss State Secretariat for Education, Research,
+and Innovation under contract no. 15.0268. This support does not imply
+endorsement.
+
+--- back
+
+# Experimental Evaluation {#experiment}
 
 We have evaluated the effectiveness of the spin bit in an emulated network
 environment. The spin bit was added to a fork of {{MINQ}}, using the mechanism
@@ -814,96 +984,3 @@ value chosen for p must be small enough to let the spin-bit mechanics work and
 large enough not to be seen as an error instead of an intentional protocol
 feature.
 
-# Privacy and Security Considerations
-
-The privacy considerations for the latency spin bit are essentially the same
-as those for passive RTT measurement in general.
-
-A concern was raised during the discussion of this feature within the QUIC
-working group and the QUIC RTT Design Team that high-resolution RTT
-information might be usable for geolocation. However, an evaluation based on
-RTT samples taken over 13,780 paths in the Internet from RIPE Atlas anchoring
-measurements {{TRILAT}} shows that the magnitude and uncertainty of RTT data
-limit the resolution of geolocation information that can be derived from
-Internet RTT to national- or continental-scale; i.e., less
-resolution than is generally available from free, open IP geolocation
-databases.
-
-One reason for the inaccuracy of geolocation from network RTT is that Internet
-backbone transmission facilities do not follow the great-circle path between
-major nodes. Instead, major geographic features and the efficiency of
-connecting adjacent major cities both influence the facility routing. An evaluation
-of ~3500 measurements on a mesh of 25 backbone nodes in the continental United
-States shows that 85% had RTT to great-circle error of 3ms or more, making
-location within US State boundaries ambiguous {{CONUS}}.
-
-Therefore, in the general case, when an endpoint's IP address is known, RTT
-information provides negligible additional information.
-
-RTT information may be used to infer the occupancy of queues along a path;
-indeed, this is part of its utility for performance measurement and
-diagnostics. When a link on a given path has excessive buffering (on the order
-of hundreds of milliseconds or more), such that the difference in delay
-between an empty queue and a full queue dwarfs normal variance and RTT along
-the path, RTT variance during the lifetime of a flow can be used to infer the
-presence of traffic on the bottleneck link. In practice, however, this is not
-a concern for passive measurement of congestion-controlled traffic, since any
-observer in a situation to observe RTT passively need not infer the presence
-of the traffic, as it can observe it directly.
-
-In addition, since RTT information contains application as well as network
-delay, patterns in RTT variance from minimum, and therefore application delay,
-can be used to infer or fingerprint application-layer behavior. However, as
-with the case above, this is not a concern with passive measurement, since the
-packet size and interarrival time sequence, which is also directly observable,
-carries more information than RTT variance sequence.
-
-We therefore conclude that the high-resolution, per-flow exposure of RTT for
-passive measurement as provided by the spin bit poses negligible marginal risk
-to privacy.
-
-As shown in {{mechanism}}, the spin bit can be implemented separately from the
-rest of the mechanisms of the QUIC transport protocol, as it requires no
-access to any state other than that observable in the QUIC packet header
-itself. We recommend that implementations take advantage of this property, to
-reduce the risk that errors in the implementation could leak private
-transport protocol state through the spin bit.
-
-Since the spin bit is disconnected from transport mechanics, a QUIC endpoint
-implementing the spin bit that has a model of the actual network RTT and a
-target RTT to expose can "lie" about its spin bit transitions, by anticipating
-or delaying observed transitions, even without coordination with and the
-collusion of the other endpoint. This is not the case with TCP, which requires
-coordination and collusion to expose false information via its sequence and
-acknowledgment numbers and its timestamp option. When passive measurement is
-used for purposes where one endpoint might gain a material advantage by
-representing a false RTT, e.g. SLA verification or enforcement of
-telecommunications regulations, this situation raises a question about the
-trustworthiness of spin bit RTT measurements.
-
-This issue must be appreciated by users of spin bit information, but
-mitigation is simple, as QUIC implementations designed to lie about RTT
-through spin bit modification can easily be detected. A lying server can be
-contacted by an honest client under the control of a verifying party, and the
-client's RTT estimate compared with the spin-bit exposed estimate. Though in
-the general case, it is impossible to verify explicit path signals with two
-complicit endpoints (see {{WIRE-IMAGE}}), a lying server/client pair may be
-subject to dynamic analysis along paths with known RTTs. We consider the ease
-of verification of lying in situations where this would be prohibited by
-regulation or contract, combined with the consequences of violation of said
-regulation or contract, to be a sufficient incentive in the general case not
-to do it.
-
-# Acknowledgments
-
-Many thanks to Christian Huitema, who originally proposed the spin bit as pull
-request 609 on {{QUIC-TRANS}}. Thanks to Tobias Buehler for feedback on the
-draft. Special thanks to the QUIC RTT Design Team for discussions leading
-especially to the measurement limitations and privacy and security
-considerations sections.
-
-This work is partially supported by the European Commission under Horizon 2020
-grant agreement no. 688421 Measurement and Architecture for a Middleboxed
-Internet (MAMI), and by the Swiss State Secretariat for Education, Research,
-and Innovation under contract no. 15.0268. This support does not imply
-endorsement.
