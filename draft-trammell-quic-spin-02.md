@@ -1,7 +1,7 @@
 ---
 title: Adding Explicit Passive Measurability of Two-Way Latency to the QUIC Transport Protocol
 abbrev: Spin Bits
-docname: draft-trammell-quic-spin-latest
+docname: draft-trammell-quic-spin-02
 date:
 category: info
 

@@ -1,7 +1,7 @@
 ---
 title: The QUIC Latency Spin Bit
 abbrev: QUIC Spin Bit
-docname: draft-ietf-quic-spin-exp-latest
+docname: draft-ietf-quic-spin-exp-00
 date:
 category: exp
 
