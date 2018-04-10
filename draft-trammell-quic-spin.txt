@@ -628,9 +628,10 @@ Internet-Draft                  Spin Bits                     April 2018
 
    Many thanks to Christian Huitema, who originally proposed the spin
    bit as pull request 609 on [QUIC-TRANS].  Thanks to Tobias Buehler
-   for feedback on the draft.  Special thanks to the QUIC RTT Design
-   Team for discussions leading especially to the measurement
-   limitations and privacy and security considerations sections.
+   for feedback on the draft, and for Alexandre Ferrieux for input on
+   the Valid Edge Counter.  Special thanks to the QUIC RTT Design Team
+   for discussions leading especially to the privacy and security
+   considerations section.
 
    This work is partially supported by the European Commission under
    Horizon 2020 grant agreement no. 688421 Measurement and Architecture
@@ -664,7 +665,6 @@ Internet-Draft                  Spin Bits                     April 2018
               P., and G. Post, "Passive Online RTT Estimation for Flow-
               Aware Routers Using One-Way Traffic (NETWORKING 2010, LNCS
               6091, pp. 109-121)", 2010.
-
 
 
 
