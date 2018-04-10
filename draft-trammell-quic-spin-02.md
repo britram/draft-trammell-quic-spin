@@ -282,9 +282,9 @@ contacting the editor.
 The latency spin bit enables latency monitoring from observation points on the
 network path. Each endpoint, client and server, maintains a spin value, 0 or
 1, for each QUIC connection, and sets the spin bit on packets it sends for
-that connection to the appropriate value (below). It also maintains the highest packet number
-seen from its peer on the connection. The value is then determined at each
-endpoint as follows:
+that connection to the appropriate value (below). It also maintains the
+highest packet number seen from its peer on the connection. The value is then
+determined at each endpoint as follows:
 
 * The server initializes its spin value to 0. When it receives a packet from
   the client, if that packet has a short header and if it increments the
@@ -424,17 +424,17 @@ in {{illus4}}.
 {: #illus4 title="Client inverts the spin edge"}
 
 Here we can also see how measurement works. An observer watching the signal at
-single observation point X in {{illus4}} will see an edge every 10 ticks, i.e. once
-per RTT. An observer watching the signal at a symmetric observation point Y in
-{{illus4}} will see a server-client edge 4 ticks after the client-server edge,
-and a client-server edge 6 ticks after the server-client edge, allowing it to
-compute component RTT.
+single observation point X in {{illus4}} will see an edge every 10 ticks, i.e.
+once per RTT. An observer watching the signal at a symmetric observation point
+Y in {{illus4}} will see a server-client edge 4 ticks after the client-server
+edge, and a client-server edge 6 ticks after the server-client edge, allowing
+it to compute component RTT.
 
 {{illus5}} shows how this mechanism works in the presence of reordering. Here,
 packet C carries the spin edge, and packet B is reordered on the way to the
 client. In this case, the client will begin sending spin 1 after the arrival
-of C, and ignore the spin bit flip to 1 on packet B, since B < C; i.e. it does not
-increment the highest packet number seen.
+of C, and ignore the spin bit flip to 1 on packet B, since B < C; i.e. it does
+not increment the highest packet number seen.
 
 ~~~~~
 +--------+   0  0  0  0  0   +--------+
@@ -487,8 +487,8 @@ to change frequently to
 ~~~~~
 {: #fig-vec-header title="Short Header Format Spin Bit and VEC"}
 
-S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet
-reception as explained in {{mechanism}}.
+S: The Spin bit is set 0 or 1 depending on the stored spin value that is
+updated on packet reception as explained in {{mechanism}}.
 
 VEC: The Valid Edge Counter is set as defined in {{vec-bits}}. If the spin bit
 field does not contain an edge, the VEC is set to 0.
@@ -556,10 +556,10 @@ databases.
 One reason for the inaccuracy of geolocation from network RTT is that Internet
 backbone transmission facilities do not follow the great-circle path between
 major nodes. Instead, major geographic features and the efficiency of
-connecting adjacent major cities both influence the facility routing. An evaluation
-of ~3500 measurements on a mesh of 25 backbone nodes in the continental United
-States shows that 85% had RTT to great-circle error of 3ms or more, making
-location within US State boundaries ambiguous {{CONUS}}.
+connecting adjacent major cities both influence the facility routing. An
+evaluation of ~3500 measurements on a mesh of 25 backbone nodes in the
+continental United States shows that 85% had RTT to great-circle error of 3ms
+or more, making location within US State boundaries ambiguous {{CONUS}}.
 
 Therefore, in the general case, when an endpoint's IP address is known, RTT
 information provides negligible additional information.
@@ -681,9 +681,9 @@ in a single direction (e.g. 00 -> 01 -> 10 -> 11) successfully rejects all
 reordered samples, including under amounts of reordering that render the
 transport itself mostly useless. However, adding a bit is not necessary:
 having the observer keep the least significant bits of the packet number, and
-rejecting samples from packets that reverse the sequence {{RFC4737}}, as suggested in
-{{limitations}}, is essentially as successful as a two-bit spin signal in
-mitigating the effects of reordering on RTT measurement.
+rejecting samples from packets that reverse the sequence {{RFC4737}}, as
+suggested in {{limitations}}, is essentially as successful as a two-bit spin
+signal in mitigating the effects of reordering on RTT measurement.
 
 Fifth, we performed parallel active measurements using ping, as described in
 {{just-ping-it}}. In our emulated network, the ICMP packets and the QUIC
@@ -755,9 +755,9 @@ a defective line card of a device located somewhere on the path. The card's
 misbehavior introduces an abnormal reordered packets only in the traffic
 exchanged at line rate.
 
-Other examples are similar in terms of cooperation requirements and the need to refer
-to measurements. NOCs need to share the same measurement metrics and to
-measure these metrics on the same fields of the packet to enable a minimal
+Other examples are similar in terms of cooperation requirements and the need
+to refer to measurements. NOCs need to share the same measurement metrics and
+to measure these metrics on the same fields of the packet to enable a minimal
 level of technical cooperation.
 
 Experimentation with the spinbit {{experiment}} has shown ability to replace
@@ -806,26 +806,26 @@ capacity. As a side effect, bufferbloat has become a common issue in such
 networks {{WWMM-BLOAT}}.
 
 An effective way of mitigating bufferbloat without sacrificing too much
-throughput is to deploy Active Queue Management (AQM) in bottleneck routers and
-base stations. However, due to the variation in deployed base-stations it is
-not always possible to enable AQM at the bottlenecks, without massive
+throughput is to deploy Active Queue Management (AQM) in bottleneck routers
+and base stations. However, due to the variation in deployed base-stations it
+is not always possible to enable AQM at the bottlenecks, without massive
 infrastructure investments.
 
 An alternative approach is to deploy AQM as a network function in a more
 centralized location than the traditional bottleneck nodes. Such an AQM
 monitors the RTT progression of flows and drops or marks packets when the
 measured latency is indicative of congestion. Such a function also has the
-possibility to detect misbehaving flows and reduce the negative impact they have
-on the network.
+possibility to detect misbehaving flows and reduce the negative impact they
+have on the network.
 
 ## Locating WiFi Problems in Home Networks
 
 Many residential networks use WiFi (802.11) on the last segment, and WiFi
 signal strength degradation manifests in high first-hop delay, due to the fact
-that the MAC layer will retransmit packets lost at that layer. Measuring the RTT
-between endpoints on the customer network and parts of the service provider's
-own infrastructure (which have predictable delay characteristics) can be used
-to isolate this cause of performance problems.
+that the MAC layer will retransmit packets lost at that layer. Measuring the
+RTT between endpoints on the customer network and parts of the service
+provider's own infrastructure (which have predictable delay characteristics)
+can be used to isolate this cause of performance problems.
 
 The network provider can measure the RTT and packet loss in the home gateway
 or an upstream point if there is no access to home gateway. A problem in the

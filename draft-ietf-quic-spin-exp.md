@@ -111,8 +111,8 @@ header for the spin bit.
 ~~~~~
 {: #fig-short-header title="Short Header Format including proposed Spin Bit"}
 
-S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet
-reception as explained in {{spinbit}}.
+S: The Spin bit is set 0 or 1 depending on the stored spin value that is
+updated on packet reception as explained in {{spinbit}}.
 
 ## Setting the Spin Bit on Outgoing Packets {#spinbit}
 
@@ -137,7 +137,8 @@ endpoint as follows:
 This procedure will cause the spin bit to change value in each direction once
 per round trip. Observation points can estimate the network latency by
 observing these changes in the latency spin bit, as described in {{usage}}.
-See {{?SPIN-BIT=I-D.trammell-quic-spin}} for further illustration of this mechanism in action.
+See {{?SPIN-BIT=I-D.trammell-quic-spin}} for further illustration of this
+mechanism in action.
 
 ## Resetting Spin Value State
 
@@ -171,14 +172,14 @@ instantaneous estimate of the RTT as experienced by the application. A simple
 linear smoothing or moving minimum filter can be applied to the stream of RTT
 information to get a more stable estimate.
 
-However, application-limited and flow-control-limited senders can have application and
-transport layer delay, respectively, that are much greater than network RTT.
-When the sender is application-limited and e.g. only sends small amount of
-periodic application traffic, where that period is
-longer than the RTT, measuring the spin bit provides information about the
-application period, not the network RTT. Simple heuristics based on the observed data
-rate per flow or changes in the RTT series can be used to reject bad RTT
-samples due to application or flow control limitation.
+However, application-limited and flow-control-limited senders can have
+application and transport layer delay, respectively, that are much greater
+than network RTT. When the sender is application-limited and e.g. only sends
+small amount of periodic application traffic, where that period is longer than
+the RTT, measuring the spin bit provides information about the application
+period, not the network RTT. Simple heuristics based on the observed data rate
+per flow or changes in the RTT series can be used to reject bad RTT samples
+due to application or flow control limitation.
 
 An on-path observer that can see traffic in both directions (from client to
 server and from server to client) can also use the spin bit to measure
