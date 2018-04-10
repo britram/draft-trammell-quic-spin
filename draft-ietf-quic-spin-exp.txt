@@ -15,11 +15,7 @@ Abstract
 
    This document specifies the addition of a latency spin bit to the
    QUIC transport protocol and describes how to use it to measure end-
-   to-end latency.  It is intended as a delta to the current
-   specification of QUIC.  An appendix describes the Valid Edge Counter
-   mechanism, which can be used to determine the validity of an RTT
-   sample in case of loss and reordering without using the QUIC packet
-   number.
+   to-end latency.
 
 Status of This Memo
 
@@ -50,6 +46,10 @@ Copyright Notice
    carefully, as they describe your rights and restrictions with respect
    to this document.  Code Components extracted from this document must
    include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
 
 
 
@@ -57,9 +57,6 @@ Trammell & Kuehlewind   Expires October 12, 2018                [Page 1]
 
 Internet-Draft                QUIC Spin Bit                   April 2018
 
-
-   the Trust Legal Provisions and are provided without warranty as
-   described in the Simplified BSD License.
 
 Table of Contents
 
@@ -104,6 +101,9 @@ Table of Contents
    https://github.com/britram/draft-trammell-quic-spin/issues.  Comments
    and suggestions on this document can be made by filing an issue
    there, or by contacting the editor.
+
+
+
 
 
 

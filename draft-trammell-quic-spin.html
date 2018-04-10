@@ -565,7 +565,7 @@ address {
                       Y
 </pre>
 <p class="figure">Figure 5: Client inverts the spin edge</p>
-<p id="rfc.section.3.2.p.7">Here we can also see how measurement works. An observer watching the signal at single observation point X in <a href="#illus4" class="xref">Figure 5</a> will see an edge every 10 ticks, i.e. once per RTT. An observer watching the signal at a symmetric observation point Y in <a href="#illus4" class="xref">Figure 5</a> will see a server-client edge 4 ticks after the client-server edge, and a client-server edge 6 ticks after the server-client edge, allowing it to compute component RTT.</p>
+<p id="rfc.section.3.2.p.7">Here we can also see how measurement works. An observer watching the signal at single observation point X in <a href="#illus4" class="xref">Figure 5</a> will see an edge every 10 ticks, i.e.  once per RTT. An observer watching the signal at a symmetric observation point Y in <a href="#illus4" class="xref">Figure 5</a> will see a server-client edge 4 ticks after the client-server edge, and a client-server edge 6 ticks after the server-client edge, allowing it to compute component RTT.</p>
 <p><a href="#illus5" class="xref">Figure 6</a> shows how this mechanism works in the presence of reordering. Here, packet C carries the spin edge, and packet B is reordered on the way to the client. In this case, the client will begin sending spin 1 after the arrival of C, and ignore the spin bit flip to 1 on packet B, since B &lt; C; i.e. it does not increment the highest packet number seen.</p>
 <div id="rfc.figure.6"></div>
 <div id="illus5"></div>
@@ -656,7 +656,7 @@ address {
 <table><tbody><tr>
 <td class="reference"><b id="QUIC-SPIN-EXP">[QUIC-SPIN-EXP]</b></td>
 <td class="top">
-<a>Trammell, B.</a> and <a>M. Kuehlewind</a>, "<a>The QUIC Latency Spin Bit (draft-ietf-quic-spin-exp-00)</a>", April 2018.</td>
+<a>Trammell, B.</a> and <a>M. Kuehlewind</a>, "<a href="https://tools.ietf.org/html/draft-ietf-quic-spin-exp">The QUIC Latency Spin Bit</a>", Internet-Draft draft-ietf-quic-spin-exp</td>
 </tr></tbody></table>
 <h1 id="rfc.references.2">
 <a href="#rfc.references.2">7.2.</a> Informative References</h1>

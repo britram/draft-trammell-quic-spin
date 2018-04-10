@@ -367,7 +367,7 @@ Internet-Draft                  Spin Bits                     April 2018
 
    Here we can also see how measurement works.  An observer watching the
    signal at single observation point X in Figure 5 will see an edge
-   every 10 ticks, i.e. once per RTT.  An observer watching the signal
+   every 10 ticks, i.e.  once per RTT.  An observer watching the signal
    at a symmetric observation point Y in Figure 5 will see a server-
    client edge 4 ticks after the client-server edge, and a client-server
    edge 6 ticks after the server-client edge, allowing it to compute
@@ -644,8 +644,8 @@ Internet-Draft                  Spin Bits                     April 2018
 7.1.  Normative References
 
    [QUIC-SPIN-EXP]
-              Trammell, B. and M. Kuehlewind, "The QUIC Latency Spin Bit
-              (draft-ietf-quic-spin-exp-00)", April 2018.
+              Trammell, B. and M. Kuehlewind, "The QUIC Latency Spin
+              Bit", draft-ietf-quic-spin-exp (work in progress).
 
 7.2.  Informative References
 
