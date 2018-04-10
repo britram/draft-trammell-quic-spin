@@ -83,7 +83,8 @@ contacting the editor.
 # The Spin Bit Mechanism
 
 The latency spin bit enables latency monitoring from observation points on the
-network path. Since it is possible to measure handshake RTT without a spin bit, it is
+network path throughout the duration of a connection. 
+Since it is possible to measure handshake RTT without a spin bit, it is
 sufficient to include the spin bit in the short packet header. The spin bit
 therefore appears only after version negotiation and connection establishment
 are completed.
@@ -119,17 +120,17 @@ updated on packet reception as explained in {{spinbit}}.
 Each endpoint, client and server, maintains a spin value, 0 or 1, for each
 QUIC connection, and sets the spin bit in the short header to the currently
 stored value when a packet with a short header is sent out. The spin value is
-initialized to 0 on both side, at the client as well as the server at
+initialized to 0 on both endpoints, at the client as well as the server at
 connection start. Each endpoint also remembers the highest packet number seen
 from its peer on the connection. The spin value is then determined at each
-endpoint as follows:
+endpoint as follows (within a single connection):
 
-* When it receives a packet from the client, if that packet has a short header
+* When the server receives a packet from the client, if that packet has a short header
   and if it increments the highest packet number seen by the server from the
-  client, it sets the spin value to the value observed in the spin bit in the
+  client, the server sets the spin value equal to the value observed in the spin bit of the
   received packet.
 
-* When it receives a packet from the server, if the packet has a short header
+* When the client receives a packet from the server, if the packet has a short header
   and if it increments the highest packet number seen by the client from the
   server, it sets the spin value to the opposite of the spin bit in the
   received packet.
@@ -143,7 +144,7 @@ mechanism in action.
 ## Resetting Spin Value State
 
 Each client and server resets it spin value to zero when sending the
-first packet in a given with a new Connection ID. This reduces the risk that
+first packet of a given connection with a new Connection ID. This reduces the risk that
 transient spin bit state can be used to link flows across connection migration
 or ID change.
 
@@ -155,14 +156,14 @@ can observe the time difference between edges (changes from 1 to 0 or 0 to 1)
 in the spin bit signal in a single direction to measure one sample of
 end-to-end RTT.
 
-An observer can keep the largest observed packet number per flow, and reject
-edges that do not have a packet number that is larger than the last largest
-observed packet number.  This will detect spurious edges caused by reordering
-across an edge, which would lead to low RTT estimates, if not ignored.
+An observer can store the largest observed packet number per flow, and reject
+edges that do not have a monotonically increasing packet number (greater than the largest
+observed packet number).  This will avoid detecting spurious edges caused by reordering
+events that include an edge, which would lead to very low RTT estimates if not ignored.
 
 The packet number can be used to filter out high RTT estimates due to loss of
 an actual edge in a burst of lost packets. If the spin bit edge occurs after a
-long packet number gap, it should be rejected.
+long packet number gap, it should be ignored.
 
 Note that this measurement, as with passive RTT
 measurement for TCP, includes any transport protocol delay (e.g., delayed
@@ -179,7 +180,8 @@ small amount of periodic application traffic, where that period is longer than
 the RTT, measuring the spin bit provides information about the application
 period, not the network RTT. Simple heuristics based on the observed data rate
 per flow or changes in the RTT series can be used to reject bad RTT samples
-due to application or flow control limitation.
+due to application or flow control limitation. Heuristics may also use the
+handshake RTT as a aid to evaluate RTT samples.
 
 An on-path observer that can see traffic in both directions (from client to
 server and from server to client) can also use the spin bit to measure
