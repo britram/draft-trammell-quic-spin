@@ -5,7 +5,7 @@
 <head profile="http://www.w3.org/2006/03/hcard http://dublincore.org/documents/2008/08/04/dc-html/">
   <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 
-  <title>The Latency Spin Bit for the QUIC Transport Protocol</title>
+  <title>The QUIC Latency Spin Bit</title>
 
   
 <style type="text/css">/*<![CDATA[*/
@@ -279,27 +279,23 @@ address {
 <link href="#rfc.section.1.1" rel="Chapter" title="1.1 About This Document">
 <link href="#rfc.section.2" rel="Chapter" title="2 The Spin Bit Mechanism">
 <link href="#rfc.section.2.1" rel="Chapter" title="2.1 Proposed Short Header Format Including Spin Bit">
-<link href="#rfc.section.2.2" rel="Chapter" title="2.2 Setting the Spin Bit">
-<link href="#rfc.section.2.3" rel="Chapter" title="2.3 Resetting Spin Bit State">
+<link href="#rfc.section.2.2" rel="Chapter" title="2.2 Setting the Spin Bit on Outgoing Packets">
+<link href="#rfc.section.2.3" rel="Chapter" title="2.3 Resetting Spin Value State">
 <link href="#rfc.section.3" rel="Chapter" title="3 Using the Spin Bit for Passive RTT Measurement">
 <link href="#rfc.section.4" rel="Chapter" title="4 Scope of the Experiment">
 <link href="#rfc.section.5" rel="Chapter" title="5 IANA Considerations">
 <link href="#rfc.section.6" rel="Chapter" title="6 Security and Privacy Considerations">
 <link href="#rfc.section.7" rel="Chapter" title="7 Acknowledgments">
 <link href="#rfc.references" rel="Chapter" title="8 Informative References">
-<link href="#rfc.appendix.A" rel="Chapter" title="A The Valid Edge Counter">
-<link href="#rfc.appendix.A.1" rel="Chapter" title="A.1 Proposed Short Header Format Including Spin Bit and VEC">
-<link href="#rfc.appendix.A.2" rel="Chapter" title="A.2 Setting the Valid Edge Counter (VEC)">
-<link href="#rfc.appendix.A.3" rel="Chapter" title="A.3 Use of the VEC by a passive observer">
 <link href="#rfc.authors" rel="Chapter">
 
 
   <meta name="generator" content="xml2rfc version 2.8.0 - https://tools.ietf.org/tools/xml2rfc" />
   <link rel="schema.dct" href="http://purl.org/dc/terms/" />
 
-  <meta name="dct.creator" content="Trammell, B., Ed., Kuehlewind, M., and P. De Vaere" />
-  <meta name="dct.identifier" content="urn:ietf:id:draft-trammell-quic-spinbit-delta-latest" />
-  <meta name="dct.issued" scheme="ISO8601" content="2018-4-06" />
+  <meta name="dct.creator" content="Trammell, B., Ed. and M. Kuehlewind" />
+  <meta name="dct.identifier" content="urn:ietf:id:draft-ietf-quic-spin-exp-latest" />
+  <meta name="dct.issued" scheme="ISO8601" content="2018-4-10" />
   <meta name="dct.abstract" content="This document specifies the addition of a latency spin bit to the QUIC transport protocol and describes how to use it to measure end-to-end latency. It is intended as a delta to the current specification of QUIC. An appendix describes the Valid Edge Counter mechanism, which can be used to determine the validity of an RTT sample in case of loss and reordering without using the QUIC packet number." />
   <meta name="description" content="This document specifies the addition of a latency spin bit to the QUIC transport protocol and describes how to use it to measure end-to-end latency. It is intended as a delta to the current specification of QUIC. An appendix describes the Valid Edge Counter mechanism, which can be used to determine the validity of an RTT sample in case of loss and reordering without using the QUIC packet number." />
 
@@ -320,23 +316,19 @@ address {
 </tr>
 <tr>
 <td class="left">Intended status: Experimental</td>
-<td class="right">P. De Vaere</td>
-</tr>
-<tr>
-<td class="left">Expires: October 8, 2018</td>
 <td class="right">ETH Zurich</td>
 </tr>
 <tr>
-<td class="left"></td>
-<td class="right">April 06, 2018</td>
+<td class="left">Expires: October 12, 2018</td>
+<td class="right">April 10, 2018</td>
 </tr>
 
     	
     </tbody>
   </table>
 
-  <p class="title">The Latency Spin Bit for the QUIC Transport Protocol<br />
-  <span class="filename">draft-trammell-quic-spinbit-delta-latest</span></p>
+  <p class="title">The QUIC Latency Spin Bit<br />
+  <span class="filename">draft-ietf-quic-spin-exp-latest</span></p>
   
   <h1 id="rfc.abstract"><a href="#rfc.abstract">Abstract</a></h1>
 <p>This document specifies the addition of a latency spin bit to the QUIC transport protocol and describes how to use it to measure end-to-end latency. It is intended as a delta to the current specification of QUIC. An appendix describes the Valid Edge Counter mechanism, which can be used to determine the validity of an RTT sample in case of loss and reordering without using the QUIC packet number.</p>
@@ -344,7 +336,7 @@ address {
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at https://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on October 8, 2018.</p>
+<p>This Internet-Draft will expire on October 12, 2018.</p>
 <h1 id="rfc.copyrightnotice"><a href="#rfc.copyrightnotice">Copyright Notice</a></h1>
 <p>Copyright (c) 2018 IETF Trust and the persons identified as the document authors.  All rights reserved.</p>
 <p>This document is subject to BCP 78 and the IETF Trust's Legal Provisions Relating to IETF Documents (https://trustee.ietf.org/license-info) in effect on the date of publication of this document.  Please review these documents carefully, as they describe your rights and restrictions with respect to this document.  Code Components extracted from this document must include Simplified BSD License text as described in Section 4.e of the Trust Legal Provisions and are provided without warranty as described in the Simplified BSD License.</p>
@@ -362,9 +354,9 @@ address {
 </li>
 <ul><li>2.1.   <a href="#rfc.section.2.1">Proposed Short Header Format Including Spin Bit</a>
 </li>
-<li>2.2.   <a href="#rfc.section.2.2">Setting the Spin Bit</a>
+<li>2.2.   <a href="#rfc.section.2.2">Setting the Spin Bit on Outgoing Packets</a>
 </li>
-<li>2.3.   <a href="#rfc.section.2.3">Resetting Spin Bit State</a>
+<li>2.3.   <a href="#rfc.section.2.3">Resetting Spin Value State</a>
 </li>
 </ul><li>3.   <a href="#rfc.section.3">Using the Spin Bit for Passive RTT Measurement</a>
 </li>
@@ -378,15 +370,7 @@ address {
 </li>
 <li>8.   <a href="#rfc.references">Informative References</a>
 </li>
-<li>Appendix A.   <a href="#rfc.appendix.A">The Valid Edge Counter</a>
-</li>
-<ul><li>A.1.   <a href="#rfc.appendix.A.1">Proposed Short Header Format Including Spin Bit and VEC</a>
-</li>
-<li>A.2.   <a href="#rfc.appendix.A.2">Setting the Valid Edge Counter (VEC)</a>
-</li>
-<li>A.3.   <a href="#rfc.appendix.A.3">Use of the VEC by a passive observer</a>
-</li>
-</ul><li><a href="#rfc.authors">Authors' Addresses</a>
+<li><a href="#rfc.authors">Authors' Addresses</a>
 </li>
 
 
@@ -397,7 +381,6 @@ address {
 </h1>
 <p id="rfc.section.1.p.1">The QUIC transport protocol <a href="#QUIC-TRANS" class="xref">[QUIC-TRANS]</a> uses Transport Layer Security (TLS) <a href="#TLS" class="xref">[TLS]</a> to encrypt most of its protocol internals. In contrast to TCP where the sequence and acknowledgement numbers and timestamps (if the respective option is in use) can be seen by on-path observers and used to estimate end-to-end latency, QUIC&#8217;s wire image (see <a href="#WIRE-IMAGE" class="xref">[WIRE-IMAGE]</a>) currently does not expose any information that can be used for passive latency measurement techniques that rely on this information (e.g. <a href="#CACM-TCP" class="xref">[CACM-TCP]</a>, <a href="#TMA-QOF" class="xref">[TMA-QOF]</a>).</p>
 <p id="rfc.section.1.p.2">This document adds an explicit signal for passive latency measurability to the QUIC short header: a &#8220;spin bit&#8221;.  Passive observation of the spin bit provides one RTT sample per RTT to passive observers of QUIC traffic. This document describes the mechanism, how it can be added to QUIC, and how it can be used by passive measurement facilities to generate RTT samples.</p>
-<p><a href="#vec" class="xref">Appendix A</a> specifies an additional Valid Edge Counter, which can be used to improve the fidelity of spin bit measurements under less than ideal network and/or traffic conditions.</p>
 <h1 id="rfc.section.1.1">
 <a href="#rfc.section.1.1">1.1.</a> <a href="#about-this-document" id="about-this-document">About This Document</a>
 </h1>
@@ -427,11 +410,11 @@ address {
 
 </pre>
 <p class="figure">Figure 1: Short Header Format including proposed Spin Bit</p>
-<p id="rfc.section.2.1.p.2">S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet reception as explained in sec <a href="#spinbit" class="xref">Section 2.2</a>.</p>
+<p id="rfc.section.2.1.p.2">S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet reception as explained in <a href="#spinbit" class="xref">Section 2.2</a>.</p>
 <h1 id="rfc.section.2.2">
-<a href="#rfc.section.2.2">2.2.</a> <a href="#spinbit" id="spinbit">Setting the Spin Bit</a>
+<a href="#rfc.section.2.2">2.2.</a> <a href="#spinbit" id="spinbit">Setting the Spin Bit on Outgoing Packets</a>
 </h1>
-<p id="rfc.section.2.2.p.1">Each endpoint, client and server, maintains a spin value, 0 or 1, for each QUIC connection, and sets the spin bit in the short header to the currently stored value when a packet with a short header is sent out.  The spin value is initialized to 0 on both side, at the client as well as the server at connection start. Each endpoint also remembers the highest packet number seen from its peer on the connection. The spin value is then determined at each endpoint as follows:</p>
+<p id="rfc.section.2.2.p.1">Each endpoint, client and server, maintains a spin value, 0 or 1, for each QUIC connection, and sets the spin bit in the short header to the currently stored value when a packet with a short header is sent out. The spin value is initialized to 0 on both side, at the client as well as the server at connection start. Each endpoint also remembers the highest packet number seen from its peer on the connection. The spin value is then determined at each endpoint as follows:</p>
 <p></p>
 
 <ul>
@@ -440,16 +423,9 @@ address {
 </ul>
 <p id="rfc.section.2.2.p.3">This procedure will cause the spin bit to change value in each direction once per round trip. Observation points can estimate the network latency by observing these changes in the latency spin bit, as described in <a href="#usage" class="xref">Section 3</a>.  See <a href="#SPIN-BIT" class="xref">[SPIN-BIT]</a> for further illustration of this mechanism in action.</p>
 <h1 id="rfc.section.2.3">
-<a href="#rfc.section.2.3">2.3.</a> <a href="#resetting-spin-bit-state" id="resetting-spin-bit-state">Resetting Spin Bit State</a>
+<a href="#rfc.section.2.3">2.3.</a> <a href="#resetting-spin-value-state" id="resetting-spin-value-state">Resetting Spin Value State</a>
 </h1>
-<p id="rfc.section.2.3.p.1">Each client and server will resets it spin value to zero on any of the following events:</p>
-<p></p>
-
-<ul>
-<li>When initiating or responding to connection migration</li>
-<li>When sending the first packet with a new Connection ID</li>
-</ul>
-<p id="rfc.section.2.3.p.3">This reduces the risk that transient spin bit state can be used to link flows across connection migration or ID change.</p>
+<p id="rfc.section.2.3.p.1">Each client and server resets it spin value to zero when sending the first packet in a given with a new Connection ID. This reduces the risk that transient spin bit state can be used to link flows across connection migration or ID change.</p>
 <h1 id="rfc.section.3">
 <a href="#rfc.section.3">3.</a> <a href="#usage" id="usage">Using the Spin Bit for Passive RTT Measurement</a>
 </h1>
@@ -470,7 +446,7 @@ address {
 <li>the accuracy and value of the information derived from spin bit measurement on live network traffic.</li>
 </ul>
 <p id="rfc.section.4.p.3">The information generated by this experiment will be used by the QUIC working group as input to a decision about the standardization of the latency spin bit.</p>
-<p id="rfc.section.4.p.4">This document describes a one-bit latency spin signal. A three-bit latency spin signal, which provides reordering, loss, and edge delay resistance even without cleartext packet numbers in the QUIC header, is described in <a href="#vec" class="xref">Appendix A</a>; experimentation with this approach is also encouraged.</p>
+<p id="rfc.section.4.p.4">This document describes a one-bit latency spin signal. A three-bit latency spin signal, which provides reordering, loss, and edge delay resistance even without cleartext packet numbers in the QUIC header, is described in <a href="#QUIC-SPIN" class="xref">[QUIC-SPIN]</a>; experimentation with this approach is also encouraged.</p>
 <h1 id="rfc.section.5">
 <a href="#rfc.section.5">5.</a> <a href="#iana-considerations" id="iana-considerations">IANA Considerations</a>
 </h1>
@@ -482,10 +458,11 @@ address {
 <h1 id="rfc.section.7">
 <a href="#rfc.section.7">7.</a> <a href="#acknowledgments" id="acknowledgments">Acknowledgments</a>
 </h1>
-<p id="rfc.section.7.p.1">This document is derived from <a href="#I-D.trammell-quic-spin" class="xref">[I-D.trammell-quic-spin]</a>, which was the work of the following authors in addition to the editor:</p>
+<p id="rfc.section.7.p.1">This document is derived from <a href="#QUIC-SPIN" class="xref">[QUIC-SPIN]</a>, which was the work of the following authors in addition to the editor of this document:</p>
 <p></p>
 
 <ul>
+<li>Piet De Vaere, ETH Zurich</li>
 <li>Roni Even, Huawei</li>
 <li>Giuseppe Fioccola, Telecom Italia</li>
 <li>Thomas Fossati, Nokia</li>
@@ -493,7 +470,7 @@ address {
 <li>Al Morton, AT&amp;T Labs</li>
 <li>Emile Stephan, Orange</li>
 </ul>
-<p id="rfc.section.7.p.3">The QUIC Spin Bit was originally specified in a slightly different form by Christian Huitema, and the Valid Edge Counter mechanism in <a href="#vec" class="xref">Appendix A</a> was first specified by Piet De Vaere.</p>
+<p id="rfc.section.7.p.3">The QUIC Spin Bit was originally specified in a slightly different form by Christian Huitema.</p>
 <p id="rfc.section.7.p.4">This work is partially supported by the European Commission under Horizon 2020 grant agreement no. 688421 Measurement and Architecture for a Middleboxed Internet (MAMI), and by the Swiss State Secretariat for Education, Research, and Innovation under contract no. 15.0268. This support does not imply endorsement.</p>
 <h1 id="rfc.references">
 <a href="#rfc.references">8.</a> Informative References</h1>
@@ -504,7 +481,7 @@ address {
 <a>Strowes, S.</a>, "<a>Passively Measuring TCP Round-Trip Times (in Communications of the ACM)</a>", October 2013.</td>
 </tr>
 <tr>
-<td class="reference"><b id="I-D.trammell-quic-spin">[I-D.trammell-quic-spin]</b></td>
+<td class="reference"><b id="QUIC-SPIN">[QUIC-SPIN]</b></td>
 <td class="top">
 <a>Trammell, B.</a>, <a>Vaere, P.</a>, <a>Even, R.</a>, <a>Fioccola, G.</a>, <a>Fossati, T.</a>, <a>Ihlar, M.</a>, <a>Morton, A.</a> and <a>S. Emile</a>, "<a href="https://tools.ietf.org/html/draft-trammell-quic-spin-01">The Addition of a Spin Bit to the QUIC Transport Protocol</a>", Internet-Draft draft-trammell-quic-spin-01, December 2017.</td>
 </tr>
@@ -534,60 +511,6 @@ address {
 <a>Trammell, B.</a> and <a>M. Kuehlewind</a>, "<a href="https://tools.ietf.org/html/draft-trammell-wire-image-03">The Wire Image of a Network Protocol</a>", Internet-Draft draft-trammell-wire-image-03, April 2018.</td>
 </tr>
 </tbody></table>
-<h1 id="rfc.appendix.A">
-<a href="#rfc.appendix.A">Appendix A.</a> <a href="#vec" id="vec">The Valid Edge Counter</a>
-</h1>
-<p id="rfc.section.A.p.1">This mechanism is indented to provide additional information about the validity of the passively observed spin edges without using information from a cleartext packet number.</p>
-<p id="rfc.section.A.p.2">A one-bit spin signal is resistent to reordering during signal generation, since the spin value is only updated at each endpoint on a packet that advances the packet counter. However, without using the packet number, a passive observer can neither detect reordered nor lost edges, and it must use heuristics to reject delayed edges.</p>
-<p id="rfc.section.A.p.3">The Valid Edge Counter (VEC) addresses these issues with two additional bits added to each packet, encoding values from 0 to 3, indicating that an edge was considered to be valid when send out by the sender, and providing a possibility to detect invalid edges due to reordering and edge loss.</p>
-<h1 id="rfc.appendix.A.1">
-<a href="#rfc.appendix.A.1">A.1.</a> <a href="#proposed-short-header-format-including-spin-bit-and-vec" id="proposed-short-header-format-including-spin-bit-and-vec">Proposed Short Header Format Including Spin Bit and VEC</a>
-</h1>
-<p id="rfc.section.A.1.p.1">As of the current editor&#8217;s version of <a href="#QUIC-TRANS" class="xref">[QUIC-TRANS]</a>, this proposal specifies using the fifth most significant bit (0x08) of the first octet in the short header for the spin bit.</p>
-<p id="rfc.section.A.1.p.2">[EDITOR&#8217;S NOTE: verify this with quic-transport editors]</p>
-<div id="rfc.figure.2"></div>
-<div id="fig-vec-header"></div>
-<pre>
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+
-|0|K|1|VEC|S|T T|
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                Destination Connection ID (0..144)           ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                      Packet Number (8/16/32)                ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                     Protected Payload (*)                   ...
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-</pre>
-<p class="figure">Figure 2: Short Header Format Spin Bit and VEC</p>
-<p id="rfc.section.A.1.p.3">S: The Spin bit is set 0 or 1 depending on the stored spin value that is updated on packet reception as explained in sec <a href="#spinbit" class="xref">Section 2.2</a>.</p>
-<p id="rfc.section.A.1.p.4">VEC: The Valid Edge Counter is set as defined in <a href="#vec-bits" class="xref">Appendix A.2</a>. If the spin bit field does not contain an edge, the VEC is set to 0.</p>
-<h1 id="rfc.appendix.A.2">
-<a href="#rfc.appendix.A.2">A.2.</a> <a href="#vec-bits" id="vec-bits">Setting the Valid Edge Counter (VEC)</a>
-</h1>
-<p id="rfc.section.A.2.p.1">The VEC is set by each endpoint as follows; unlike the spin bit, note that there is no difference between client and server handling of the VEC:</p>
-<p></p>
-
-<ul>
-<li>By default, the VEC is set to 0.</li>
-<li>If a packet contains an edge (transition 0-&gt;1 or 1-&gt;0) in the spin signal, and that edge is delayed (sent more than a configured delay since the edge was received, defaulting to 1ms), the VEC is set to 1.</li>
-<li>If a packet contains an edge in the spin signal, and that edge is not delayed, the VEC is set to the value of the VEC that accompanied the last incoming spin bit transition plus one. This counter holds at 3, instead of cycling around. In other words, an edge received with a VEC of 0 will be reflected as an edge with a VEC of 1; with a VEC of 1 as VEC of 2, and a VEC of 2 or 3 as a VEC of 3.</li>
-</ul>
-<p id="rfc.section.A.2.p.3">This mechanism allows observers to recognize spurious edges due to reordering and delayed edges due to loss, since these packets will have been sent with VEC 0: they were not edges when they were sent. In addition, it allows senders to signal that a valid edge was delayed because the sender was application-limited: these edges are sent with the VEC set to 1 by the sender, prompting the VEC to count back up over the next RTT.</p>
-<h1 id="rfc.appendix.A.3">
-<a href="#rfc.appendix.A.3">A.3.</a> <a href="#use-of-the-vec-by-a-passive-observer" id="use-of-the-vec-by-a-passive-observer">Use of the VEC by a passive observer</a>
-</h1>
-<p id="rfc.section.A.3.p.1">The VEC can be used by observers to determine whether an edge in the spin bit signal is valid or not, as follows:</p>
-<p></p>
-
-<ul>
-<li>A packet containing an apparent edge in the spin signal with a VEC of 0 is not a valid edge, but may be have been caused by reordering or loss, or was marked as delayed by the sender. It should therefore be ignored.</li>
-<li>A packet containing an apparent edge in the spin signal with a VEC of 1 can be used as a left edge (i.e., to start measuring an RTT sample), but not as a right edge (i.e., to take an RTT sample since the last edge).</li>
-<li>A packet containing an apparent edge in the spin signal with a VEC of 2 can be used as a left edge, but not as a right edge. If the observation point is symmetric (i.e, it can see both upstream and downstream packets in the flow), the packet can also be used to take a component RTT sample on the segment of the path between the observation point and the direction in which the previous VEC 1 edge was seen.</li>
-<li>A packet containing an apparent edge in the spin signal with a VEC of 3 can be used as a left edge or right edge, and can be used to compute component RTT in either direction.</li>
-</ul>
 <h1 id="rfc.authors"><a href="#rfc.authors">Authors' Addresses</a></h1>
 <div class="avoidbreak">
   <address class="vcard">
@@ -629,27 +552,6 @@ address {
 	  <span class="country-name vcardline"></span>
 	</span>
 	<span class="vcardline">EMail: <a href="mailto:mirja.kuehlewind@tik.ee.ethz.ch">mirja.kuehlewind@tik.ee.ethz.ch</a></span>
-
-  </address>
-</div><div class="avoidbreak">
-  <address class="vcard">
-	<span class="vcardline">
-	  <span class="fn">Piet De Vaere</span> 
-	  <span class="n hidden">
-		<span class="family-name">De Vaere</span>
-	  </span>
-	</span>
-	<span class="org vcardline">ETH Zurich</span>
-	<span class="adr">
-	  
-	  <span class="vcardline">
-		<span class="locality"></span> 
-		<span class="region"></span>
-		<span class="code"></span>
-	  </span>
-	  <span class="country-name vcardline"></span>
-	</span>
-	<span class="vcardline">EMail: <a href="mailto:piet@devae.re">piet@devae.re</a></span>
 
   </address>
 </div>

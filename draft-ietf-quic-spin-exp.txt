@@ -4,13 +4,12 @@
 
 QUIC                                                    B. Trammell, Ed.
 Internet-Draft                                             M. Kuehlewind
-Intended status: Experimental                                P. De Vaere
-Expires: October 8, 2018                                      ETH Zurich
-                                                          April 06, 2018
+Intended status: Experimental                                 ETH Zurich
+Expires: October 12, 2018                                 April 10, 2018
 
 
-          The Latency Spin Bit for the QUIC Transport Protocol
-                draft-trammell-quic-spinbit-delta-latest
+                       The QUIC Latency Spin Bit
+                    draft-ietf-quic-spin-exp-latest
 
 Abstract
 
@@ -37,7 +36,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on October 8, 2018.
+   This Internet-Draft will expire on October 12, 2018.
 
 Copyright Notice
 
@@ -50,37 +49,33 @@ Copyright Notice
    publication of this document.  Please review these documents
    carefully, as they describe your rights and restrictions with respect
    to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
 
 
 
-Trammell, et al.         Expires October 8, 2018                [Page 1]
+Trammell & Kuehlewind   Expires October 12, 2018                [Page 1]
 
 Internet-Draft                QUIC Spin Bit                   April 2018
 
 
-   include Simplified BSD License text as described in Section 4.e of
    the Trust Legal Provisions and are provided without warranty as
    described in the Simplified BSD License.
 
 Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
-     1.1.  About This Document . . . . . . . . . . . . . . . . . . .   3
+     1.1.  About This Document . . . . . . . . . . . . . . . . . . .   2
    2.  The Spin Bit Mechanism  . . . . . . . . . . . . . . . . . . .   3
      2.1.  Proposed Short Header Format Including Spin Bit . . . . .   3
-     2.2.  Setting the Spin Bit  . . . . . . . . . . . . . . . . . .   3
-     2.3.  Resetting Spin Bit State  . . . . . . . . . . . . . . . .   4
+     2.2.  Setting the Spin Bit on Outgoing Packets  . . . . . . . .   3
+     2.3.  Resetting Spin Value State  . . . . . . . . . . . . . . .   4
    3.  Using the Spin Bit for Passive RTT Measurement  . . . . . . .   4
    4.  Scope of the Experiment . . . . . . . . . . . . . . . . . . .   5
-   5.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
-   6.  Security and Privacy Considerations . . . . . . . . . . . . .   6
+   5.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5
+   6.  Security and Privacy Considerations . . . . . . . . . . . . .   5
    7.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .   6
-   8.  Informative References  . . . . . . . . . . . . . . . . . . .   7
-   Appendix A.  The Valid Edge Counter . . . . . . . . . . . . . . .   7
-     A.1.  Proposed Short Header Format Including Spin Bit and VEC .   8
-     A.2.  Setting the Valid Edge Counter (VEC)  . . . . . . . . . .   8
-     A.3.  Use of the VEC by a passive observer  . . . . . . . . . .   9
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   9
+   8.  Informative References  . . . . . . . . . . . . . . . . . . .   6
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   7
 
 1.  Introduction
 
@@ -100,20 +95,6 @@ Table of Contents
    mechanism, how it can be added to QUIC, and how it can be used by
    passive measurement facilities to generate RTT samples.
 
-   Appendix A specifies an additional Valid Edge Counter, which can be
-   used to improve the fidelity of spin bit measurements under less than
-   ideal network and/or traffic conditions.
-
-
-
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 2]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
-
 1.1.  About This Document
 
    This document is maintained in the GitHub repository
@@ -123,6 +104,15 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    https://github.com/britram/draft-trammell-quic-spin/issues.  Comments
    and suggestions on this document can be made by filing an issue
    there, or by contacting the editor.
+
+
+
+
+
+Trammell & Kuehlewind   Expires October 12, 2018                [Page 2]
+
+Internet-Draft                QUIC Spin Bit                   April 2018
+
 
 2.  The Spin Bit Mechanism
 
@@ -155,21 +145,13 @@ Internet-Draft                QUIC Spin Bit                   April 2018
          Figure 1: Short Header Format including proposed Spin Bit
 
    S: The Spin bit is set 0 or 1 depending on the stored spin value that
-   is updated on packet reception as explained in sec Section 2.2.
+   is updated on packet reception as explained in Section 2.2.
 
-2.2.  Setting the Spin Bit
+2.2.  Setting the Spin Bit on Outgoing Packets
 
    Each endpoint, client and server, maintains a spin value, 0 or 1, for
    each QUIC connection, and sets the spin bit in the short header to
    the currently stored value when a packet with a short header is sent
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 3]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
-
    out.  The spin value is initialized to 0 on both side, at the client
    as well as the server at connection start.  Each endpoint also
    remembers the highest packet number seen from its peer on the
@@ -180,6 +162,13 @@ Internet-Draft                QUIC Spin Bit                   April 2018
       short header and if it increments the highest packet number seen
       by the server from the client, it sets the spin value to the value
       observed in the spin bit in the received packet.
+
+
+
+Trammell & Kuehlewind   Expires October 12, 2018                [Page 3]
+
+Internet-Draft                QUIC Spin Bit                   April 2018
+
 
    o  When it receives a packet from the server, if the packet has a
       short header and if it increments the highest packet number seen
@@ -192,17 +181,12 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    as described in Section 3.  See [SPIN-BIT] for further illustration
    of this mechanism in action.
 
-2.3.  Resetting Spin Bit State
+2.3.  Resetting Spin Value State
 
-   Each client and server will resets it spin value to zero on any of
-   the following events:
-
-   o  When initiating or responding to connection migration
-
-   o  When sending the first packet with a new Connection ID
-
-   This reduces the risk that transient spin bit state can be used to
-   link flows across connection migration or ID change.
+   Each client and server resets it spin value to zero when sending the
+   first packet in a given with a new Connection ID.  This reduces the
+   risk that transient spin bit state can be used to link flows across
+   connection migration or ID change.
 
 3.  Using the Spin Bit for Passive RTT Measurement
 
@@ -217,14 +201,6 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    last largest observed packet number.  This will detect spurious edges
    caused by reordering across an edge, which would lead to low RTT
    estimates, if not ignored.
-
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 4]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
 
    The packet number can be used to filter out high RTT estimates due to
    loss of an actual edge in a burst of lost packets.  If the spin bit
@@ -242,6 +218,14 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    have application and transport layer delay, respectively, that are
    much greater than network RTT.  When the sender is application-
    limited and e.g. only sends small amount of periodic application
+
+
+
+Trammell & Kuehlewind   Expires October 12, 2018                [Page 4]
+
+Internet-Draft                QUIC Spin Bit                   April 2018
+
+
    traffic, where that period is longer than the RTT, measuring the spin
    bit provides information about the application period, not the
    network RTT.  Simple heuristics based on the observed data rate per
@@ -273,19 +257,10 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    working group as input to a decision about the standardization of the
    latency spin bit.
 
-
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 5]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
-
    This document describes a one-bit latency spin signal.  A three-bit
    latency spin signal, which provides reordering, loss, and edge delay
    resistance even without cleartext packet numbers in the QUIC header,
-   is described in Appendix A; experimentation with this approach is
+   is described in [QUIC-SPIN]; experimentation with this approach is
    also encouraged.
 
 5.  IANA Considerations
@@ -299,13 +274,23 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    essentially the same as those for passive RTT measurement in general.
    However, it has been shown that these kind of RTT estimates do not
    provide a sufficiently high enough accuracy for geo-locating,
+
+
+
+Trammell & Kuehlewind   Expires October 12, 2018                [Page 5]
+
+Internet-Draft                QUIC Spin Bit                   April 2018
+
+
    therefore the privacy risk of exposing these information is
    considered low.
 
 7.  Acknowledgments
 
-   This document is derived from [I-D.trammell-quic-spin], which was the
-   work of the following authors in addition to the editor:
+   This document is derived from [QUIC-SPIN], which was the work of the
+   following authors in addition to the editor of this document:
+
+   o  Piet De Vaere, ETH Zurich
 
    o  Roni Even, Huawei
 
@@ -320,8 +305,7 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    o  Emile Stephan, Orange
 
    The QUIC Spin Bit was originally specified in a slightly different
-   form by Christian Huitema, and the Valid Edge Counter mechanism in
-   Appendix A was first specified by Piet De Vaere.
+   form by Christian Huitema.
 
    This work is partially supported by the European Commission under
    Horizon 2020 grant agreement no. 688421 Measurement and Architecture
@@ -329,22 +313,13 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    for Education, Research, and Innovation under contract no. 15.0268.
    This support does not imply endorsement.
 
-
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 6]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
-
 8.  Informative References
 
    [CACM-TCP]
               Strowes, S., "Passively Measuring TCP Round-Trip Times (in
               Communications of the ACM)", October 2013.
 
-   [I-D.trammell-quic-spin]
+   [QUIC-SPIN]
               Trammell, B., Vaere, P., Even, R., Fioccola, G., Fossati,
               T., Ihlar, M., Morton, A., and S. Emile, "The Addition of
               a Spin Bit to the QUIC Transport Protocol", draft-
@@ -354,6 +329,14 @@ Internet-Draft                QUIC Spin Bit                   April 2018
               Iyengar, J. and M. Thomson, "QUIC: A UDP-Based Multiplexed
               and Secure Transport", draft-ietf-quic-transport-10 (work
               in progress), March 2018.
+
+
+
+
+Trammell & Kuehlewind   Expires October 12, 2018                [Page 6]
+
+Internet-Draft                QUIC Spin Bit                   April 2018
+
 
    [SPIN-BIT]
               Trammell, B., Vaere, P., Even, R., Fioccola, G., Fossati,
@@ -374,137 +357,7 @@ Internet-Draft                QUIC Spin Bit                   April 2018
               Network Protocol", draft-trammell-wire-image-03 (work in
               progress), April 2018.
 
-Appendix A.  The Valid Edge Counter
-
-   This mechanism is indented to provide additional information about
-   the validity of the passively observed spin edges without using
-   information from a cleartext packet number.
-
-   A one-bit spin signal is resistent to reordering during signal
-   generation, since the spin value is only updated at each endpoint on
-   a packet that advances the packet counter.  However, without using
-   the packet number, a passive observer can neither detect reordered
-   nor lost edges, and it must use heuristics to reject delayed edges.
-
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 7]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
-
-   The Valid Edge Counter (VEC) addresses these issues with two
-   additional bits added to each packet, encoding values from 0 to 3,
-   indicating that an edge was considered to be valid when send out by
-   the sender, and providing a possibility to detect invalid edges due
-   to reordering and edge loss.
-
-A.1.  Proposed Short Header Format Including Spin Bit and VEC
-
-   As of the current editor's version of [QUIC-TRANS], this proposal
-   specifies using the fifth most significant bit (0x08) of the first
-   octet in the short header for the spin bit.
-
-   [EDITOR'S NOTE: verify this with quic-transport editors]
-
-   0                   1                   2                   3
-   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-   +-+-+-+-+-+-+-+-+
-   |0|K|1|VEC|S|T T|
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                Destination Connection ID (0..144)           ...
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                      Packet Number (8/16/32)                ...
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                     Protected Payload (*)                   ...
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-
-              Figure 2: Short Header Format Spin Bit and VEC
-
-   S: The Spin bit is set 0 or 1 depending on the stored spin value that
-   is updated on packet reception as explained in sec Section 2.2.
-
-   VEC: The Valid Edge Counter is set as defined in Appendix A.2.  If
-   the spin bit field does not contain an edge, the VEC is set to 0.
-
-A.2.  Setting the Valid Edge Counter (VEC)
-
-   The VEC is set by each endpoint as follows; unlike the spin bit, note
-   that there is no difference between client and server handling of the
-   VEC:
-
-   o  By default, the VEC is set to 0.
-
-   o  If a packet contains an edge (transition 0->1 or 1->0) in the spin
-      signal, and that edge is delayed (sent more than a configured
-      delay since the edge was received, defaulting to 1ms), the VEC is
-      set to 1.
-
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 8]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
-
-   o  If a packet contains an edge in the spin signal, and that edge is
-      not delayed, the VEC is set to the value of the VEC that
-      accompanied the last incoming spin bit transition plus one.  This
-      counter holds at 3, instead of cycling around.  In other words, an
-      edge received with a VEC of 0 will be reflected as an edge with a
-      VEC of 1; with a VEC of 1 as VEC of 2, and a VEC of 2 or 3 as a
-      VEC of 3.
-
-   This mechanism allows observers to recognize spurious edges due to
-   reordering and delayed edges due to loss, since these packets will
-   have been sent with VEC 0: they were not edges when they were sent.
-   In addition, it allows senders to signal that a valid edge was
-   delayed because the sender was application-limited: these edges are
-   sent with the VEC set to 1 by the sender, prompting the VEC to count
-   back up over the next RTT.
-
-A.3.  Use of the VEC by a passive observer
-
-   The VEC can be used by observers to determine whether an edge in the
-   spin bit signal is valid or not, as follows:
-
-   o  A packet containing an apparent edge in the spin signal with a VEC
-      of 0 is not a valid edge, but may be have been caused by
-      reordering or loss, or was marked as delayed by the sender.  It
-      should therefore be ignored.
-
-   o  A packet containing an apparent edge in the spin signal with a VEC
-      of 1 can be used as a left edge (i.e., to start measuring an RTT
-      sample), but not as a right edge (i.e., to take an RTT sample
-      since the last edge).
-
-   o  A packet containing an apparent edge in the spin signal with a VEC
-      of 2 can be used as a left edge, but not as a right edge.  If the
-      observation point is symmetric (i.e, it can see both upstream and
-      downstream packets in the flow), the packet can also be used to
-      take a component RTT sample on the segment of the path between the
-      observation point and the direction in which the previous VEC 1
-      edge was seen.
-
-   o  A packet containing an apparent edge in the spin signal with a VEC
-      of 3 can be used as a left edge or right edge, and can be used to
-      compute component RTT in either direction.
-
 Authors' Addresses
-
-
-
-
-
-
-
-Trammell, et al.         Expires October 8, 2018                [Page 9]
-
-Internet-Draft                QUIC Spin Bit                   April 2018
-
 
    Brian Trammell (editor)
    ETH Zurich
@@ -518,10 +371,6 @@ Internet-Draft                QUIC Spin Bit                   April 2018
    Email: mirja.kuehlewind@tik.ee.ethz.ch
 
 
-   Piet De Vaere
-   ETH Zurich
-
-   Email: piet@devae.re
 
 
 
@@ -540,21 +389,4 @@ Internet-Draft                QUIC Spin Bit                   April 2018
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Trammell, et al.         Expires October 8, 2018               [Page 10]
+Trammell & Kuehlewind   Expires October 12, 2018                [Page 7]
