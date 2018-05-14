@@ -467,15 +467,15 @@ providing a possibility to detect invalid edges due to reordering and edge loss.
 
 As of the current editor's version of {{QUIC-TRANS}}, this proposal specifies
 using bit 0x04 of the first octet in the short header for the spin bit, and
-the bits 0x18 for the valid edge counter. Note that these values are subject
-to change frequently to
+the bits 0x03 for the valid edge counter. Note that these values are subject
+to change as the layout of the first octet is finalized.
 
 ~~~~~
 
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+
-|0|K|1|VEC|S|T T|
+|0|K|1|1|0|S|VEC|
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                Destination Connection ID (0..144)           ...
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
